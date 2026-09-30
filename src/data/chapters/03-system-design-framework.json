@@ -1,0 +1,153 @@
+{
+  "id": 3,
+  "num": 3,
+  "slug": "03-system-design-framework",
+  "title": "A Framework For System Design Interviews",
+  "titleBn": "সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক",
+  "description": "৪ ধাপের কার্যকর সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক: প্রয়োজনীয়তা বিশ্লেষণ, হাই-লেভেল ডিজাইন, ডিপ ডাইভ এবং র‍্যাপ-আপ।",
+  "volume": 1,
+  "readingTime": 3,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 2,
+      "title": "Step 1: Understand the Problem and Establish Design Scope",
+      "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+      "id": "step-1-understand-the-problem-and-establish-design-scope"
+    },
+    {
+      "level": 3,
+      "title": "Key Objectives",
+      "titleBn": "Key Objectives",
+      "id": "key-objectives"
+    },
+    {
+      "level": 3,
+      "title": "Approach",
+      "titleBn": "Approach",
+      "id": "approach"
+    },
+    {
+      "level": 3,
+      "title": "Example",
+      "titleBn": "Example",
+      "id": "example"
+    },
+    {
+      "level": 2,
+      "title": "Step 2: Propose High-Level Design and Get Buy-In",
+      "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+      "id": "step-2-propose-high-level-design-and-get-buy-in"
+    },
+    {
+      "level": 3,
+      "title": "Key Objectives",
+      "titleBn": "Key Objectives",
+      "id": "key-objectives"
+    },
+    {
+      "level": 3,
+      "title": "Approach",
+      "titleBn": "Approach",
+      "id": "approach"
+    },
+    {
+      "level": 3,
+      "title": "Example",
+      "titleBn": "Example",
+      "id": "example"
+    },
+    {
+      "level": 2,
+      "title": "Step 3: Design Deep Dive",
+      "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+      "id": "step-3-design-deep-dive"
+    },
+    {
+      "level": 3,
+      "title": "Key Objectives",
+      "titleBn": "Key Objectives",
+      "id": "key-objectives"
+    },
+    {
+      "level": 3,
+      "title": "Approach",
+      "titleBn": "Approach",
+      "id": "approach"
+    },
+    {
+      "level": 3,
+      "title": "Example Topics",
+      "titleBn": "Example Topics",
+      "id": "example-topics"
+    },
+    {
+      "level": 2,
+      "title": "Step 4: Wrap-Up",
+      "titleBn": "ধাপ 4: Wrap-Up",
+      "id": "step-4-wrap-up"
+    },
+    {
+      "level": 3,
+      "title": "Key Objectives",
+      "titleBn": "Key Objectives",
+      "id": "key-objectives"
+    },
+    {
+      "level": 3,
+      "title": "Approach",
+      "titleBn": "Approach",
+      "id": "approach"
+    },
+    {
+      "level": 2,
+      "title": "Best Practices",
+      "titleBn": "Best Practices",
+      "id": "best-practices"
+    },
+    {
+      "level": 3,
+      "title": "Dos",
+      "titleBn": "Dos",
+      "id": "dos"
+    },
+    {
+      "level": 3,
+      "title": "Don’ts",
+      "titleBn": "Don’ts",
+      "id": "don-ts"
+    },
+    {
+      "level": 2,
+      "title": "Time Management",
+      "titleBn": "Time Management",
+      "id": "time-management"
+    },
+    {
+      "level": 3,
+      "title": "Suggested Time Allocation (for 45-Minute Interviews):",
+      "titleBn": "Suggested Time Allocation (for 45-Minute Interviews):",
+      "id": "suggested-time-allocation-for-45-minute-interviews"
+    }
+  ],
+  "imageCount": 0,
+  "prev": {
+    "num": 2,
+    "slug": "02-back-of-the-envelope-estimation",
+    "title": "Back-of-the-Envelope Estimation",
+    "titleBn": "ব্যাক-অফ-দ্য-এনভেলপ হিসাব ও অনুমান"
+  },
+  "next": {
+    "num": 4,
+    "slug": "04-rate-limiter",
+    "title": "Design A Rate Limiter",
+    "titleBn": "রেট লিমিটার ডিজাইন"
+  },
+  "contentEn": "# Chapter 3: A Framework for System Design Interviews\n\n## Introduction\nSystem design interviews are a key part of the hiring process, simulating real-life problem-solving scenarios. These interviews evaluate not just technical skills but also collaboration, communication, and the ability to handle ambiguous requirements.\n\nThis chapter introduces a **4-step framework** for navigating system design interviews effectively.\n\n---\n\n## Step 1: Understand the Problem and Establish Design Scope\n\n### Key Objectives\n- Clarify requirements and assumptions.\n- Avoid jumping into solutions prematurely.\n- Showcase critical thinking by asking good questions.\n\n### Approach\n- **Ask Clarifying Questions:**\n  - What are the most important features?\n  - What scale does the system need to handle?\n  - Are we building for web, mobile, or both?\n  - Are there existing technologies or constraints?\n\n- **Document Assumptions:** Write assumptions on a whiteboard or paper for reference.\n\n### Example\n**Problem:** Design a news feed system.  \n**Questions:**\n- Is it a mobile app, web app, or both?\n- How many friends can a user have?\n- Should the feed include images and videos?\n- Is the feed sorted by reverse chronological order?\n\n---\n\n## Step 2: Propose High-Level Design and Get Buy-In\n\n### Key Objectives\n- Develop a high-level architecture.\n- Collaborate with the interviewer to refine the design.\n\n### Approach\n- **Draft a Blueprint:**\n  - Use box diagrams for key components (e.g., clients, APIs, databases, caches, CDNs).\n  - Treat the interviewer as a teammate to refine the design.\n\n- **Perform Back-of-the-Envelope Calculations:**\n  - Ensure the design can handle the scale constraints.\n\n- **Walk Through Use Cases:** Identify edge cases and validate design assumptions.\n\n### Example\nFor a news feed system, divide the design into:\n1. **Feed Publishing Flow:** Writing posts into databases and populating friends' feeds.\n2. **Feed Retrieval Flow:** Aggregating and displaying friends' posts in reverse chronological order.\n\n---\n\n## Step 3: Design Deep Dive\n\n### Key Objectives\n- Dive into critical components.\n- Showcase depth of understanding and adaptability.\n\n### Approach\n- **Prioritize Key Components:** Focus on areas most relevant to the problem.\n- **Discuss Bottlenecks:** Identify potential performance issues and propose solutions.\n- **Balance Detail:** Avoid over-engineering or unnecessary deep dives.\n\n### Example Topics\n- **URL Shortener:** Focus on hash function design.\n- **Chat System:** Explore latency reduction and online/offline status handling.\n- **News Feed System:** Examine feed publishing and retrieval processes.\n\n---\n\n## Step 4: Wrap-Up\n\n### Key Objectives\n- Highlight areas for improvement.\n- Recap the design and discuss follow-ups.\n\n### Approach\n- **Identify Bottlenecks:** Discuss potential limitations and scaling strategies.\n- **Summarize Design:** Recap major design decisions and trade-offs.\n- **Propose Enhancements:**\n  - How to scale from 1 million to 10 million users.\n  - Error handling for server failures or network issues.\n\n---\n\n## Best Practices\n\n### Dos\n- **Ask Questions:** Clarify ambiguities before diving into solutions.\n- **Communicate:** Share your thought process with the interviewer.\n- **Iterate with the Interviewer:** Treat them as a collaborator.\n- **Show Flexibility:** Suggest alternative approaches and refine your design.\n- **Focus on Critical Components:** Prioritize key parts of the system.\n\n### Don’ts\n- **Avoid Premature Solutions:** Don’t design before understanding the requirements.\n- **Don’t Go Silent:** Communicate regularly during the process.\n- **Avoid Over-Engineering:** Focus on practical, scalable solutions.\n\n---\n\n## Time Management\n\n### Suggested Time Allocation (for 45-Minute Interviews):\n1. **Understand Problem and Scope:** 3–10 minutes\n2. **High-Level Design and Buy-In:** 10–15 minutes\n3. **Deep Dive:** 10–25 minutes\n4. **Wrap-Up:** 3–5 minutes\n\n",
+  "contentBn": "# অধ্যায় 3: সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক\n\n## ভূমিকা (Introduction)\nSystem design interviews are a key part of the hiring process, simulating real-life problem-solving scenarios. These interviews evaluate not just technical skills but also collaboration, communication, and the ability to handle ambiguous requirements.\n\nThis chapter introduces a **4-step framework** for navigating system design interviews effectively.\n\n---\n\n## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ\n\n### Key Objectives\n- Clarify requirements and assumptions.\n- Avoid jumping into solutions prematurely.\n- Showcase critical thinking by asking good questions.\n\n### Approach\n- **Ask Clarifying Questions:**\n  - What are the most important features?\n  - What scale does the system need to handle?\n  - Are we building for web, mobile, or both?\n  - Are there existing technologies or constraints?\n\n- **Document Assumptions:** Write assumptions on a whiteboard or paper for reference.\n\n### Example\n**Problem:** Design a news feed system.  \n**Questions:**\n- Is it a mobile app, web app, or both?\n- How many friends can a user have?\n- Should the feed include images and videos?\n- Is the feed sorted by reverse chronological order?\n\n---\n\n## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ\n\n### Key Objectives\n- Develop a high-level architecture.\n- Collaborate with the interviewer to refine the design.\n\n### Approach\n- **Draft a Blueprint:**\n  - Use box diagrams for key components (e.g., clients, APIs, databases, caches, CDNs).\n  - Treat the interviewer as a teammate to refine the design.\n\n- **Perform Back-of-the-Envelope Calculations:**\n  - Ensure the design can handle the scale constraints.\n\n- **Walk Through Use Cases:** Identify edge cases and validate design assumptions.\n\n### Example\nFor a news feed system, divide the design into:\n1. **Feed Publishing Flow:** Writing posts into databases and populating friends' feeds.\n2. **Feed Retrieval Flow:** Aggregating and displaying friends' posts in reverse chronological order.\n\n---\n\n## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)\n\n### Key Objectives\n- Dive into critical components.\n- Showcase depth of understanding and adaptability.\n\n### Approach\n- **Prioritize Key Components:** Focus on areas most relevant to the problem.\n- **Discuss Bottlenecks:** Identify potential performance issues and propose solutions.\n- **Balance Detail:** Avoid over-engineering or unnecessary deep dives.\n\n### Example Topics\n- **URL Shortener:** Focus on hash function design.\n- **Chat System:** Explore latency reduction and online/offline status handling.\n- **News Feed System:** Examine feed publishing and retrieval processes.\n\n---\n\n## ধাপ 4: Wrap-Up\n\n### Key Objectives\n- Highlight areas for improvement.\n- Recap the design and discuss follow-ups.\n\n### Approach\n- **Identify Bottlenecks:** Discuss potential limitations and scaling strategies.\n- **Summarize Design:** Recap major design decisions and trade-offs.\n- **Propose Enhancements:**\n  - How to scale from 1 million to 10 million users.\n  - Error handling for server failures or network issues.\n\n---\n\n## Best Practices\n\n### Dos\n- **Ask Questions:** Clarify ambiguities before diving into solutions.\n- **Communicate:** Share your thought process with the interviewer.\n- **Iterate with the Interviewer:** Treat them as a collaborator.\n- **Show Flexibility:** Suggest alternative approaches and refine your design.\n- **Focus on Critical Components:** Prioritize key parts of the system.\n\n### Don’ts\n- **Avoid Premature Solutions:** Don’t design before understanding the requirements.\n- **Don’t Go Silent:** Communicate regularly during the process.\n- **Avoid Over-Engineering:** Focus on practical, scalable solutions.\n\n---\n\n## Time Management\n\n### Suggested Time Allocation (for 45-Minute Interviews):\n1. **Understand Problem and Scope:** 3–10 minutes\n2. **High-Level Design and Buy-In:** 10–15 minutes\n3. **Deep Dive:** 10–25 minutes\n4. **Wrap-Up:** 3–5 minutes\n\n"
+}

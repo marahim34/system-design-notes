@@ -1,0 +1,141 @@
+{
+  "id": 4,
+  "num": 4,
+  "slug": "04-rate-limiter",
+  "title": "Design A Rate Limiter",
+  "titleBn": "রেট লিমিটার ডিজাইন",
+  "description": "DoS আক্রমণ প্রতিরোধ ও সার্ভার লোড নিয়ন্ত্রণে টোকেন বাকেট, লিংকিং বাকেট এবং স্লাইডিং উইন্ডো রেট লিমিটিং অ্যালগরিদম।",
+  "volume": 1,
+  "readingTime": 3,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 2,
+      "title": "Benefits of Rate Limiting",
+      "titleBn": "রেট লিমিটিংয়ের সুবিধাসমূহ",
+      "id": "benefits-of-rate-limiting"
+    },
+    {
+      "level": 2,
+      "title": "Step 1: Understanding the Problem",
+      "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+      "id": "step-1-understanding-the-problem"
+    },
+    {
+      "level": 3,
+      "title": "Key Features",
+      "titleBn": "মূল বৈশিষ্ট্যসমূহ (Key Features)",
+      "id": "key-features"
+    },
+    {
+      "level": 3,
+      "title": "Requirements",
+      "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+      "id": "requirements"
+    },
+    {
+      "level": 2,
+      "title": "Step 2: High-Level Design",
+      "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+      "id": "step-2-high-level-design"
+    },
+    {
+      "level": 3,
+      "title": "Placement Options",
+      "titleBn": "Placement Options",
+      "id": "placement-options"
+    },
+    {
+      "level": 3,
+      "title": "Guidelines for Placement",
+      "titleBn": "Guidelines for Placement",
+      "id": "guidelines-for-placement"
+    },
+    {
+      "level": 2,
+      "title": "Step 3: Rate Limiting Algorithms",
+      "titleBn": "ধাপ ৩: রেট লিমিটিং অ্যালগরিদমসমূহ",
+      "id": "step-3-rate-limiting-algorithms"
+    },
+    {
+      "level": 3,
+      "title": "1. Token Bucket",
+      "titleBn": "১. টোকেন বাকেট অ্যালগরিদম (Token Bucket)",
+      "id": "1-token-bucket"
+    },
+    {
+      "level": 3,
+      "title": "2. Leaking Bucket",
+      "titleBn": "২. লিকিং বাকেট অ্যালগরিদম (Leaking Bucket)",
+      "id": "2-leaking-bucket"
+    },
+    {
+      "level": 3,
+      "title": "3. Fixed Window Counter",
+      "titleBn": "৩. ফিক্সড উইন্ডো কাউন্টার (Fixed Window Counter)",
+      "id": "3-fixed-window-counter"
+    },
+    {
+      "level": 3,
+      "title": "4. Sliding Window Log",
+      "titleBn": "৪. স্লাইডিং উইন্ডো লগ (Sliding Window Log)",
+      "id": "4-sliding-window-log"
+    },
+    {
+      "level": 3,
+      "title": "5. Sliding Window Counter",
+      "titleBn": "৫. স্লাইডিং উইন্ডো কাউন্টার (Sliding Window Counter)",
+      "id": "5-sliding-window-counter"
+    },
+    {
+      "level": 2,
+      "title": "High-Level Architecture",
+      "titleBn": "High-Level Architecture",
+      "id": "high-level-architecture"
+    },
+    {
+      "level": 2,
+      "title": "Advanced Considerations",
+      "titleBn": "Advanced Considerations",
+      "id": "advanced-considerations"
+    },
+    {
+      "level": 3,
+      "title": "Distributed Environments",
+      "titleBn": "Distributed Environments",
+      "id": "distributed-environments"
+    },
+    {
+      "level": 3,
+      "title": "Performance Optimizations",
+      "titleBn": "Performance Optimizations",
+      "id": "performance-optimizations"
+    },
+    {
+      "level": 3,
+      "title": "Monitoring",
+      "titleBn": "Monitoring",
+      "id": "monitoring"
+    }
+  ],
+  "imageCount": 8,
+  "prev": {
+    "num": 3,
+    "slug": "03-system-design-framework",
+    "title": "A Framework For System Design Interviews",
+    "titleBn": "সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক"
+  },
+  "next": {
+    "num": 5,
+    "slug": "05-consistent-hashing",
+    "title": "Design Consistent Hashing",
+    "titleBn": "কনসিস্টেন্ট হ্যাশিং ডিজাইন"
+  },
+  "contentEn": "# Chapter 4: Design a Rate Limiter\n\n## Introduction\nThis chapter explores the design and implementation of a rate limiter—a system component used to control traffic rates sent by clients or services. Rate limiters are crucial for preventing abuse, reducing costs, and ensuring the stability of server resources. Examples of their use include limiting posts, account creations, and reward claims.\n\n## Benefits of Rate Limiting\n- **Preventing DoS Attacks:** Blocking excess calls to avoid resource starvation.\n- **Cost Reduction:** Limiting unnecessary requests to reduce server expenses.\n- **Preventing Overloads:** Filtering out excessive requests to stabilize server performance.\n\n## Step 1: Understanding the Problem\n### Key Features\n- Server-side API rate limiter.\n- Support for multiple throttle rules.\n- Handle large-scale systems in distributed environments.\n- Option for a standalone service or application-level code.\n- Inform users when throttled.\n\n### Requirements\n- Accurate request throttling.\n- Minimal latency.\n- Low memory usage.\n- Distributed capability.\n- Clear exception handling.\n- High fault tolerance.\n\n## Step 2: High-Level Design\n### Placement Options\n<div style=\"margin-left:2rem\">\n    <img src=\"/chapters/04-rate-limiter/images/rate_limiter_architecture.png\"  alt=\"Rate Limiting Middleware Architecture\" width=\"550\">\n</div>\n\n1. **Client-Side Implementation:** Unreliable due to potential misuse.\n2. **Server-Side Implementation:** Preferred for control and reliability.\n3. **Middleware (API Gateway):** A flexible option for integrated rate limiting.\n\n\n### Guidelines for Placement\n- Evaluate current tech stack and choose efficient options.\n- Select appropriate algorithms based on business needs.\n- Use an API gateway if microservices are employed.\n- Opt for commercial solutions if resources are limited.\n\n## Step 3: Rate Limiting Algorithms\n### 1. Token Bucket\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/token-bucket.png\"  alt=\"Token Bucket Algorithm\" width=\"550\">\n</div>\n\n- **Description:** Tokens are added to a bucket at a fixed rate; each request consumes a token.\n- **Parameters:** Bucket size and refill rate.\n- **Pros:** Easy to implement, memory-efficient, supports traffic bursts.\n- **Cons:** Requires careful parameter tuning.\n\n\n\n### 2. Leaking Bucket\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/leaking-bucket.png\"  alt=\"Leaking Bucket Algorithm\" width=\"550\">\n</div>\n\n- **Description:** Processes requests at a fixed rate using a FIFO queue.\n- **Pros:** Memory-efficient, stable outflow rate.\n- **Cons:** Traffic bursts may delay recent requests.\n  \n\n  Example: https://github.com/uber-go/ratelimit\n\n\n\n### 3. Fixed Window Counter\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/fixed-window-counter.png\"  alt=\"Fixed Window Counter\" width=\"550\">\n</div>\n\n- **Description:** Divides time into fixed intervals and uses counters to limit requests.\n- **Pros:** Simple, efficient for specific use cases.\n- **Cons:** Traffic spikes at window edges can exceed limits.\n\n- Sudden burst of traffic at the edges of time windows\ncould cause more requests than allowed quota to go through.\n\n  <img src=\"/chapters/04-rate-limiter/images/fixed-window-issue.png\"  alt=\"Fixed Window Issue\" width=\"550\">\n\n\n### 4. Sliding Window Log\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/sliding-window-log.png\"  alt=\"Sliding Window Log\" width=\"550\">\n</div>\n\n- **Description:** Tracks timestamps to allow a rolling time window.\n- **Pros:** Accurate rate limiting.\n- **Cons:** High memory consumption.\n  \n\n\n### 5. Sliding Window Counter\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/sliding-window-counter.png\"  alt=\"Fixed Window Counter\" width=\"550\">\n</div>\n\n- **Description:** Combines fixed window and sliding log methods for smoothing spikes.\n- **Pros:** Memory-efficient, handles traffic bursts.\n- **Cons:** Approximation may not be perfectly strict.\n  \n\n\n\n## High-Level Architecture\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/architecture.png\" style=\"margin-left: 40px; margin-top: 40px; margin-bottom: 20px;\" alt=\"Architecture\" width=\"550\">\n</div>\n\n- **Data Storage:** Use in-memory caching (e.g., Redis) for fast counter operations.\n- **Steps:**\n  1. Client sends request to middleware.\n  2. Middleware checks counters in Redis.\n  3. Request is processed or rejected based on limits.\n\n\n## Advanced Considerations\n### Distributed Environments\n- **Challenges:** Race conditions, synchronization issues.\n- **Solutions:** Use locks, Lua scripts, or sorted sets in Redis. Employ centralized data stores for synchronization.\n\n### Performance Optimizations\n- Multi-data center setups for reduced latency.\n- Eventual consistency models for synchronization.\n\n### Monitoring\n- Regular analytics to ensure algorithm effectiveness and adjust rules as needed.\n\n",
+  "contentBn": "# অধ্যায় 4: রেট লিমিটার ডিজাইন\n\n## ভূমিকা (Introduction)\nThis chapter explores the design and implementation of a rate limiter—a system component used to control traffic rates sent by clients or services. Rate limiters are crucial for preventing abuse, reducing costs, and ensuring the stability of server resources. Examples of their use include limiting posts, account creations, and reward claims.\n\n## রেট লিমিটিংয়ের সুবিধাসমূহ\n- **DoS আক্রমণ প্রতিরোধ:** Blocking excess calls to avoid resource starvation.\n- **খরচ সাশ্রয়:** Limiting unnecessary requests to reduce server expenses.\n- **ওভারলোড প্রতিরোধ:** Filtering out excessive requests to stabilize server performance.\n\n## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস\n### মূল বৈশিষ্ট্যসমূহ (Key Features)\n- Server-side API rate limiter.\n- Support for multiple throttle rules.\n- Handle large-scale systems in distributed environments.\n- Option for a standalone service or application-level code.\n- Inform users when throttled.\n\n### রিকোয়ারমেন্টস (Requirements)\n- Accurate request throttling.\n- Minimal latency.\n- Low memory usage.\n- Distributed capability.\n- Clear exception handling.\n- ফল্ট টলারেন্স বা ত্রুটি সহনশীলতা (Fault Tolerance).\n\n## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন\n### Placement Options\n<div style=\"margin-left:2rem\">\n    <img src=\"/chapters/04-rate-limiter/images/rate_limiter_architecture.png\"  alt=\"Rate Limiting Middleware Architecture\" width=\"550\">\n</div>\n\n1. **ক্লায়েন্ট-সাইড ইমপ্লিমেন্টেশন:** Unreliable due to potential misuse.\n2. **সার্ভার-সাইড ইমপ্লিমেন্টেশন:** Preferred for control and reliability.\n3. **মিডলওয়্যার (API Gateway):** A flexible option for integrated rate limiting.\n\n\n### Guidelines for Placement\n- Evaluate current tech stack and choose efficient options.\n- Select appropriate algorithms based on business needs.\n- Use an API gateway if microservices are employed.\n- Opt for commercial solutions if resources are limited.\n\n## ধাপ ৩: রেট লিমিটিং অ্যালগরিদমসমূহ\n### ১. টোকেন বাকেট অ্যালগরিদম (Token Bucket)\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/token-bucket.png\"  alt=\"Token Bucket Algorithm\" width=\"550\">\n</div>\n\n- **Description:** একটি নির্দিষ্ট হারে বাকেটে টোকেন জমা হয়; প্রতিটি রিকোয়েস্ট একটি করে টোকেন খরচ করে।\n- **Parameters:** Bucket size and refill rate.\n- **Pros:** বাস্তবায়ন সহজ, মেমোরি সাশ্রয়ী এবং হঠাৎ ট্রাফিক চাপ (bursts) সামলাতে পারে।\n- **Cons:** প্যারামিটারগুলো সঠিকভাবে টিউন করা প্রয়োজন।\n\n\n\n### ২. লিকিং বাকেট অ্যালগরিদম (Leaking Bucket)\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/leaking-bucket.png\"  alt=\"Leaking Bucket Algorithm\" width=\"550\">\n</div>\n\n- **Description:** Processes requests at a fixed rate using a FIFO queue.\n- **Pros:** Memory-efficient, stable outflow rate.\n- **Cons:** Traffic bursts may delay recent requests.\n  \n\n  Example: https://github.com/uber-go/ratelimit\n\n\n\n### ৩. ফিক্সড উইন্ডো কাউন্টার (Fixed Window Counter)\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/fixed-window-counter.png\"  alt=\"Fixed Window Counter\" width=\"550\">\n</div>\n\n- **Description:** Divides time into fixed intervals and uses counters to limit requests.\n- **Pros:** Simple, efficient for specific use cases.\n- **Cons:** Traffic spikes at window edges can exceed limits.\n\n- Sudden burst of traffic at the edges of time windows\ncould cause more requests than allowed quota to go through.\n\n  <img src=\"/chapters/04-rate-limiter/images/fixed-window-issue.png\"  alt=\"Fixed Window Issue\" width=\"550\">\n\n\n### ৪. স্লাইডিং উইন্ডো লগ (Sliding Window Log)\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/sliding-window-log.png\"  alt=\"Sliding Window Log\" width=\"550\">\n</div>\n\n- **Description:** Tracks timestamps to allow a rolling time window.\n- **Pros:** Accurate rate limiting.\n- **Cons:** High memory consumption.\n  \n\n\n### ৫. স্লাইডিং উইন্ডো কাউন্টার (Sliding Window Counter)\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/sliding-window-counter.png\"  alt=\"Fixed Window Counter\" width=\"550\">\n</div>\n\n- **Description:** Combines fixed window and sliding log methods for smoothing spikes.\n- **Pros:** Memory-efficient, handles traffic bursts.\n- **Cons:** Approximation may not be perfectly strict.\n  \n\n\n\n## High-Level Architecture\n<div style=\"margin-left:2rem\">\n  <img src=\"/chapters/04-rate-limiter/images/architecture.png\" style=\"margin-left: 40px; margin-top: 40px; margin-bottom: 20px;\" alt=\"Architecture\" width=\"550\">\n</div>\n\n- **Data Storage:** Use in-memory caching (e.g., Redis) for fast counter operations.\n- **Steps:**\n  1. Client sends request to middleware.\n  2. Middleware checks counters in Redis.\n  3. Request is processed or rejected based on limits.\n\n\n## Advanced Considerations\n### Distributed Environments\n- **Challenges:** Race conditions, synchronization issues.\n- **Solutions:** Use locks, Lua scripts, or sorted sets in Redis. Employ centralized data stores for synchronization.\n\n### Performance Optimizations\n- Multi-data center setups for reduced latency.\n- Eventual consistency models for synchronization.\n\n### Monitoring\n- Regular analytics to ensure algorithm effectiveness and adjust rules as needed.\n\n"
+}

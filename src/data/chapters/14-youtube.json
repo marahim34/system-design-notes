@@ -1,0 +1,141 @@
+{
+  "id": 14,
+  "num": 14,
+  "slug": "14-youtube",
+  "title": "Design YouTube",
+  "titleBn": "ইউটিউব ভিডিও প্ল্যাটফর্ম ডিজাইন",
+  "description": "ভিডিও আপলোড, ট্রান্সকোডিং ও এনকোডিং পাইপলাইন, CDN ডিস্ট্রিবিউশন এবং স্ট্রিমিং আর্কিটেকচার।",
+  "volume": 1,
+  "readingTime": 6,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 3,
+      "title": "Key Statistics (2020)",
+      "titleBn": "Key Statistics (2020)",
+      "id": "key-statistics-2020"
+    },
+    {
+      "level": 2,
+      "title": "Step 1: Understand the Problem and Scope",
+      "titleBn": "ধাপ 1: Understand the Problem and Scope",
+      "id": "step-1-understand-the-problem-and-scope"
+    },
+    {
+      "level": 3,
+      "title": "Core Functionalities",
+      "titleBn": "Core Functionalities",
+      "id": "core-functionalities"
+    },
+    {
+      "level": 3,
+      "title": "Supported Platforms",
+      "titleBn": "Supported Platforms",
+      "id": "supported-platforms"
+    },
+    {
+      "level": 3,
+      "title": "Assumptions",
+      "titleBn": "Assumptions",
+      "id": "assumptions"
+    },
+    {
+      "level": 2,
+      "title": "Step 2: High-Level Design",
+      "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+      "id": "step-2-high-level-design"
+    },
+    {
+      "level": 3,
+      "title": "Components",
+      "titleBn": "Components",
+      "id": "components"
+    },
+    {
+      "level": 3,
+      "title": "Core Workflows",
+      "titleBn": "Core Workflows",
+      "id": "core-workflows"
+    },
+    {
+      "level": 2,
+      "title": "Step 3: Design Deep Dive",
+      "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+      "id": "step-3-design-deep-dive"
+    },
+    {
+      "level": 3,
+      "title": "Video Transcoding",
+      "titleBn": "Video Transcoding",
+      "id": "video-transcoding"
+    },
+    {
+      "level": 3,
+      "title": "Video Transcoding Architecture",
+      "titleBn": "Video Transcoding Architecture",
+      "id": "video-transcoding-architecture"
+    },
+    {
+      "level": 2,
+      "title": "System Optimizations",
+      "titleBn": "System Optimizations",
+      "id": "system-optimizations"
+    },
+    {
+      "level": 3,
+      "title": "Speed Optimizations",
+      "titleBn": "Speed Optimizations",
+      "id": "speed-optimizations"
+    },
+    {
+      "level": 3,
+      "title": "Safety Optimizations",
+      "titleBn": "Safety Optimizations",
+      "id": "safety-optimizations"
+    },
+    {
+      "level": 3,
+      "title": "Cost-Saving Optimizations",
+      "titleBn": "Cost-Saving Optimizations",
+      "id": "cost-saving-optimizations"
+    },
+    {
+      "level": 2,
+      "title": "Error Handling",
+      "titleBn": "Error Handling",
+      "id": "error-handling"
+    },
+    {
+      "level": 3,
+      "title": "Recoverable Errors",
+      "titleBn": "Recoverable Errors",
+      "id": "recoverable-errors"
+    },
+    {
+      "level": 3,
+      "title": "Non-Recoverable Errors",
+      "titleBn": "Non-Recoverable Errors",
+      "id": "non-recoverable-errors"
+    }
+  ],
+  "imageCount": 14,
+  "prev": {
+    "num": 13,
+    "slug": "13-search-autocomplete",
+    "title": "Design A Search Autocomplete System",
+    "titleBn": "সার্চ অটো-কমপ্লিট সিস্টেম ডিজাইন"
+  },
+  "next": {
+    "num": 15,
+    "slug": "15-google-drive",
+    "title": "Design Google Drive",
+    "titleBn": "গুগল ড্রাইভ ক্লাউড স্টোরেজ ডিজাইন"
+  },
+  "contentEn": "# Chapter 14: Design YouTube\n\n## Introduction\nYouTube is a massive video streaming platform supporting video uploads, playback, and various interactions. This chapter focuses on designing a scalable video streaming system with the following core features:\n- **Fast video uploads**\n- **Smooth video streaming**\n- **Ability to change video quality**\n- **Low infrastructure cost**\n- **High availability and reliability**\n\n### Key Statistics (2020)\n- **2 billion monthly active users**\n- **5 billion videos watched per day**\n- **37% of mobile internet traffic comes from YouTube**\n- Available in **80 languages**\n- **$15.1 billion ad revenue** in 2019\n\n---\n\n## Step 1: Understand the Problem and Scope\n\n### Core Functionalities\n1. Upload videos\n2. Watch videos\n\n### Supported Platforms\n- Mobile apps, web browsers, and smart TVs\n\n### Assumptions\n- **Daily Active Users (DAU):** 5 million\n- **Average Video Size:** 300 MB\n- **Upload Limits:** Max 1 GB per video\n- **Daily Storage Need:** 150 TB\n- **CDN Costs:** 5 million * 5 videos * 0.3GB * $0.02 =  $150,000/day (using Amazon CloudFront)\n\n---\n\n## Step 2: High-Level Design\n\n### Components\n\n<div style=\"margin-left:3rem\">\n    <img src=\"/chapters/14-youtube/images/high-level-design.png\" alt=\"High Level Design\" width=\"400\">\n</div>\n\n1. **Client:** Devices like smartphones, computers, and TVs.\n2. **CDN (Content Delivery Network):** Stores and streams videos.\n3. **API Servers:** Handles all user interactions except video streaming (e.g., uploads, metadata updates).\n4. **Metadata Database:** Stores video metadata (e.g., title, description, size).\n5. **Original Storage:** Blob storage for uploaded videos.\n6. **Transcoding Servers:** Convert videos into multiple resolutions and formats.\n7. **Transcoded Storage:** Blob storage for transcoded videos.\n\n\n---\n\n### Core Workflows\n#### 1. Video Uploading Flow\n- **Parallel Processes:**\n  1. Upload video to original storage.\n  2. Update video metadata in the database.\n\n- **Video Upload (Steps):**\n\n    <div style=\"margin-left:3rem\">\n        <img src=\"/chapters/14-youtube/images/video-uploading-flow.png\" alt=\"Video Upload Flow\" width=\"500\">\n    </div>\n\n    - [1] Videos are uploaded to blob storage. \n    - [2] Transcoding servers convert videos to multiple formats.\n    - [3] One trasncoding is complete, following two steps are exectued in parallel.\n        - [3a] Transcoded videos are sent to transcoded storage.\n        - [3b] Transcoding completion events are queued in the completion queue. \n    - [3a.1] Videos are distributed to the CDN. \n    - [3b.1] Completion handlers update metadata and inform users. \n\n\n\n- **Metadata Upload (Steps):**\n\n    <div style=\"margin-left:3rem\">\n        <img src=\"/chapters/14-youtube/images/metadata-upload.png\" alt=\"Metadata Upload\" height=\"500\">\n    </div>\n\n    - The client in parallel sends a request to update the video metadata \n    - The request contains video metadata, including file name, size, format, etc.\n    \n       \n\n\n#### 2. Video Streaming Flow\n\n<div style=\"margin-left: 3em;\">\n  <img src=\"/chapters/14-youtube/images/video-streaming-flow.png\" alt=\"Video Streaming Flow\" height=\"400\">\n</div>\n\n- Videos are streamed directly from the CDN using edge servers to minimize latency.\n- Some of te popular streaming protocols are MPEG_DASH, Apple HLS, Adobe HDS.\n-  *Different streaming protocols support different video encodings and playback players.*\n\n\n---\n\n## Step 3: Design Deep Dive\n\n### Video Transcoding\n#### Importance\n1. Raw video consumes large amounts of storage space. It Reduces storage space.\n2. Ensures compatibility across devices and browsers.\n3. Adapts video quality to network conditions.\n\n#### Components\n- **Container:** Encapsulates video, audio, and metadata (e.g., MP4, AVI).\n- **Codecs:** Compression and Decompression algorithms (e.g., H.264, VP9).\n\n#### Directed Acyclic Graph (DAG) Model\n<div style=\"margin-left: 3em;\">\n    <img src=\"/chapters/14-youtube/images/dag-video-transcoding.png\" alt=\"DAG Video Transcoding\" width=\"600\">\n</div>\n\n- Transcoding a video is computationally expensive and time-consuming.\n- DAG Model defines tasks like encoding, thumbnail generation, and watermarking.\n- Allows high parallelism in video processing.\n\n\n- The original video is split into video, audio, and metadata. \n    - Video encodings: Videos are converted to support different resolutions, codec, bitrates.\n    - Thumbnail: It can either be uploaded by a user or automatically generated bythe system.\n    - Watermark: Image overlay on top of your video contains identifying information about the video.\n\n---\n\n### Video Transcoding Architecture\n\n<div style=\"margin-left: 3em;\">\n<img src=\"/chapters/14-youtube/images/video-transcoding-architecture.png\" alt=\"Video Transcoding\" width=\"600\">\n</div>\n\n1. **Preprocessor:** Splits videos into smaller chunks (GOP alignment). It has 4 responsibilities.\n\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/dag-config.png\" alt=\"DAG Config\" width=\"500\">\n    </div>\n\n    - Video splitting: Video stream is split or further split into smaller Group of Pictures (GOP) alignment.\n    - It split videos by GOP alignment for old clients.\n    - It generates DAG based on configuration files client programmers write. \n    - It stores GOPs and metadata in temporary storage in case the encoding fails, the system could use persisted data for retry operations.\n\n\n2. **DAG Scheduler:** Organizes tasks into sequential or parallel stages.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/dag-scheduler.png\" alt=\"DAG Scheduler\" width=\"500\">\n    </div>\n\n    - It splits a DAG graph into stages of tasks and puts them in the task queue in the resource manager. \n    - Stage 1: video, audio, and metadata.\n    - The video file is further split into two tasks in stage 2: video encoding and thumbnail. \n\n\n3. **Resource Manager:** Responsible for managing the efficiency of resource allocation.It\ncontains 3 queues and a task scheduler.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/resource-manager.png\" alt=\"Resource Manager\" width=\"700\">\n    </div>\n\n    - Task queue: priority queue that contains tasks to be executed.\n    - Worker queue: priority queue that contains worker utilization info.\n    - Running queue: contains  currently running tasks and workers running the tasks.\n    - Task scheduler: picks the optimal task/worker, and instructs the chosen task worker to execute the job.\n\n\n4. **Task Workers:** Perform transcoding and other operations.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/task-worker.png\" alt=\"Task Worker\" width=\"250\">\n   </div>\n\n    - Different task workers may run different tasks \n\n\n5. **Temporary Storage:** Stores intermediate data for retries.\n    - The choice of storage system depends on factors like data type, data size, access frequency, data life span, etc. \n6. **Output:** Transcoded videos ready for distribution.\n\n\n---\n\n## System Optimizations\n\n### Speed Optimizations\n1. **Parallel Video Uploads:** Split videos into smaller chunks for faster, resumable uploads.\n\n    <img src=\"/chapters/14-youtube/images/video-split.png\" alt=\"Video Split\" width=\"600\">\n\n2. **Distributed Upload Centers:** Use CDNs as upload hubs close to users.\n3. **Parallel Processing:** Decouple modules using message queues for high parallelism.\n\n    <img src=\"/chapters/14-youtube/images/message-queue1.png\" alt=\"Message Queue\" width=\"600\">\n    <img src=\"/chapters/14-youtube/images/message-queue2.png\" alt=\"Message Queue\" height=\"170\" width=\"500\">\n\n### Safety Optimizations\n1. **Pre-Signed URLs:** Restrict video uploads to authorized users.\n\n    <img src=\"/chapters/14-youtube/images/pres-signed-urls.png\" alt=\"Pre Signed\" width=\"500\">\n\n2. **Protect Videos:**\n   - **DRM Systems** (e.g., Apple FairPlay, Google Widevine).\n   - **AES Encryption.**\n   - **Watermarking.**\n\n### Cost-Saving Optimizations\n1. Serve only popular videos via CDN; less popular ones from high-capacity servers.\n2. Encode on-demand for rarely accessed videos.\n3. Regionalize video distribution based on popularity.\n4. Build custom CDNs and partner with ISPs to reduce bandwidth costs.\n\n---\n\n## Error Handling\n### Recoverable Errors\n- Retry failed uploads, transcoding, or resource allocation tasks.\n\n### Non-Recoverable Errors\n- Stop malformed video processing and return error codes.\n\n",
+  "contentBn": "# অধ্যায় 14: ইউটিউব ভিডিও প্ল্যাটফর্ম ডিজাইন\n\n## ভূমিকা (Introduction)\nYouTube is a massive video streaming platform supporting video uploads, playback, and various interactions. This chapter focuses on designing a scalable video streaming system with the following core features:\n- **Fast video uploads**\n- **Smooth video streaming**\n- **Ability to change video quality**\n- **Low infrastructure cost**\n- **উচ্চ প্রাপ্যতা (High Availability) and reliability**\n\n### Key Statistics (2020)\n- **2 billion monthly active users**\n- **5 billion videos watched per day**\n- **37% of mobile internet traffic comes from YouTube**\n- Available in **80 languages**\n- **$15.1 billion ad revenue** in 2019\n\n---\n\n## ধাপ 1: Understand the Problem and Scope\n\n### Core Functionalities\n1. Upload videos\n2. Watch videos\n\n### Supported Platforms\n- Mobile apps, web browsers, and smart TVs\n\n### Assumptions\n- **Daily Active Users (DAU):** 5 million\n- **Average Video Size:** 300 MB\n- **Upload Limits:** Max 1 GB per video\n- **Daily Storage Need:** 150 TB\n- **CDN Costs:** 5 million * 5 videos * 0.3GB * $0.02 =  $150,000/day (using Amazon CloudFront)\n\n---\n\n## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন\n\n### Components\n\n<div style=\"margin-left:3rem\">\n    <img src=\"/chapters/14-youtube/images/high-level-design.png\" alt=\"High Level Design\" width=\"400\">\n</div>\n\n1. **Client:** Devices like smartphones, computers, and TVs.\n2. **CDN (Content Delivery Network):** Stores and streams videos.\n3. **API Servers:** Handles all user interactions except video streaming (e.g., uploads, metadata updates).\n4. **Metadata Database:** Stores video metadata (e.g., title, description, size).\n5. **Original Storage:** Blob storage for uploaded videos.\n6. **Transcoding Servers:** Convert videos into multiple resolutions and formats.\n7. **Transcoded Storage:** Blob storage for transcoded videos.\n\n\n---\n\n### Core Workflows\n#### 1. Video Uploading Flow\n- **Parallel Processes:**\n  1. Upload video to original storage.\n  2. Update video metadata in the database.\n\n- **Video Upload (Steps):**\n\n    <div style=\"margin-left:3rem\">\n        <img src=\"/chapters/14-youtube/images/video-uploading-flow.png\" alt=\"Video Upload Flow\" width=\"500\">\n    </div>\n\n    - [1] Videos are uploaded to blob storage. \n    - [2] Transcoding servers convert videos to multiple formats.\n    - [3] One trasncoding is complete, following two steps are exectued in parallel.\n        - [3a] Transcoded videos are sent to transcoded storage.\n        - [3b] Transcoding completion events are queued in the completion queue. \n    - [3a.1] Videos are distributed to the CDN. \n    - [3b.1] Completion handlers update metadata and inform users. \n\n\n\n- **Metadata Upload (Steps):**\n\n    <div style=\"margin-left:3rem\">\n        <img src=\"/chapters/14-youtube/images/metadata-upload.png\" alt=\"Metadata Upload\" height=\"500\">\n    </div>\n\n    - The client in parallel sends a request to update the video metadata \n    - The request contains video metadata, including file name, size, format, etc.\n    \n       \n\n\n#### 2. Video Streaming Flow\n\n<div style=\"margin-left: 3em;\">\n  <img src=\"/chapters/14-youtube/images/video-streaming-flow.png\" alt=\"Video Streaming Flow\" height=\"400\">\n</div>\n\n- Videos are streamed directly from the CDN using edge servers to minimize latency.\n- Some of te popular streaming protocols are MPEG_DASH, Apple HLS, Adobe HDS.\n-  *Different streaming protocols support different video encodings and playback players.*\n\n\n---\n\n## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)\n\n### Video Transcoding\n#### Importance\n1. Raw video consumes large amounts of storage space. It Reduces storage space.\n2. Ensures compatibility across devices and browsers.\n3. Adapts video quality to network conditions.\n\n#### Components\n- **Container:** Encapsulates video, audio, and metadata (e.g., MP4, AVI).\n- **Codecs:** Compression and Decompression algorithms (e.g., H.264, VP9).\n\n#### Directed Acyclic Graph (DAG) Model\n<div style=\"margin-left: 3em;\">\n    <img src=\"/chapters/14-youtube/images/dag-video-transcoding.png\" alt=\"DAG Video Transcoding\" width=\"600\">\n</div>\n\n- Transcoding a video is computationally expensive and time-consuming.\n- DAG Model defines tasks like encoding, thumbnail generation, and watermarking.\n- Allows high parallelism in video processing.\n\n\n- The original video is split into video, audio, and metadata. \n    - Video encodings: Videos are converted to support different resolutions, codec, bitrates.\n    - Thumbnail: It can either be uploaded by a user or automatically generated bythe system.\n    - Watermark: Image overlay on top of your video contains identifying information about the video.\n\n---\n\n### Video Transcoding Architecture\n\n<div style=\"margin-left: 3em;\">\n<img src=\"/chapters/14-youtube/images/video-transcoding-architecture.png\" alt=\"Video Transcoding\" width=\"600\">\n</div>\n\n1. **Preprocessor:** Splits videos into smaller chunks (GOP alignment). It has 4 responsibilities.\n\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/dag-config.png\" alt=\"DAG Config\" width=\"500\">\n    </div>\n\n    - Video splitting: Video stream is split or further split into smaller Group of Pictures (GOP) alignment.\n    - It split videos by GOP alignment for old clients.\n    - It generates DAG based on configuration files client programmers write. \n    - It stores GOPs and metadata in temporary storage in case the encoding fails, the system could use persisted data for retry operations.\n\n\n2. **DAG Scheduler:** Organizes tasks into sequential or parallel stages.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/dag-scheduler.png\" alt=\"DAG Scheduler\" width=\"500\">\n    </div>\n\n    - It splits a DAG graph into stages of tasks and puts them in the task queue in the resource manager. \n    - Stage 1: video, audio, and metadata.\n    - The video file is further split into two tasks in stage 2: video encoding and thumbnail. \n\n\n3. **Resource Manager:** Responsible for managing the efficiency of resource allocation.It\ncontains 3 queues and a task scheduler.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/resource-manager.png\" alt=\"Resource Manager\" width=\"700\">\n    </div>\n\n    - Task queue: priority queue that contains tasks to be executed.\n    - Worker queue: priority queue that contains worker utilization info.\n    - Running queue: contains  currently running tasks and workers running the tasks.\n    - Task scheduler: picks the optimal task/worker, and instructs the chosen task worker to execute the job.\n\n\n4. **Task Workers:** Perform transcoding and other operations.\n    <div style=\"margin-left: 3em;\">\n        <img src=\"/chapters/14-youtube/images/task-worker.png\" alt=\"Task Worker\" width=\"250\">\n   </div>\n\n    - Different task workers may run different tasks \n\n\n5. **Temporary Storage:** Stores intermediate data for retries.\n    - The choice of storage system depends on factors like data type, data size, access frequency, data life span, etc. \n6. **Output:** Transcoded videos ready for distribution.\n\n\n---\n\n## System Optimizations\n\n### Speed Optimizations\n1. **Parallel Video Uploads:** Split videos into smaller chunks for faster, resumable uploads.\n\n    <img src=\"/chapters/14-youtube/images/video-split.png\" alt=\"Video Split\" width=\"600\">\n\n2. **Distributed Upload Centers:** Use CDNs as upload hubs close to users.\n3. **Parallel Processing:** Decouple modules using message queues for high parallelism.\n\n    <img src=\"/chapters/14-youtube/images/message-queue1.png\" alt=\"Message Queue\" width=\"600\">\n    <img src=\"/chapters/14-youtube/images/message-queue2.png\" alt=\"Message Queue\" height=\"170\" width=\"500\">\n\n### Safety Optimizations\n1. **Pre-Signed URLs:** Restrict video uploads to authorized users.\n\n    <img src=\"/chapters/14-youtube/images/pres-signed-urls.png\" alt=\"Pre Signed\" width=\"500\">\n\n2. **Protect Videos:**\n   - **DRM Systems** (e.g., Apple FairPlay, Google Widevine).\n   - **AES Encryption.**\n   - **Watermarking.**\n\n### Cost-Saving Optimizations\n1. Serve only popular videos via CDN; less popular ones from high-capacity servers.\n2. Encode on-demand for rarely accessed videos.\n3. Regionalize video distribution based on popularity.\n4. Build custom CDNs and partner with ISPs to reduce bandwidth costs.\n\n---\n\n## Error Handling\n### Recoverable Errors\n- Retry failed uploads, transcoding, or resource allocation tasks.\n\n### Non-Recoverable Errors\n- Stop malformed video processing and return error codes.\n\n"
+}

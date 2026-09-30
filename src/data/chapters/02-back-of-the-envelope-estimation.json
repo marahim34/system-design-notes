@@ -1,0 +1,105 @@
+{
+  "id": 2,
+  "num": 2,
+  "slug": "02-back-of-the-envelope-estimation",
+  "title": "Back-of-the-Envelope Estimation",
+  "titleBn": "ব্যাক-অফ-দ্য-এনভেলপ হিসাব ও অনুমান",
+  "description": "সিস্টেম ডিজাইনে পারফরম্যান্স, মেমোরি, লেটেন্সি এবং থ্রুপুট পরিমাপের দ্রুত গণনামূলক হিসাব।",
+  "volume": 1,
+  "readingTime": 3,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 2,
+      "title": "Section 1: Key Concepts",
+      "titleBn": "সেকশন 1: Key Concepts",
+      "id": "section-1-key-concepts"
+    },
+    {
+      "level": 3,
+      "title": "Power of Two",
+      "titleBn": "Power of Two",
+      "id": "power-of-two"
+    },
+    {
+      "level": 3,
+      "title": "Latency Numbers Every Programmer Should Know",
+      "titleBn": "Latency Numbers Every Programmer Should Know",
+      "id": "latency-numbers-every-programmer-should-know"
+    },
+    {
+      "level": 3,
+      "title": "Availability Numbers",
+      "titleBn": "Availability Numbers",
+      "id": "availability-numbers"
+    },
+    {
+      "level": 2,
+      "title": "Section 2: Example Estimation - Twitter QPS and Storage Requirements",
+      "titleBn": "সেকশন 2: Example Estimation - Twitter QPS and Storage Requirements",
+      "id": "section-2-example-estimation-twitter-qps-and-storage-requirements"
+    },
+    {
+      "level": 3,
+      "title": "Assumptions",
+      "titleBn": "Assumptions",
+      "id": "assumptions"
+    },
+    {
+      "level": 3,
+      "title": "Estimations",
+      "titleBn": "Estimations",
+      "id": "estimations"
+    },
+    {
+      "level": 2,
+      "title": "Section 3: Tips for Effective Estimation",
+      "titleBn": "সেকশন 3: Tips for Effective Estimation",
+      "id": "section-3-tips-for-effective-estimation"
+    },
+    {
+      "level": 3,
+      "title": "1. Rounding and Approximation",
+      "titleBn": "1. Rounding and Approximation",
+      "id": "1-rounding-and-approximation"
+    },
+    {
+      "level": 3,
+      "title": "2. Write Down Assumptions",
+      "titleBn": "2. Write Down Assumptions",
+      "id": "2-write-down-assumptions"
+    },
+    {
+      "level": 3,
+      "title": "3. Label Units",
+      "titleBn": "3. Label Units",
+      "id": "3-label-units"
+    },
+    {
+      "level": 3,
+      "title": "4. Common Estimation Scenarios",
+      "titleBn": "4. Common Estimation Scenarios",
+      "id": "4-common-estimation-scenarios"
+    }
+  ],
+  "imageCount": 1,
+  "prev": {
+    "num": 1,
+    "slug": "01-scaling",
+    "title": "Scale From Zero To Millions Of Users",
+    "titleBn": "শূন্য থেকে লক্ষ-কোটি ব্যবহারকারীতে স্কেলিং"
+  },
+  "next": {
+    "num": 3,
+    "slug": "03-system-design-framework",
+    "title": "A Framework For System Design Interviews",
+    "titleBn": "সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক"
+  },
+  "contentEn": "# Chapter 2: Back-of-the-Envelope Estimation\n\n## Introduction\nBack-of-the-envelope estimation is a crucial skill in system design interviews. It involves making quick, rough calculations to assess system capacity or performance. According to Jeff Dean, Google Senior Fellow, these estimates help evaluate whether designs meet requirements through thought experiments and common performance benchmarks.\n\nThis chapter covers key concepts, methodologies, and examples to build proficiency in scalability and estimation.\n\n---\n\n## Section 1: Key Concepts\n\n### Power of Two\nUnderstanding data volume in terms of powers of two is fundamental:\n\n<img src=\"/chapters/02-back-of-the-envelope-estimation/images/power-of-two.png\" alt=\"power-of-two\" width=\"500\" />\n\nThis knowledge helps in performing accurate storage and bandwidth calculations.\n\n---\n\n### Latency Numbers Every Programmer Should Know\nLatency numbers represent the time taken for various operations in computing systems. These provide insights into relative performance:\n\n| Operation                | Latency (2020) |\n|--------------------------|----------------|\n| L1 Cache Access          | 0.5 ns         |\n| L2 Cache Access          | 7 ns           |\n| Main Memory Access       | 100 ns         |\n| SSD Random Read          | 150 µs         |\n| HDD Random Seek          | 10 ms          |\n| Round-Trip in Data Center| 500 µs         |\n| Inter-Region Data Center | 150 ms         |\n\n**Key Insights:**\n- Memory is fast, disk is slow.\n- Avoid disk seeks whenever possible.\n- Compress data before transmitting over the internet to save bandwidth.\n\n\n---\n\n### Availability Numbers\nHigh availability (HA) ensures minimal downtime. Availability is expressed in **nines**:\n- **99% (Two Nines):** ~3.65 days/year of downtime\n- **99.9% (Three Nines):** ~8.8 hours/year of downtime\n- **99.99% (Four Nines):** ~52 minutes/year of downtime\n- **99.999% (Five Nines):** ~5.3 minutes/year of downtime\n- **99.9999% (Six Nines):** ~31.56 seconds/year of downtime\n\n\nCloud providers like Amazon, Google, and Microsoft aim for SLAs (Service Level Agreements) of **99.9% or higher**.\n\n---\n\n## Section 2: Example Estimation - Twitter QPS and Storage Requirements\n\n### Assumptions\n- **300 million monthly active users (MAU).**\n- **50% daily active users (DAU).**\n- **Average tweets/user/day:** 2.\n- **10% of tweets contain media.**\n- **Data retention:** 5 years.\n\n### Estimations\n1. **Query Per Second (QPS):**\n   - DAU = \\( 300M x 50\\% = 150M \\)\n   - Tweets QPS = \\( 150M x 2 tweets / 24 hour / 3600 seconds = ~3500 )\n   - Peak QPS = \\( 2 x 3500 = ~7000 \\)\n\n2. **Media Storage:**\n   - **Tweet Size Components:**\n     - `tweet_id`: 64 bytes\n     - `text`: 140 bytes\n     - `media`: 1 MB\n   - **Daily Media Storage:** \\( 150M x 2 x 10\\% x 1MB = 30TB per day \\)\n   - **5-Year Storage:** \\( 30TB x 365 x 5 = ~55PB \\)\n\n---\n\n## Section 3: Tips for Effective Estimation\n\n### 1. Rounding and Approximation\nPrecision is not critical; focus on the process. Simplify complex calculations using round numbers. For example:\n- \\( 99987 / 9.1 \\) can be approximated as \\( 100,000 / 10 = 10,000 \\).\n\n### 2. Write Down Assumptions\nDocument assumptions clearly for future reference.\n\n### 3. Label Units\nAvoid ambiguity by labeling units (e.g., `5 MB` instead of `5`).\n\n### 4. Common Estimation Scenarios\n- **QPS (Queries Per Second):** Measure traffic intensity.\n- **Peak QPS:** Account for traffic spikes.\n- **Storage Requirements:** Estimate total data needs.\n- **Cache Requirements:** Evaluate memory requirements for caching.\n- **Number of Servers:** Calculate hardware needs based on workload.\n\n",
+  "contentBn": "# অধ্যায় 2: ব্যাক-অফ-দ্য-এনভেলপ হিসাব ও অনুমান\n\n## ভূমিকা (Introduction)\nBack-of-the-envelope estimation is a crucial skill in system design interviews. It involves making quick, rough calculations to assess system capacity or performance. According to Jeff Dean, Google Senior Fellow, these estimates help evaluate whether designs meet requirements through thought experiments and common performance benchmarks.\n\nThis chapter covers key concepts, methodologies, and examples to build proficiency in scalability and estimation.\n\n---\n\n## সেকশন 1: Key Concepts\n\n### Power of Two\nUnderstanding data volume in terms of powers of two is fundamental:\n\n<img src=\"/chapters/02-back-of-the-envelope-estimation/images/power-of-two.png\" alt=\"power-of-two\" width=\"500\" />\n\nThis knowledge helps in performing accurate storage and bandwidth calculations.\n\n---\n\n### Latency Numbers Every Programmer Should Know\nLatency numbers represent the time taken for various operations in computing systems. These provide insights into relative performance:\n\n| Operation                | Latency (2020) |\n|--------------------------|----------------|\n| L1 Cache Access          | 0.5 ns         |\n| L2 Cache Access          | 7 ns           |\n| Main Memory Access       | 100 ns         |\n| SSD Random Read          | 150 µs         |\n| HDD Random Seek          | 10 ms          |\n| Round-Trip in Data Center| 500 µs         |\n| Inter-Region Data Center | 150 ms         |\n\n**Key Insights:**\n- Memory is fast, disk is slow.\n- Avoid disk seeks whenever possible.\n- Compress data before transmitting over the internet to save bandwidth.\n\n\n---\n\n### Availability Numbers\nউচ্চ প্রাপ্যতা (High Availability) (HA) ensures minimal downtime. Availability is expressed in **nines**:\n- **99% (Two Nines):** ~3.65 days/year of downtime\n- **99.9% (Three Nines):** ~8.8 hours/year of downtime\n- **99.99% (Four Nines):** ~52 minutes/year of downtime\n- **99.999% (Five Nines):** ~5.3 minutes/year of downtime\n- **99.9999% (Six Nines):** ~31.56 seconds/year of downtime\n\n\nCloud providers like Amazon, Google, and Microsoft aim for SLAs (Service Level Agreements) of **99.9% or higher**.\n\n---\n\n## সেকশন 2: Example Estimation - Twitter QPS and Storage Requirements\n\n### Assumptions\n- **300 million monthly active users (MAU).**\n- **50% daily active users (DAU).**\n- **Average tweets/user/day:** 2.\n- **10% of tweets contain media.**\n- **Data retention:** 5 years.\n\n### Estimations\n1. **Query Per Second (QPS):**\n   - DAU = \\( 300M x 50\\% = 150M \\)\n   - Tweets QPS = \\( 150M x 2 tweets / 24 hour / 3600 seconds = ~3500 )\n   - Peak QPS = \\( 2 x 3500 = ~7000 \\)\n\n2. **Media Storage:**\n   - **Tweet Size Components:**\n     - `tweet_id`: 64 bytes\n     - `text`: 140 bytes\n     - `media`: 1 MB\n   - **Daily Media Storage:** \\( 150M x 2 x 10\\% x 1MB = 30TB per day \\)\n   - **5-Year Storage:** \\( 30TB x 365 x 5 = ~55PB \\)\n\n---\n\n## সেকশন 3: Tips for Effective Estimation\n\n### 1. Rounding and Approximation\nPrecision is not critical; focus on the process. Simplify complex calculations using round numbers. For example:\n- \\( 99987 / 9.1 \\) can be approximated as \\( 100,000 / 10 = 10,000 \\).\n\n### 2. Write Down Assumptions\nDocument assumptions clearly for future reference.\n\n### 3. Label Units\nAvoid ambiguity by labeling units (e.g., `5 MB` instead of `5`).\n\n### 4. Common Estimation Scenarios\n- **QPS (Queries Per Second):** Measure traffic intensity.\n- **Peak QPS:** Account for traffic spikes.\n- **Storage Requirements:** Estimate total data needs.\n- **Cache Requirements:** Evaluate memory requirements for caching.\n- **Number of Servers:** Calculate hardware needs based on workload.\n\n"
+}

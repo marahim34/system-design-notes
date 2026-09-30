@@ -1,0 +1,179 @@
+[
+  {
+    "title": "✨ Key Features",
+    "links": []
+  },
+  {
+    "title": "🚀 Running Locally",
+    "links": []
+  },
+  {
+    "title": "☁️ Deploying to Vercel",
+    "links": []
+  },
+  {
+    "title": "Rate Limiting",
+    "links": [
+      {
+        "title": "Circuit Breaker Algorithm",
+        "url": "https://martinfowler.com/bliki/CircuitBreaker.html"
+      },
+      {
+        "title": "Uber Rate Limiter",
+        "url": "https://github.com/uber-go/ratelimit/blob/master/ratelimit.go"
+      }
+    ]
+  },
+  {
+    "title": "Consistent Hashing",
+    "links": [
+      {
+        "title": "Consistent Hashing",
+        "url": "https://tom-e-white.com/2007/11/consistent-hashing.html"
+      },
+      {
+        "title": "CS168: Introduction and Consistent Hashing:",
+        "url": " http://theory.stanford.edu/~tim/s16/l/l1.pdf"
+      },
+      {
+        "title": "Apache Cassandra",
+        "url": "http://www.cs.cornell.edu/Projects/ladis2009/papers/Lakshman-ladis2009.PDF"
+      },
+      {
+        "title": "Scaling Discord",
+        "url": "https://blog.discord.com/scaling-elixir-f9b8e1e7c29b"
+      },
+      {
+        "title": "Google Maglev",
+        "url": "https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/44824.pdf"
+      }
+    ]
+  },
+  {
+    "title": "Key-Value Store",
+    "links": [
+      {
+        "title": "Amazon Dynamo",
+        "url": "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"
+      },
+      {
+        "title": "Cassandra Architecture",
+        "url": "https://docs.datastax.com/en/archived/cassandra/3.0/cassandra/architecture/archIntro.html"
+      },
+      {
+        "title": "Google BigTable Architecture",
+        "url": "https://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf"
+      },
+      {
+        "title": "Amazon Dynamo DB Internals",
+        "url": "https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html"
+      },
+      {
+        "title": "Design Patterns in Amazon Dynamo DB",
+        "url": "https://www.youtube.com/watch?v=HaEPXoXVf2k"
+      },
+      {
+        "title": "Internals of Amazon Dynamo DB",
+        "url": "https://www.youtube.com/watch?v=yvBR71D0nAQ"
+      }
+    ]
+  },
+  {
+    "title": "Unique-ID Generator",
+    "links": [
+      {
+        "title": "Ticket Servers: Distributed Unique Primary Keys on the Cheap",
+        "url": "https://code.flickr.net/2010/02/08/ticket-servers-distributed-unique-primary-keys-on-the-cheap"
+      },
+      {
+        "title": "Snowflake",
+        "url": "https://blog.twitter.com/engineering/en_us/a/2010/announcing-snowflake.html"
+      }
+    ]
+  },
+  {
+    "title": "Web Crawler",
+    "links": [
+      {
+        "title": "Web Crawling",
+        "url": "http://infolab.stanford.edu/~olston/publications/crawling_survey.pdf"
+      },
+      {
+        "title": "Google Dynamic Rendering",
+        "url": "https://developers.google.com/search/docs/guides/dynamic-rendering"
+      }
+    ]
+  },
+  {
+    "title": "Chat Systems",
+    "links": [
+      {
+        "title": "How Discord stores billions of messages",
+        "url": "https://discord.com/blog/how-discord-stores-billions-of-messages"
+      },
+      {
+        "title": "Flannel: An Application-Level Edge Cache to Make Slack Scale",
+        "url": "https://slack.engineering/flannel-an-application-level-edge-cache-to-make-slack-scale/"
+      }
+    ]
+  },
+  {
+    "title": "Search Autocomplete",
+    "links": [
+      {
+        "title": "How We Built Prefixy",
+        "url": "https://medium.com/@prefixyteam/how-we-built-prefixy-a-scalable-prefix-search-service-for-powering-autocomplete-c20f98e2eff1"
+      },
+      {
+        "title": "Prefix Hash Tree",
+        "url": "https://people.eecs.berkeley.edu/~sylvia/papers/pht.pdf"
+      }
+    ]
+  },
+  {
+    "title": "Youtube",
+    "links": [
+      {
+        "title": "YouTube Architecture",
+        "url": "http://highscalability.com/youtube-architecture"
+      },
+      {
+        "title": "YouTube scalability 2012",
+        "url": "https://www.youtube.com/watch?v=w5WVu624fY8"
+      },
+      {
+        "title": "Transcoding Videos at Scale",
+        "url": "https://www.egnyte.com/blog/2018/12/transcoding-how-we-serve-videos-at-scale/"
+      },
+      {
+        "title": "Facebook Video Broadcasting",
+        "url": "https://engineering.fb.com/ios/under-the-hood-broadcasting-live-video-to-millions/"
+      },
+      {
+        "title": "Netflix Video Encoding at Scale",
+        "url": "https://netflixtechblog.com/high-quality-video-encoding-at-scale-d159db052746"
+      },
+      {
+        "title": "Netflix Shot based encoding",
+        "url": "https://netflixtechblog.com/optimized-shot-based-encodes-now-streaming-4b9464204830"
+      }
+    ]
+  },
+  {
+    "title": "Google Drive",
+    "links": [
+      {
+        "title": "Differential Synchronization",
+        "url": "https://neil.fraser.name/writing/sync/"
+      },
+      {
+        "title": "Differential Synchronization Video",
+        "url": "https://www.youtube.com/watch?v=S2Hp_1jqpY8"
+      },
+      {
+        "title": "How We’ve Scaled Dropbox",
+        "url": "https://www.youtube.com/watch?v=PE4gwstWhmc&feature=youtu.be"
+      }
+    ]
+  }
+]

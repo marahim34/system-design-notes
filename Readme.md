@@ -1,11 +1,68 @@
 
 # [System Design Interview - An Insider's Guide (Vol 1 and 2)](https://bytebytego.com/courses/system-design-interview)
-These notes are based on the System Design Interview books - [Vol 1 and Vol 2 2nd Ed](https://www.goodreads.com/book/show/54109255-system-design-interview-an-insider-s-guide) 
+These notes are based on the System Design Interview books - [Vol 1 and Vol 2 2nd Ed](https://www.goodreads.com/book/show/54109255-system-design-interview-an-insider-s-guide).
 
-Check the notes here: https://pagefy.io/system-design/system-design-interview-by-alex-xu
+---
 
-**Note:** These notes are a work in progress. 
+## 🌐 Interactive React Web App (English & বাংলা)
 
+This repository includes a full-featured, modern React documentation website inspired by [Pagefy](https://pagefy-blush.vercel.app/system-design/system-design-interview-by-alex-xu), with **bilingual English & Bangla (বাংলা) tab switching**!
+
+### ✨ Key Features
+- 🇧🇩 **Bangla Translation in a Tab:** Switch effortlessly between **English**, **বাংলা (Bangla)**, or **Side-by-Side (পাশাপাশি)** reading modes!
+- 🔍 **Instant Search (⌘K / Ctrl+K):** Fast search across all 28 chapters, sections, and topics.
+- 🖼️ **Diagram Lightbox & Zoom:** Click any architecture diagram to open a full-screen zoomable lightbox.
+- 📑 **Table of Contents (On This Page):** Right sidebar outline with active scroll-spy navigation.
+- 🌓 **Dark & Light Mode:** Seamless theme toggling with localStorage persistence.
+- 📚 **System Design Glossary (শব্দকোষ):** Quick cheat sheet of key distributed systems concepts in Bengali and English.
+- 🎯 **Prep Progress Tracker:** Check off completed chapters to track your interview study progress.
+- ⚡ **Zero-Latency Static Bundling:** High performance with instant page loads.
+
+---
+
+### 🚀 Running Locally
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start the local development server
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
+### ☁️ Deploying to Vercel
+
+#### Method 1: Deploy with Git (Recommended)
+1. Push your changes to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "Add React web app with Bangla translation tab"
+   git push origin main
+   ```
+2. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+3. Import your `system-design-notes` repository.
+4. Vercel will automatically detect **Vite**:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+5. Click **Deploy**! Your site will be live on Vercel with HTTPS and automatic CDN caching.
+
+#### Method 2: Deploy with Vercel CLI
+```bash
+# Install Vercel CLI globally (if not already installed)
+npm i -g vercel
+
+# Deploy directly from your terminal
+vercel
+```
+
+---
+
+## 📖 Table of Contents
 
  * [Chapter 1 - Scale From Zero To Millions Of Users](./01.%20Scaling/)
  * [Chapter 2 - Back-of-the-envelope Estimation](./02.%20Back%20Of%20the%20Envelope%20Estimation/)

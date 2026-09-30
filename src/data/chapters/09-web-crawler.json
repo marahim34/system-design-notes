@@ -1,0 +1,135 @@
+{
+  "id": 9,
+  "num": 9,
+  "slug": "09-web-crawler",
+  "title": "Design A Web Crawler",
+  "titleBn": "ওয়েব ক্রলার ডিজাইন",
+  "description": "সার্চ ইঞ্জিনের জন্য রোবট.txt, URL ফ্রন্টিয়ার, ডুপ্লিকেট কনটেন্ট ডিটেকশন ও মাল্টি-থ্রেডেড ক্রলিং।",
+  "volume": 1,
+  "readingTime": 5,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 3,
+      "title": "Applications of Web Crawlers",
+      "titleBn": "Applications of Web Crawlers",
+      "id": "applications-of-web-crawlers"
+    },
+    {
+      "level": 3,
+      "title": "Design Challenges",
+      "titleBn": "Design Challenges",
+      "id": "design-challenges"
+    },
+    {
+      "level": 2,
+      "title": "Step 1: Understanding the Problem",
+      "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+      "id": "step-1-understanding-the-problem"
+    },
+    {
+      "level": 3,
+      "title": "Requirements",
+      "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+      "id": "requirements"
+    },
+    {
+      "level": 2,
+      "title": "Step 2: High-Level Design",
+      "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+      "id": "step-2-high-level-design"
+    },
+    {
+      "level": 3,
+      "title": "Components",
+      "titleBn": "Components",
+      "id": "components"
+    },
+    {
+      "level": 3,
+      "title": "Workflow",
+      "titleBn": "Workflow",
+      "id": "workflow"
+    },
+    {
+      "level": 2,
+      "title": "Step 3: Deep Dive into Key Components",
+      "titleBn": "ধাপ 3: Deep Dive into Key Components",
+      "id": "step-3-deep-dive-into-key-components"
+    },
+    {
+      "level": 3,
+      "title": "DFS/BFS",
+      "titleBn": "DFS/BFS",
+      "id": "dfs-bfs"
+    },
+    {
+      "level": 3,
+      "title": "URL Frontier",
+      "titleBn": "URL Frontier",
+      "id": "url-frontier"
+    },
+    {
+      "level": 3,
+      "title": "HTML Downloader",
+      "titleBn": "HTML Downloader",
+      "id": "html-downloader"
+    },
+    {
+      "level": 3,
+      "title": "Robustness",
+      "titleBn": "Robustness",
+      "id": "robustness"
+    },
+    {
+      "level": 3,
+      "title": "Extensibility",
+      "titleBn": "Extensibility",
+      "id": "extensibility"
+    },
+    {
+      "level": 3,
+      "title": "Avoiding Problematic Content",
+      "titleBn": "Avoiding Problematic Content",
+      "id": "avoiding-problematic-content"
+    },
+    {
+      "level": 2,
+      "title": "Step 4: Wrap Up",
+      "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+      "id": "step-4-wrap-up"
+    },
+    {
+      "level": 3,
+      "title": "Key Takeaways",
+      "titleBn": "Key Takeaways",
+      "id": "key-takeaways"
+    },
+    {
+      "level": 3,
+      "title": "Additional Considerations",
+      "titleBn": "Additional Considerations",
+      "id": "additional-considerations"
+    }
+  ],
+  "imageCount": 4,
+  "prev": {
+    "num": 8,
+    "slug": "08-url-shortener",
+    "title": "Design A URL Shortener",
+    "titleBn": "ইউআরএল শর্টনার ডিজাইন (TinyURL)"
+  },
+  "next": {
+    "num": 10,
+    "slug": "10-notification-system",
+    "title": "Design A Notification System",
+    "titleBn": "নোটিফিকেশন সিস্টেম ডিজাইন"
+  },
+  "contentEn": "# Chapter 9: Design a Web Crawler\n\n## Introduction\nA **web crawler**, also known as a spider or robot, is used to discover and collect web content, such as web pages, images, and videos. This chapter focuses on designing a scalable web crawler for **search engine indexing**.\n\n### Applications of Web Crawlers\n1. **Search Engine Indexing:** Collect web pages to create searchable indexes (e.g., Googlebot).\n2. **Web Archiving:** Preserve web data for future use (e.g., US Library of Congress).\n3. **Web Mining:** Extract knowledge from web data (e.g., financial analysis of shareholder reports).\n4. **Web Monitoring:** Detect copyright or trademark infringements.\n\n### Design Challenges\nA good web crawler must address:\n- **Scalability:** Handle billions of pages using parallelization.\n- **Robustness:** Manage bad HTML, crashes, and malicious links.\n- **Politeness:** Avoid overwhelming servers with too many requests.\n- **Extensibility:** Support new content types with minimal changes.\n\n---\n\n## Step 1: Understanding the Problem\n\n### Requirements\n1. Crawl **1 billion web pages per month** (400 pages/second, peak 800 QPS).\n2. Collect **HTML-only content**.\n3. Track new and updated pages.\n4. Ignore duplicate content.\n5. Store crawled data for **5 years**, requiring ~30 PB of storage.\n\n---\n\n## Step 2: High-Level Design\n\n### Components\n<p align=\"center\">\n<img src=\"/chapters/09-web-crawler/images/web-crawler-architecture.png\" alt=\"Web Crawler Architecture\" width=\"700\">\n</p>\n\n1. **Seed URLs:** Starting points for the crawler.\n    - Need to selective as a good starting point that a crawler can utilize to traverse as many links as possible.\n    - Can be based on locality based on different popular website or based on topics.\n    - Strategies: Categorize by locality or topic (e.g., sports, healthcare).\n\n2. **URL Frontier:** Stores URLs to be downloaded.\n   - Implemented as a **FIFO queue**.\n\n3. **HTML Downloader:** Downloads web pages from URLs provided by the URL Frontier.\n\n4. **DNS Resolver:** Converts URLs to IP addresses.\n\n5. **Content Parser:** Validates and parses web pages.\n   - Discards malformed pages.\n\n6. **Content Seen?:** Checks for duplicate content using hash comparisons (compare the hash values of the two web pages).\n\n7. **Content Storage:** Stores HTML pages on disk (popular content in memory to reduce latency).\n\n8. **URL Extractor:** Extracts new links from parsed pages.\n\n9. **URL Filter:** Excludes blacklisted or erroneous URLs.\n\n10. **URL Seen?** Tracks visited URLs to avoid duplication.\n\n11. **URL Storage:** Stores already visited URLs.\n\n\n---\n\n### Workflow\n1. Add **Seed URLs** to the URL Frontier.\n2. **HTML Downloader** fetches URLs and resolves their IPs via the DNS Resolver.\n3. **Content Parser** validates and passes content to the \"Content Seen?\" component.\n4. If the content is new, extract links via the **URL Extractor**.\n5. Filter and add unique links to the URL Frontier.\n\n\n---\n\n## Step 3: Deep Dive into Key Components\n### DFS/BFS\n-  The web can be though of as a directed graph where web pages are nodes and hyperlinks (URLs) as edges.\n-  BFS is usually used for graph traversal as the depth can be be very deep thus DFS is not ideal.\n-  Standard BFS does not take the priority of a URL into consideration, not every page has the same level of quality and importance.\n\n\n### URL Frontier\n- **Politeness:** \n    - Ensure only one request per host at a time. Add a dealy b/w two download tasks.\n    - Use a mapping from hostnames to queues and worker (download) threads.\n    - Each downloader thread has a separate FIFO queue and only downloads URLs from that queue.\n\n        <img src=\"/chapters/09-web-crawler/images/politeness.png\" alt=\"Politeness\" width=\"500\">\n\n    - **Queue router:** Ensures that each queue (b1, b2, … bn) only contains URLs from the same host.\n    - **Mapping table:** It maps each host to a queue.\n    - **Queue selector:** Each worker thread is mapped to a FIFO queue, and it only downloads URLs from that queue. The queue selection logic is done by the Queue selector.\n    - **Worker thread 1 to N.** A worker thread downloads web pages sequentially from the same host. A delay can be added between two download tasks.\n\n- **Priority:** \n    - Assign higher priority to important pages (e.g., by PageRank or update frequency).\n\n        <img src=\"/chapters/09-web-crawler/images/prioritizer.png\" alt=\"Politeness\" width=\"500\">\n    \n    - **Prioritizer:** It takes URLs as input and computes the priorities.\n    - **Queue f1 to fn:** Each queue has an assigned priority. Queues with high priority are selected with higher probability.\n    - **Queue selector:** Randomly choose a queue with a bias towards queues with higher priority.\n    - **Front queues:** manage prioritization\n    - **Back queues:** manage politeness\n\n- **Freshness:** Recrawl based on update history or importance.\n\n\n### HTML Downloader\n- **Robots.txt Compliance:** Respect rules in robots.txt files.\n- **Performance Optimizations:**\n  1. Distributed crawling using multiple servers.\n  2. Use a **DNS cache** to avoid repeated lookups.\n  3. Geographically distribute crawl servers for faster downloads.\n  4. Use a short timeout to avoid slow or unresponsive servers.\n\n### Robustness\n1. **Consistent Hashing:** Distribute load among servers effectively.\n2. **Error Handling:** Prevent system crashes from exceptions.\n3. **Data Validation:** Ensure content integrity.\n\n### Extensibility\n- Add modules for new content types (e.g., PNG downloader, web monitor).\n- Example: Plug in a module to monitor web content for copyright violations.\n\n    <img src=\"/chapters/09-web-crawler/images/extensibility.png\" alt=\"Politeness\" width=\"600\">\n---\n\n### Avoiding Problematic Content\n1. **Duplicate Content:** Detect using hash comparisons.\n2. **Spider Traps:** Avoid infinite loops with techniques like URL length limits.\n3. **Data Noise:** Filter irrelevant content like ads or spam.\n\n---\n\n## Step 4: Wrap Up\n### Key Takeaways\n1. Web crawlers must balance scalability, robustness, politeness, and extensibility.\n2. **Politeness** prevents overloading servers, while **priority** ensures important pages are crawled first.\n3. Efficient storage and error handling are crucial for handling large-scale crawling.\n\n### Additional Considerations\n- **Server-Side Rendering:** Handle dynamic content generated by JavaScript or AJAX.\n- **Anti-Spam Measures:** Exclude low-quality or irrelevant pages.\n- **Database Sharding:** Scale the data layer using replication and sharding.\n- **Horizontal Scaling:** Use stateless servers to scale crawl jobs efficiently.\n- **Analytics:** Collect and analyze data for insights.\n\n",
+  "contentBn": "# অধ্যায় 9: ওয়েব ক্রলার ডিজাইন\n\n## ভূমিকা (Introduction)\nA **web crawler**, also known as a spider or robot, is used to discover and collect web content, such as web pages, images, and videos. This chapter focuses on designing a scalable web crawler for **search engine indexing**.\n\n### Applications of Web Crawlers\n1. **Search Engine Indexing:** Collect web pages to create searchable indexes (e.g., Googlebot).\n2. **Web Archiving:** Preserve web data for future use (e.g., US Library of Congress).\n3. **Web Mining:** Extract knowledge from web data (e.g., financial analysis of shareholder reports).\n4. **Web Monitoring:** Detect copyright or trademark infringements.\n\n### Design Challenges\nA good web crawler must address:\n- **Scalability:** Handle billions of pages using parallelization.\n- **Robustness:** Manage bad HTML, crashes, and malicious links.\n- **Politeness:** Avoid overwhelming servers with too many requests.\n- **Extensibility:** Support new content types with minimal changes.\n\n---\n\n## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস\n\n### রিকোয়ারমেন্টস (Requirements)\n1. Crawl **1 billion web pages per month** (400 pages/second, peak 800 QPS).\n2. Collect **HTML-only content**.\n3. Track new and updated pages.\n4. Ignore duplicate content.\n5. Store crawled data for **5 years**, requiring ~30 PB of storage.\n\n---\n\n## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন\n\n### Components\n<p align=\"center\">\n<img src=\"/chapters/09-web-crawler/images/web-crawler-architecture.png\" alt=\"Web Crawler Architecture\" width=\"700\">\n</p>\n\n1. **Seed URLs:** Starting points for the crawler.\n    - Need to selective as a good starting point that a crawler can utilize to traverse as many links as possible.\n    - Can be based on locality based on different popular website or based on topics.\n    - Strategies: Categorize by locality or topic (e.g., sports, healthcare).\n\n2. **URL Frontier:** Stores URLs to be downloaded.\n   - Implemented as a **FIFO queue**.\n\n3. **HTML Downloader:** Downloads web pages from URLs provided by the URL Frontier.\n\n4. **DNS Resolver:** Converts URLs to IP addresses.\n\n5. **Content Parser:** Validates and parses web pages.\n   - Discards malformed pages.\n\n6. **Content Seen?:** Checks for duplicate content using hash comparisons (compare the hash values of the two web pages).\n\n7. **Content Storage:** Stores HTML pages on disk (popular content in memory to reduce latency).\n\n8. **URL Extractor:** Extracts new links from parsed pages.\n\n9. **URL Filter:** Excludes blacklisted or erroneous URLs.\n\n10. **URL Seen?** Tracks visited URLs to avoid duplication.\n\n11. **URL Storage:** Stores already visited URLs.\n\n\n---\n\n### Workflow\n1. Add **Seed URLs** to the URL Frontier.\n2. **HTML Downloader** fetches URLs and resolves their IPs via the DNS Resolver.\n3. **Content Parser** validates and passes content to the \"Content Seen?\" component.\n4. If the content is new, extract links via the **URL Extractor**.\n5. Filter and add unique links to the URL Frontier.\n\n\n---\n\n## ধাপ 3: Deep Dive into Key Components\n### DFS/BFS\n-  The web can be though of as a directed graph where web pages are nodes and hyperlinks (URLs) as edges.\n-  BFS is usually used for graph traversal as the depth can be be very deep thus DFS is not ideal.\n-  Standard BFS does not take the priority of a URL into consideration, not every page has the same level of quality and importance.\n\n\n### URL Frontier\n- **Politeness:** \n    - Ensure only one request per host at a time. Add a dealy b/w two download tasks.\n    - Use a mapping from hostnames to queues and worker (download) threads.\n    - Each downloader thread has a separate FIFO queue and only downloads URLs from that queue.\n\n        <img src=\"/chapters/09-web-crawler/images/politeness.png\" alt=\"Politeness\" width=\"500\">\n\n    - **Queue router:** Ensures that each queue (b1, b2, … bn) only contains URLs from the same host.\n    - **Mapping table:** It maps each host to a queue.\n    - **Queue selector:** Each worker thread is mapped to a FIFO queue, and it only downloads URLs from that queue. The queue selection logic is done by the Queue selector.\n    - **Worker thread 1 to N.** A worker thread downloads web pages sequentially from the same host. A delay can be added between two download tasks.\n\n- **Priority:** \n    - Assign higher priority to important pages (e.g., by PageRank or update frequency).\n\n        <img src=\"/chapters/09-web-crawler/images/prioritizer.png\" alt=\"Politeness\" width=\"500\">\n    \n    - **Prioritizer:** It takes URLs as input and computes the priorities.\n    - **Queue f1 to fn:** Each queue has an assigned priority. Queues with high priority are selected with higher probability.\n    - **Queue selector:** Randomly choose a queue with a bias towards queues with higher priority.\n    - **Front queues:** manage prioritization\n    - **Back queues:** manage politeness\n\n- **Freshness:** Recrawl based on update history or importance.\n\n\n### HTML Downloader\n- **Robots.txt Compliance:** Respect rules in robots.txt files.\n- **Performance Optimizations:**\n  1. Distributed crawling using multiple servers.\n  2. Use a **DNS cache** to avoid repeated lookups.\n  3. Geographically distribute crawl servers for faster downloads.\n  4. Use a short timeout to avoid slow or unresponsive servers.\n\n### Robustness\n1. **Consistent Hashing:** Distribute load among servers effectively.\n2. **Error Handling:** Prevent system crashes from exceptions.\n3. **Data Validation:** Ensure content integrity.\n\n### Extensibility\n- Add modules for new content types (e.g., PNG downloader, web monitor).\n- Example: Plug in a module to monitor web content for copyright violations.\n\n    <img src=\"/chapters/09-web-crawler/images/extensibility.png\" alt=\"Politeness\" width=\"600\">\n---\n\n### Avoiding Problematic Content\n1. **Duplicate Content:** Detect using hash comparisons.\n2. **Spider Traps:** Avoid infinite loops with techniques like URL length limits.\n3. **Data Noise:** Filter irrelevant content like ads or spam.\n\n---\n\n## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)\n### Key Takeaways\n1. Web crawlers must balance scalability, robustness, politeness, and extensibility.\n2. **Politeness** prevents overloading servers, while **priority** ensures important pages are crawled first.\n3. Efficient storage and error handling are crucial for handling large-scale crawling.\n\n### Additional Considerations\n- **Server-Side Rendering:** Handle dynamic content generated by JavaScript or AJAX.\n- **Anti-Spam Measures:** Exclude low-quality or irrelevant pages.\n- **Database Sharding:** Scale the data layer using replication and sharding.\n- **Horizontal Scaling:** Use stateless servers to scale crawl jobs efficiently.\n- **Analytics:** Collect and analyze data for insights.\n\n"
+}

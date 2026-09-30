@@ -1,0 +1,3376 @@
+[
+  {
+    "id": 1,
+    "num": 1,
+    "slug": "01-scaling",
+    "title": "Scale From Zero To Millions Of Users",
+    "titleBn": "শূন্য থেকে লক্ষ-কোটি ব্যবহারকারীতে স্কেলিং",
+    "description": "সিঙ্গেল সার্ভার থেকে শুরু করে মাল্টিপল ডাটা সেন্টার, ক্যাশিং, ডাটাবেস রেপ্লিকেশন ও শার্ডিং এর মাধ্যমে মিলিয়ন ব্যবহারকারীর সিস্টেম আর্কিটেকচার।",
+    "volume": 1,
+    "readingTime": 8,
+    "sectionCount": 30,
+    "imageCount": 12,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "section-1-single-server-setup",
+        "title": "Section 1: Single Server Setup",
+        "titleBn": "সেকশন ১: সিঙ্গেল সার্ভার সেটআপ (Single Server Setup)",
+        "level": 2
+      },
+      {
+        "id": "request-flow",
+        "title": "Request Flow",
+        "titleBn": "রিকোয়েস্ট ফ্লো (Request Flow)",
+        "level": 3
+      },
+      {
+        "id": "traffic-sources",
+        "title": "Traffic Sources",
+        "titleBn": "ট্রাফিক সোর্সসমূহ (Traffic Sources)",
+        "level": 3
+      },
+      {
+        "id": "section-2-database-separation",
+        "title": "Section 2: Database Separation",
+        "titleBn": "সেকশন ২: ডাটাবেস পৃথকীকরণ (Database Separation)",
+        "level": 2
+      },
+      {
+        "id": "database-choices",
+        "title": "Database Choices",
+        "titleBn": "ডাটাবেস নির্বাচন (Database Choices)",
+        "level": 3
+      },
+      {
+        "id": "section-3-vertical-vs-horizontal-scaling",
+        "title": "Section 3: Vertical vs Horizontal Scaling",
+        "titleBn": "সেকশন ৩: ভার্টিক্যাল বনাম হরাইজন্টাল স্কেলিং",
+        "level": 2
+      },
+      {
+        "id": "vertical-scaling",
+        "title": "Vertical Scaling",
+        "titleBn": "ভার্টিক্যাল স্কেলিং (Vertical Scaling)",
+        "level": 3
+      },
+      {
+        "id": "horizontal-scaling",
+        "title": "Horizontal Scaling",
+        "titleBn": "হরাইজন্টাল স্কেলিং (Horizontal Scaling)",
+        "level": 3
+      },
+      {
+        "id": "section-4-load-balancer",
+        "title": "Section 4: Load Balancer",
+        "titleBn": "সেকশন ৪: লোড ব্যালেন্সার (Load Balancer)",
+        "level": 2
+      },
+      {
+        "id": "section-5-database-replication",
+        "title": "Section 5: Database Replication",
+        "titleBn": "সেকশন ৫: ডাটাবেস রেপ্লিকেশন (Database Replication)",
+        "level": 2
+      },
+      {
+        "id": "master-slave-model",
+        "title": "Master-Slave Model",
+        "titleBn": "Master-Slave Model",
+        "level": 3
+      },
+      {
+        "id": "benefits",
+        "title": "Benefits",
+        "titleBn": "সুবিধাসমূহ (Benefits)",
+        "level": 3
+      },
+      {
+        "id": "failure-handling",
+        "title": "Failure Handling",
+        "titleBn": "Failure Handling",
+        "level": 3
+      },
+      {
+        "id": "section-6-caching",
+        "title": "Section 6: Caching",
+        "titleBn": "সেকশন 6: Caching",
+        "level": 2
+      },
+      {
+        "id": "caching-considerations",
+        "title": "Caching considerations",
+        "titleBn": "Caching considerations",
+        "level": 3
+      },
+      {
+        "id": "section-7-content-delivery-network-cdn",
+        "title": "Section 7: Content Delivery Network (CDN)",
+        "titleBn": "সেকশন ৭: কনটেন্ট ডেলিভারি নেটওয়ার্ক (CDN)",
+        "level": 2
+      },
+      {
+        "id": "workflow",
+        "title": "Workflow",
+        "titleBn": "Workflow",
+        "level": 3
+      },
+      {
+        "id": "cdn-considerations",
+        "title": "CDN considerations",
+        "titleBn": "CDN considerations",
+        "level": 3
+      },
+      {
+        "id": "section-8-stateless-web-tier",
+        "title": "Section 8: Stateless Web Tier",
+        "titleBn": "সেকশন ৮: স্টেটলেস ওয়েব টিয়ার (Stateless Web Tier)",
+        "level": 2
+      },
+      {
+        "id": "section-9-multi-data-center-setup",
+        "title": "Section 9: Multi-Data Center Setup",
+        "titleBn": "সেকশন 9: Multi-Data Center Setup",
+        "level": 2
+      },
+      {
+        "id": "key-considerations",
+        "title": "Key considerations",
+        "titleBn": "Key considerations",
+        "level": 3
+      },
+      {
+        "id": "section-10-message-queue",
+        "title": "Section 10: Message Queue",
+        "titleBn": "সেকশন ১০: মেসেজ কিউ (Message Queue)",
+        "level": 2
+      },
+      {
+        "id": "section-11-logging-metrics-and-automation",
+        "title": "Section 11: Logging, Metrics, and Automation",
+        "titleBn": "সেকশন 11: Logging, Metrics, and Automation",
+        "level": 2
+      },
+      {
+        "id": "importance",
+        "title": "Importance",
+        "titleBn": "Importance",
+        "level": 3
+      },
+      {
+        "id": "section-12-database-scaling",
+        "title": "Section 12: Database Scaling",
+        "titleBn": "সেকশন ১২: ডাটাবেস স্কেলিং ও শার্ডিং (Database Scaling)",
+        "level": 2
+      },
+      {
+        "id": "vertical-scaling",
+        "title": "Vertical Scaling",
+        "titleBn": "ভার্টিক্যাল স্কেলিং (Vertical Scaling)",
+        "level": 3
+      },
+      {
+        "id": "horizontal-scaling-sharding",
+        "title": "Horizontal Scaling (Sharding)",
+        "titleBn": "হরাইজন্টাল স্কেলিং (শার্ডিং)",
+        "level": 3
+      },
+      {
+        "id": "conclusion",
+        "title": "Conclusion",
+        "titleBn": "Conclusion",
+        "level": 2
+      },
+      {
+        "id": "key-takeaways",
+        "title": "Key Takeaways",
+        "titleBn": "Key Takeaways",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "num": 2,
+    "slug": "02-back-of-the-envelope-estimation",
+    "title": "Back-of-the-Envelope Estimation",
+    "titleBn": "ব্যাক-অফ-দ্য-এনভেলপ হিসাব ও অনুমান",
+    "description": "সিস্টেম ডিজাইনে পারফরম্যান্স, মেমোরি, লেটেন্সি এবং থ্রুপুট পরিমাপের দ্রুত গণনামূলক হিসাব।",
+    "volume": 1,
+    "readingTime": 3,
+    "sectionCount": 13,
+    "imageCount": 1,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "section-1-key-concepts",
+        "title": "Section 1: Key Concepts",
+        "titleBn": "সেকশন 1: Key Concepts",
+        "level": 2
+      },
+      {
+        "id": "power-of-two",
+        "title": "Power of Two",
+        "titleBn": "Power of Two",
+        "level": 3
+      },
+      {
+        "id": "latency-numbers-every-programmer-should-know",
+        "title": "Latency Numbers Every Programmer Should Know",
+        "titleBn": "Latency Numbers Every Programmer Should Know",
+        "level": 3
+      },
+      {
+        "id": "availability-numbers",
+        "title": "Availability Numbers",
+        "titleBn": "Availability Numbers",
+        "level": 3
+      },
+      {
+        "id": "section-2-example-estimation-twitter-qps-and-storage-requirements",
+        "title": "Section 2: Example Estimation - Twitter QPS and Storage Requirements",
+        "titleBn": "সেকশন 2: Example Estimation - Twitter QPS and Storage Requirements",
+        "level": 2
+      },
+      {
+        "id": "assumptions",
+        "title": "Assumptions",
+        "titleBn": "Assumptions",
+        "level": 3
+      },
+      {
+        "id": "estimations",
+        "title": "Estimations",
+        "titleBn": "Estimations",
+        "level": 3
+      },
+      {
+        "id": "section-3-tips-for-effective-estimation",
+        "title": "Section 3: Tips for Effective Estimation",
+        "titleBn": "সেকশন 3: Tips for Effective Estimation",
+        "level": 2
+      },
+      {
+        "id": "1-rounding-and-approximation",
+        "title": "1. Rounding and Approximation",
+        "titleBn": "1. Rounding and Approximation",
+        "level": 3
+      },
+      {
+        "id": "2-write-down-assumptions",
+        "title": "2. Write Down Assumptions",
+        "titleBn": "2. Write Down Assumptions",
+        "level": 3
+      },
+      {
+        "id": "3-label-units",
+        "title": "3. Label Units",
+        "titleBn": "3. Label Units",
+        "level": 3
+      },
+      {
+        "id": "4-common-estimation-scenarios",
+        "title": "4. Common Estimation Scenarios",
+        "titleBn": "4. Common Estimation Scenarios",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "num": 3,
+    "slug": "03-system-design-framework",
+    "title": "A Framework For System Design Interviews",
+    "titleBn": "সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক",
+    "description": "৪ ধাপের কার্যকর সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক: প্রয়োজনীয়তা বিশ্লেষণ, হাই-লেভেল ডিজাইন, ডিপ ডাইভ এবং র‍্যাপ-আপ।",
+    "volume": 1,
+    "readingTime": 3,
+    "sectionCount": 21,
+    "imageCount": 0,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "key-objectives",
+        "title": "Key Objectives",
+        "titleBn": "Key Objectives",
+        "level": 3
+      },
+      {
+        "id": "approach",
+        "title": "Approach",
+        "titleBn": "Approach",
+        "level": 3
+      },
+      {
+        "id": "example",
+        "title": "Example",
+        "titleBn": "Example",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "key-objectives",
+        "title": "Key Objectives",
+        "titleBn": "Key Objectives",
+        "level": 3
+      },
+      {
+        "id": "approach",
+        "title": "Approach",
+        "titleBn": "Approach",
+        "level": 3
+      },
+      {
+        "id": "example",
+        "title": "Example",
+        "titleBn": "Example",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "key-objectives",
+        "title": "Key Objectives",
+        "titleBn": "Key Objectives",
+        "level": 3
+      },
+      {
+        "id": "approach",
+        "title": "Approach",
+        "titleBn": "Approach",
+        "level": 3
+      },
+      {
+        "id": "example-topics",
+        "title": "Example Topics",
+        "titleBn": "Example Topics",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap-Up",
+        "titleBn": "ধাপ 4: Wrap-Up",
+        "level": 2
+      },
+      {
+        "id": "key-objectives",
+        "title": "Key Objectives",
+        "titleBn": "Key Objectives",
+        "level": 3
+      },
+      {
+        "id": "approach",
+        "title": "Approach",
+        "titleBn": "Approach",
+        "level": 3
+      },
+      {
+        "id": "best-practices",
+        "title": "Best Practices",
+        "titleBn": "Best Practices",
+        "level": 2
+      },
+      {
+        "id": "dos",
+        "title": "Dos",
+        "titleBn": "Dos",
+        "level": 3
+      },
+      {
+        "id": "don-ts",
+        "title": "Don’ts",
+        "titleBn": "Don’ts",
+        "level": 3
+      },
+      {
+        "id": "time-management",
+        "title": "Time Management",
+        "titleBn": "Time Management",
+        "level": 2
+      },
+      {
+        "id": "suggested-time-allocation-for-45-minute-interviews",
+        "title": "Suggested Time Allocation (for 45-Minute Interviews):",
+        "titleBn": "Suggested Time Allocation (for 45-Minute Interviews):",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "num": 4,
+    "slug": "04-rate-limiter",
+    "title": "Design A Rate Limiter",
+    "titleBn": "রেট লিমিটার ডিজাইন",
+    "description": "DoS আক্রমণ প্রতিরোধ ও সার্ভার লোড নিয়ন্ত্রণে টোকেন বাকেট, লিংকিং বাকেট এবং স্লাইডিং উইন্ডো রেট লিমিটিং অ্যালগরিদম।",
+    "volume": 1,
+    "readingTime": 3,
+    "sectionCount": 19,
+    "imageCount": 8,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "benefits-of-rate-limiting",
+        "title": "Benefits of Rate Limiting",
+        "titleBn": "রেট লিমিটিংয়ের সুবিধাসমূহ",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "key-features",
+        "title": "Key Features",
+        "titleBn": "মূল বৈশিষ্ট্যসমূহ (Key Features)",
+        "level": 3
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "placement-options",
+        "title": "Placement Options",
+        "titleBn": "Placement Options",
+        "level": 3
+      },
+      {
+        "id": "guidelines-for-placement",
+        "title": "Guidelines for Placement",
+        "titleBn": "Guidelines for Placement",
+        "level": 3
+      },
+      {
+        "id": "step-3-rate-limiting-algorithms",
+        "title": "Step 3: Rate Limiting Algorithms",
+        "titleBn": "ধাপ ৩: রেট লিমিটিং অ্যালগরিদমসমূহ",
+        "level": 2
+      },
+      {
+        "id": "1-token-bucket",
+        "title": "1. Token Bucket",
+        "titleBn": "১. টোকেন বাকেট অ্যালগরিদম (Token Bucket)",
+        "level": 3
+      },
+      {
+        "id": "2-leaking-bucket",
+        "title": "2. Leaking Bucket",
+        "titleBn": "২. লিকিং বাকেট অ্যালগরিদম (Leaking Bucket)",
+        "level": 3
+      },
+      {
+        "id": "3-fixed-window-counter",
+        "title": "3. Fixed Window Counter",
+        "titleBn": "৩. ফিক্সড উইন্ডো কাউন্টার (Fixed Window Counter)",
+        "level": 3
+      },
+      {
+        "id": "4-sliding-window-log",
+        "title": "4. Sliding Window Log",
+        "titleBn": "৪. স্লাইডিং উইন্ডো লগ (Sliding Window Log)",
+        "level": 3
+      },
+      {
+        "id": "5-sliding-window-counter",
+        "title": "5. Sliding Window Counter",
+        "titleBn": "৫. স্লাইডিং উইন্ডো কাউন্টার (Sliding Window Counter)",
+        "level": 3
+      },
+      {
+        "id": "high-level-architecture",
+        "title": "High-Level Architecture",
+        "titleBn": "High-Level Architecture",
+        "level": 2
+      },
+      {
+        "id": "advanced-considerations",
+        "title": "Advanced Considerations",
+        "titleBn": "Advanced Considerations",
+        "level": 2
+      },
+      {
+        "id": "distributed-environments",
+        "title": "Distributed Environments",
+        "titleBn": "Distributed Environments",
+        "level": 3
+      },
+      {
+        "id": "performance-optimizations",
+        "title": "Performance Optimizations",
+        "titleBn": "Performance Optimizations",
+        "level": 3
+      },
+      {
+        "id": "monitoring",
+        "title": "Monitoring",
+        "titleBn": "Monitoring",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "num": 5,
+    "slug": "05-consistent-hashing",
+    "title": "Design Consistent Hashing",
+    "titleBn": "কনসিস্টেন্ট হ্যাশিং ডিজাইন",
+    "description": "ডিস্ট্রিবিউটেড ক্যাশ ও ডাটাবেসে ভার্চুয়াল নোড এবং হ্যাশ রিং ব্যবহার করে ডাটা রিব্যালান্সিং অপ্টিমাইজেশন।",
+    "volume": 1,
+    "readingTime": 4,
+    "sectionCount": 13,
+    "imageCount": 10,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "the-rehashing-problem",
+        "title": "The Rehashing Problem",
+        "titleBn": "রি-হ্যাশিংয়ের সমস্যা (The Rehashing Problem)",
+        "level": 2
+      },
+      {
+        "id": "explanation",
+        "title": "Explanation",
+        "titleBn": "Explanation",
+        "level": 3
+      },
+      {
+        "id": "key-issue",
+        "title": "Key Issue",
+        "titleBn": "Key Issue",
+        "level": 3
+      },
+      {
+        "id": "consistent-hashing",
+        "title": "Consistent Hashing",
+        "titleBn": "কনসিস্টেন্ট হ্যাশিং (Consistent Hashing)",
+        "level": 2
+      },
+      {
+        "id": "definition",
+        "title": "Definition",
+        "titleBn": "Definition",
+        "level": 3
+      },
+      {
+        "id": "key-concepts",
+        "title": "Key Concepts",
+        "titleBn": "Key Concepts",
+        "level": 3
+      },
+      {
+        "id": "challenges-and-solutions",
+        "title": "Challenges and Solutions",
+        "titleBn": "Challenges and Solutions",
+        "level": 2
+      },
+      {
+        "id": "two-issues-in-basic-approach",
+        "title": "Two Issues in Basic Approach",
+        "titleBn": "Two Issues in Basic Approach",
+        "level": 3
+      },
+      {
+        "id": "solution-virtual-nodes",
+        "title": "Solution: Virtual Nodes",
+        "titleBn": "Solution: Virtual Nodes",
+        "level": 3
+      },
+      {
+        "id": "affected-keys",
+        "title": "Affected Keys",
+        "titleBn": "Affected Keys",
+        "level": 2
+      },
+      {
+        "id": "benefits-of-consistent-hashing",
+        "title": "Benefits of Consistent Hashing",
+        "titleBn": "Benefits of Consistent Hashing",
+        "level": 2
+      },
+      {
+        "id": "real-world-applications",
+        "title": "Real-World Applications",
+        "titleBn": "Real-World Applications",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "num": 6,
+    "slug": "06-key-value-store",
+    "title": "Design A Key-Value Store",
+    "titleBn": "কী-ভ্যালু স্টোর ডিজাইন",
+    "description": "CAP থিওরেম, ভেক্টর ক্লক, কোরাম কনসেনসাস ও SSTable/LSM-Tree ভিত্তিক ডিস্ট্রিবিউটেড কী-ভ্যালু স্টোরেজ।",
+    "volume": 1,
+    "readingTime": 9,
+    "sectionCount": 18,
+    "imageCount": 17,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "characteristics-of-the-design",
+        "title": "Characteristics of the Design",
+        "titleBn": "Characteristics of the Design",
+        "level": 3
+      },
+      {
+        "id": "single-server-key-value-store",
+        "title": "Single Server Key-Value Store",
+        "titleBn": "Single Server Key-Value Store",
+        "level": 2
+      },
+      {
+        "id": "implementation",
+        "title": "Implementation",
+        "titleBn": "Implementation",
+        "level": 3
+      },
+      {
+        "id": "limitation",
+        "title": "Limitation",
+        "titleBn": "Limitation",
+        "level": 3
+      },
+      {
+        "id": "distributed-key-value-store",
+        "title": "Distributed Key-Value Store",
+        "titleBn": "Distributed Key-Value Store",
+        "level": 2
+      },
+      {
+        "id": "cap-theorem",
+        "title": "CAP Theorem",
+        "titleBn": "CAP Theorem",
+        "level": 3
+      },
+      {
+        "id": "system-components",
+        "title": "System Components",
+        "titleBn": "System Components",
+        "level": 2
+      },
+      {
+        "id": "1-data-partitioning",
+        "title": "1. Data Partitioning",
+        "titleBn": "1. Data Partitioning",
+        "level": 3
+      },
+      {
+        "id": "2-data-replication",
+        "title": "2. Data Replication",
+        "titleBn": "2. Data Replication",
+        "level": 3
+      },
+      {
+        "id": "3-consistency",
+        "title": "3. Consistency",
+        "titleBn": "3. Consistency",
+        "level": 3
+      },
+      {
+        "id": "4-inconsistency-resolution",
+        "title": "4. Inconsistency Resolution",
+        "titleBn": "4. Inconsistency Resolution",
+        "level": 3
+      },
+      {
+        "id": "5-handling-failures",
+        "title": "5. Handling Failures",
+        "titleBn": "5. Handling Failures",
+        "level": 3
+      },
+      {
+        "id": "6-handling-data-center-outages",
+        "title": "6. Handling Data Center Outages",
+        "titleBn": "6. Handling Data Center Outages",
+        "level": 3
+      },
+      {
+        "id": "write-and-read-paths",
+        "title": "Write and Read Paths",
+        "titleBn": "Write and Read Paths",
+        "level": 2
+      },
+      {
+        "id": "1-write-path-based-on-cassandra-architecture",
+        "title": "1. Write Path (Based on Cassandra architecture)",
+        "titleBn": "1. Write Path (Based on Cassandra architecture)",
+        "level": 3
+      },
+      {
+        "id": "2-read-path",
+        "title": "2. Read Path",
+        "titleBn": "2. Read Path",
+        "level": 3
+      },
+      {
+        "id": "final-architecture",
+        "title": "Final Architecture",
+        "titleBn": "Final Architecture",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "num": 7,
+    "slug": "07-unique-id-generator",
+    "title": "Design A Unique ID Generator In Distributed Systems",
+    "titleBn": "ডিস্ট্রিবিউটেড ইউনিক আইডি জেনারেটর",
+    "description": "টুইটার স্নোফ্লেক (Snowflake) আর্কিটেকচার ও ৬০-বিট ডিস্ট্রিবিউটেড সর্টেবল আইডি জেনারেশন।",
+    "volume": 1,
+    "readingTime": 3,
+    "sectionCount": 12,
+    "imageCount": 5,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "basic-requirements",
+        "title": "Basic Requirements",
+        "titleBn": "Basic Requirements",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design-options",
+        "title": "Step 2: High-Level Design Options",
+        "titleBn": "ধাপ 2: High-Level Design Options",
+        "level": 2
+      },
+      {
+        "id": "1-multi-master-replication",
+        "title": "1. Multi-Master Replication",
+        "titleBn": "1. Multi-Master Replication",
+        "level": 3
+      },
+      {
+        "id": "2-uuid-universally-unique-identifier",
+        "title": "2. UUID (Universally Unique Identifier)",
+        "titleBn": "2. UUID (Universally Unique Identifier)",
+        "level": 3
+      },
+      {
+        "id": "3-ticket-server",
+        "title": "3. Ticket Server",
+        "titleBn": "3. Ticket Server",
+        "level": 3
+      },
+      {
+        "id": "4-twitter-snowflake-approach",
+        "title": "4. Twitter Snowflake Approach",
+        "titleBn": "4. Twitter Snowflake Approach",
+        "level": 3
+      },
+      {
+        "id": "step-4-additional-considerations",
+        "title": "Step 4: Additional Considerations",
+        "titleBn": "ধাপ 4: Additional Considerations",
+        "level": 2
+      },
+      {
+        "id": "1-clock-synchronization",
+        "title": "1. Clock Synchronization",
+        "titleBn": "1. Clock Synchronization",
+        "level": 3
+      },
+      {
+        "id": "2-section-length-tuning",
+        "title": "2. Section Length Tuning",
+        "titleBn": "2. Section Length Tuning",
+        "level": 3
+      },
+      {
+        "id": "3-high-availability",
+        "title": "3. High Availability",
+        "titleBn": "3. High Availability",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "num": 8,
+    "slug": "08-url-shortener",
+    "title": "Design A URL Shortener",
+    "titleBn": "ইউআরএল শর্টনার ডিজাইন (TinyURL)",
+    "description": "Base62 এনকোডিং, হ্যাশ কলিশন হ্যান্ডলিং এবং উচ্চ-স্কেলের রিড-হেভি URL রিডাইরেকশন সিস্টেম।",
+    "volume": 1,
+    "readingTime": 4,
+    "sectionCount": 17,
+    "imageCount": 7,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-1-high-level-design",
+        "title": "Step 1: High-Level Design",
+        "titleBn": "ধাপ 1: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "api-endpoints",
+        "title": "API Endpoints",
+        "titleBn": "API Endpoints",
+        "level": 3
+      },
+      {
+        "id": "url-redirection",
+        "title": "URL Redirection",
+        "titleBn": "URL Redirection",
+        "level": 3
+      },
+      {
+        "id": "url-shortening",
+        "title": "URL Shortening",
+        "titleBn": "URL Shortening",
+        "level": 3
+      },
+      {
+        "id": "step-2-deep-dive-into-design",
+        "title": "Step 2: Deep Dive into Design",
+        "titleBn": "ধাপ 2: Deep Dive into Design",
+        "level": 2
+      },
+      {
+        "id": "data-model",
+        "title": "Data Model",
+        "titleBn": "Data Model",
+        "level": 3
+      },
+      {
+        "id": "hash-function",
+        "title": "Hash Function",
+        "titleBn": "Hash Function",
+        "level": 3
+      },
+      {
+        "id": "comparison",
+        "title": "Comparison",
+        "titleBn": "Comparison",
+        "level": 3
+      },
+      {
+        "id": "url-shortening-flow",
+        "title": "URL Shortening Flow",
+        "titleBn": "URL Shortening Flow",
+        "level": 3
+      },
+      {
+        "id": "url-redirecting-flow",
+        "title": "URL Redirecting Flow",
+        "titleBn": "URL Redirecting Flow",
+        "level": 3
+      },
+      {
+        "id": "additional-considerations",
+        "title": "Additional Considerations",
+        "titleBn": "Additional Considerations",
+        "level": 2
+      },
+      {
+        "id": "rate-limiter",
+        "title": "Rate Limiter",
+        "titleBn": "Rate Limiter",
+        "level": 3
+      },
+      {
+        "id": "scalability",
+        "title": "Scalability",
+        "titleBn": "Scalability",
+        "level": 3
+      },
+      {
+        "id": "analytics",
+        "title": "Analytics",
+        "titleBn": "Analytics",
+        "level": 3
+      },
+      {
+        "id": "high-availability-and-reliability",
+        "title": "High Availability and Reliability",
+        "titleBn": "High Availability and Reliability",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "num": 9,
+    "slug": "09-web-crawler",
+    "title": "Design A Web Crawler",
+    "titleBn": "ওয়েব ক্রলার ডিজাইন",
+    "description": "সার্চ ইঞ্জিনের জন্য রোবট.txt, URL ফ্রন্টিয়ার, ডুপ্লিকেট কনটেন্ট ডিটেকশন ও মাল্টি-থ্রেডেড ক্রলিং।",
+    "volume": 1,
+    "readingTime": 5,
+    "sectionCount": 18,
+    "imageCount": 4,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "applications-of-web-crawlers",
+        "title": "Applications of Web Crawlers",
+        "titleBn": "Applications of Web Crawlers",
+        "level": 3
+      },
+      {
+        "id": "design-challenges",
+        "title": "Design Challenges",
+        "titleBn": "Design Challenges",
+        "level": 3
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "components",
+        "title": "Components",
+        "titleBn": "Components",
+        "level": 3
+      },
+      {
+        "id": "workflow",
+        "title": "Workflow",
+        "titleBn": "Workflow",
+        "level": 3
+      },
+      {
+        "id": "step-3-deep-dive-into-key-components",
+        "title": "Step 3: Deep Dive into Key Components",
+        "titleBn": "ধাপ 3: Deep Dive into Key Components",
+        "level": 2
+      },
+      {
+        "id": "dfs-bfs",
+        "title": "DFS/BFS",
+        "titleBn": "DFS/BFS",
+        "level": 3
+      },
+      {
+        "id": "url-frontier",
+        "title": "URL Frontier",
+        "titleBn": "URL Frontier",
+        "level": 3
+      },
+      {
+        "id": "html-downloader",
+        "title": "HTML Downloader",
+        "titleBn": "HTML Downloader",
+        "level": 3
+      },
+      {
+        "id": "robustness",
+        "title": "Robustness",
+        "titleBn": "Robustness",
+        "level": 3
+      },
+      {
+        "id": "extensibility",
+        "title": "Extensibility",
+        "titleBn": "Extensibility",
+        "level": 3
+      },
+      {
+        "id": "avoiding-problematic-content",
+        "title": "Avoiding Problematic Content",
+        "titleBn": "Avoiding Problematic Content",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      },
+      {
+        "id": "key-takeaways",
+        "title": "Key Takeaways",
+        "titleBn": "Key Takeaways",
+        "level": 3
+      },
+      {
+        "id": "additional-considerations",
+        "title": "Additional Considerations",
+        "titleBn": "Additional Considerations",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "num": 10,
+    "slug": "10-notification-system",
+    "title": "Design A Notification System",
+    "titleBn": "নোটিফিকেশন সিস্টেম ডিজাইন",
+    "description": "মোবাইল পুশ নোটিফিকেশন (APNs/FCM), SMS এবং ইমেইল ডেলিভারি আর্কিটেকচার উইথ মেসেজ কিউ।",
+    "volume": 1,
+    "readingTime": 4,
+    "sectionCount": 13,
+    "imageCount": 6,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "components",
+        "title": "Components",
+        "titleBn": "Components",
+        "level": 3
+      },
+      {
+        "id": "challenges-in-initial-design",
+        "title": "Challenges in Initial Design",
+        "titleBn": "Challenges in Initial Design",
+        "level": 3
+      },
+      {
+        "id": "improved-design",
+        "title": "Improved Design",
+        "titleBn": "Improved Design",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "reliability",
+        "title": "Reliability",
+        "titleBn": "Reliability",
+        "level": 3
+      },
+      {
+        "id": "additional-components",
+        "title": "Additional Components",
+        "titleBn": "Additional Components",
+        "level": 3
+      },
+      {
+        "id": "security",
+        "title": "Security",
+        "titleBn": "Security",
+        "level": 3
+      },
+      {
+        "id": "notification-flow",
+        "title": "Notification Flow",
+        "titleBn": "Notification Flow",
+        "level": 3
+      },
+      {
+        "id": "key-optimizations",
+        "title": "Key Optimizations",
+        "titleBn": "Key Optimizations",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "num": 11,
+    "slug": "11-news-feed-system",
+    "title": "Design A News Feed System",
+    "titleBn": "নিউজ ফিড সিস্টেম ডিজাইন",
+    "description": "ফেসবুক বা টুইটার স্টাইলের ফ্যান-আউট অন রাইট বনাম ফ্যান-আউট অন রিড এবং ফিড ক্যাশিং কৌশল।",
+    "volume": 1,
+    "readingTime": 4,
+    "sectionCount": 17,
+    "imageCount": 5,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "overview",
+        "title": "Overview",
+        "titleBn": "Overview",
+        "level": 3
+      },
+      {
+        "id": "news-feed-apis",
+        "title": "News Feed APIs",
+        "titleBn": "News Feed APIs",
+        "level": 3
+      },
+      {
+        "id": "feed-publishing",
+        "title": "Feed Publishing",
+        "titleBn": "Feed Publishing",
+        "level": 3
+      },
+      {
+        "id": "news-feed-building",
+        "title": "News Feed Building",
+        "titleBn": "News Feed Building",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "feed-publishing-deep-dive",
+        "title": "Feed Publishing Deep Dive",
+        "titleBn": "Feed Publishing Deep Dive",
+        "level": 3
+      },
+      {
+        "id": "news-feed-retrieval-deep-dive",
+        "title": "News Feed Retrieval Deep Dive",
+        "titleBn": "News Feed Retrieval Deep Dive",
+        "level": 2
+      },
+      {
+        "id": "cache-architecture",
+        "title": "Cache Architecture",
+        "titleBn": "Cache Architecture",
+        "level": 3
+      },
+      {
+        "id": "key-optimizations",
+        "title": "Key Optimizations",
+        "titleBn": "Key Optimizations",
+        "level": 2
+      },
+      {
+        "id": "scaling",
+        "title": "Scaling",
+        "titleBn": "Scaling",
+        "level": 3
+      },
+      {
+        "id": "caching",
+        "title": "Caching",
+        "titleBn": "Caching",
+        "level": 3
+      },
+      {
+        "id": "reliability",
+        "title": "Reliability",
+        "titleBn": "Reliability",
+        "level": 3
+      },
+      {
+        "id": "monitoring",
+        "title": "Monitoring",
+        "titleBn": "Monitoring",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "num": 12,
+    "slug": "12-chat-system",
+    "title": "Design A Chat System",
+    "titleBn": "রিয়েল-টাইম চ্যাট সিস্টেম ডিজাইন",
+    "description": "ওয়েবসকেট (WebSocket), ডিসকর্ড/স্ল্যাক স্টাইল মেসেজ সিঙ্ক, অনলাইন প্রেজেন্স এবং মেসেজ স্টোরেজ।",
+    "volume": 1,
+    "readingTime": 6,
+    "sectionCount": 15,
+    "imageCount": 16,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "communication-protocols",
+        "title": "Communication Protocols",
+        "titleBn": "Communication Protocols",
+        "level": 3
+      },
+      {
+        "id": "components",
+        "title": "Components",
+        "titleBn": "Components",
+        "level": 3
+      },
+      {
+        "id": "design",
+        "title": "Design",
+        "titleBn": "Design",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "service-discovery",
+        "title": "Service Discovery",
+        "titleBn": "Service Discovery",
+        "level": 3
+      },
+      {
+        "id": "messaging-flows",
+        "title": "Messaging Flows",
+        "titleBn": "Messaging Flows",
+        "level": 3
+      },
+      {
+        "id": "online-presence",
+        "title": "Online Presence",
+        "titleBn": "Online Presence",
+        "level": 3
+      },
+      {
+        "id": "additional-considerations",
+        "title": "Additional Considerations",
+        "titleBn": "Additional Considerations",
+        "level": 2
+      },
+      {
+        "id": "scalability",
+        "title": "Scalability",
+        "titleBn": "Scalability",
+        "level": 3
+      },
+      {
+        "id": "error-handling",
+        "title": "Error Handling",
+        "titleBn": "Error Handling",
+        "level": 3
+      },
+      {
+        "id": "future-extensions",
+        "title": "Future Extensions",
+        "titleBn": "Future Extensions",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "num": 13,
+    "slug": "13-search-autocomplete",
+    "title": "Design A Search Autocomplete System",
+    "titleBn": "সার্চ অটো-কমপ্লিট সিস্টেম ডিজাইন",
+    "description": "ট্রাই (Trie) ডেটা স্ট্রাকচার, প্রিফিক্স ক্যাশিং এবং টপ-K সার্চ কুয়েরি অপ্টিমাইজেশন।",
+    "volume": 1,
+    "readingTime": 5,
+    "sectionCount": 16,
+    "imageCount": 9,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "key-features",
+        "title": "Key Features",
+        "titleBn": "মূল বৈশিষ্ট্যসমূহ (Key Features)",
+        "level": 3
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "requirements",
+        "title": "Requirements",
+        "titleBn": "রিকোয়ারমেন্টস (Requirements)",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "data-gathering-service",
+        "title": "Data Gathering Service",
+        "titleBn": "Data Gathering Service",
+        "level": 3
+      },
+      {
+        "id": "query-service",
+        "title": "Query Service",
+        "titleBn": "Query Service",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "trie-data-structure",
+        "title": "Trie Data Structure",
+        "titleBn": "Trie Data Structure",
+        "level": 3
+      },
+      {
+        "id": "query-processing-flow",
+        "title": "Query Processing Flow",
+        "titleBn": "Query Processing Flow",
+        "level": 3
+      },
+      {
+        "id": "optimizations",
+        "title": "Optimizations",
+        "titleBn": "Optimizations",
+        "level": 3
+      },
+      {
+        "id": "data-gathering-pipeline",
+        "title": "Data Gathering Pipeline",
+        "titleBn": "Data Gathering Pipeline",
+        "level": 3
+      },
+      {
+        "id": "scalability",
+        "title": "Scalability",
+        "titleBn": "Scalability",
+        "level": 3
+      },
+      {
+        "id": "step-4-advanced-features",
+        "title": "Step 4: Advanced Features",
+        "titleBn": "ধাপ 4: Advanced Features",
+        "level": 2
+      },
+      {
+        "id": "multi-language-support",
+        "title": "Multi-Language Support",
+        "titleBn": "Multi-Language Support",
+        "level": 3
+      },
+      {
+        "id": "trending-queries",
+        "title": "Trending Queries",
+        "titleBn": "Trending Queries",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "num": 14,
+    "slug": "14-youtube",
+    "title": "Design YouTube",
+    "titleBn": "ইউটিউব ভিডিও প্ল্যাটফর্ম ডিজাইন",
+    "description": "ভিডিও আপলোড, ট্রান্সকোডিং ও এনকোডিং পাইপলাইন, CDN ডিস্ট্রিবিউশন এবং স্ট্রিমিং আর্কিটেকচার।",
+    "volume": 1,
+    "readingTime": 6,
+    "sectionCount": 19,
+    "imageCount": 14,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "key-statistics-2020",
+        "title": "Key Statistics (2020)",
+        "titleBn": "Key Statistics (2020)",
+        "level": 3
+      },
+      {
+        "id": "step-1-understand-the-problem-and-scope",
+        "title": "Step 1: Understand the Problem and Scope",
+        "titleBn": "ধাপ 1: Understand the Problem and Scope",
+        "level": 2
+      },
+      {
+        "id": "core-functionalities",
+        "title": "Core Functionalities",
+        "titleBn": "Core Functionalities",
+        "level": 3
+      },
+      {
+        "id": "supported-platforms",
+        "title": "Supported Platforms",
+        "titleBn": "Supported Platforms",
+        "level": 3
+      },
+      {
+        "id": "assumptions",
+        "title": "Assumptions",
+        "titleBn": "Assumptions",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "components",
+        "title": "Components",
+        "titleBn": "Components",
+        "level": 3
+      },
+      {
+        "id": "core-workflows",
+        "title": "Core Workflows",
+        "titleBn": "Core Workflows",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "video-transcoding",
+        "title": "Video Transcoding",
+        "titleBn": "Video Transcoding",
+        "level": 3
+      },
+      {
+        "id": "video-transcoding-architecture",
+        "title": "Video Transcoding Architecture",
+        "titleBn": "Video Transcoding Architecture",
+        "level": 3
+      },
+      {
+        "id": "system-optimizations",
+        "title": "System Optimizations",
+        "titleBn": "System Optimizations",
+        "level": 2
+      },
+      {
+        "id": "speed-optimizations",
+        "title": "Speed Optimizations",
+        "titleBn": "Speed Optimizations",
+        "level": 3
+      },
+      {
+        "id": "safety-optimizations",
+        "title": "Safety Optimizations",
+        "titleBn": "Safety Optimizations",
+        "level": 3
+      },
+      {
+        "id": "cost-saving-optimizations",
+        "title": "Cost-Saving Optimizations",
+        "titleBn": "Cost-Saving Optimizations",
+        "level": 3
+      },
+      {
+        "id": "error-handling",
+        "title": "Error Handling",
+        "titleBn": "Error Handling",
+        "level": 2
+      },
+      {
+        "id": "recoverable-errors",
+        "title": "Recoverable Errors",
+        "titleBn": "Recoverable Errors",
+        "level": 3
+      },
+      {
+        "id": "non-recoverable-errors",
+        "title": "Non-Recoverable Errors",
+        "titleBn": "Non-Recoverable Errors",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "num": 15,
+    "slug": "15-google-drive",
+    "title": "Design Google Drive",
+    "titleBn": "গুগল ড্রাইভ ক্লাউড স্টোরেজ ডিজাইন",
+    "description": "ব্লক লেভেল ডিফারেনশিয়াল সিঙ্ক, ফাইল ভার্সনিং, মেটাডাটা ডাটাবেস ও অবজেক্ট স্টোরেজ।",
+    "volume": 1,
+    "readingTime": 7,
+    "sectionCount": 16,
+    "imageCount": 9,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem",
+        "title": "Step 1: Understanding the Problem",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস",
+        "level": 2
+      },
+      {
+        "id": "key-requirements",
+        "title": "Key Requirements",
+        "titleBn": "Key Requirements",
+        "level": 3
+      },
+      {
+        "id": "constraints-and-assumptions",
+        "title": "Constraints and Assumptions",
+        "titleBn": "Constraints and Assumptions",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "single-server-setup",
+        "title": "Single-Server Setup",
+        "titleBn": "Single-Server Setup",
+        "level": 3
+      },
+      {
+        "id": "moving-to-distributed-systems",
+        "title": "Moving to Distributed Systems",
+        "titleBn": "Moving to Distributed Systems",
+        "level": 3
+      },
+      {
+        "id": "improved-design",
+        "title": "Improved design",
+        "titleBn": "Improved design",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "metadata-database",
+        "title": "Metadata Database",
+        "titleBn": "Metadata Database",
+        "level": 3
+      },
+      {
+        "id": "file-upload-flow",
+        "title": "File Upload Flow",
+        "titleBn": "File Upload Flow",
+        "level": 3
+      },
+      {
+        "id": "file-sync",
+        "title": "File Sync",
+        "titleBn": "File Sync",
+        "level": 3
+      },
+      {
+        "id": "file-download-flow",
+        "title": "File Download Flow",
+        "titleBn": "File Download Flow",
+        "level": 3
+      },
+      {
+        "id": "notification-service",
+        "title": "Notification Service",
+        "titleBn": "Notification Service",
+        "level": 3
+      },
+      {
+        "id": "storage-optimization",
+        "title": "Storage Optimization",
+        "titleBn": "Storage Optimization",
+        "level": 3
+      },
+      {
+        "id": "failure-handling",
+        "title": "Failure Handling",
+        "titleBn": "Failure Handling",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "num": 16,
+    "slug": "16-proximity-service",
+    "title": "Proximity Service",
+    "titleBn": "প্রক্সিমিটি সার্ভিস (কাছের স্থান খোঁজা)",
+    "description": "জিয়োহ্যাশ (Geohash), কোয়াডট্রি (Quadtree) এবং লোকাল বিজনেস সার্চ আর্কিটেকচার।",
+    "volume": 1,
+    "readingTime": 10,
+    "sectionCount": 30,
+    "imageCount": 15,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understanding-the-problem-and-establishing-scope",
+        "title": "Step 1: Understanding the Problem and Establishing Scope",
+        "titleBn": "ধাপ 1: Understanding the Problem and Establishing Scope",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional Requirements**",
+        "titleBn": "**Functional Requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-Functional Requirements**",
+        "titleBn": "**Non-Functional Requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-Envelope Estimation**",
+        "titleBn": "**Back-of-the-Envelope Estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-high-level-design",
+        "title": "Step 2: High-Level Design",
+        "titleBn": "ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন",
+        "level": 2
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "data-model",
+        "title": "**Data Model**",
+        "titleBn": "**Data Model**",
+        "level": 3
+      },
+      {
+        "id": "data-schema",
+        "title": "**Data Schema**",
+        "titleBn": "**Data Schema**",
+        "level": 3
+      },
+      {
+        "id": "high-level-system-architecture",
+        "title": "**High-Level System Architecture**",
+        "titleBn": "**High-Level System Architecture**",
+        "level": 3
+      },
+      {
+        "id": "step-3-algorithms-for-fetching-nearby-businesses",
+        "title": "Step 3: Algorithms for Fetching Nearby Businesses",
+        "titleBn": "ধাপ 3: Algorithms for Fetching Nearby Businesses",
+        "level": 2
+      },
+      {
+        "id": "option-1-two-dimensional-search-naive-approach",
+        "title": "**Option 1: Two-Dimensional Search (Naive Approach)**",
+        "titleBn": "**Option 1: Two-Dimensional Search (Naive Approach)**",
+        "level": 3
+      },
+      {
+        "id": "better-approach",
+        "title": "Better Approach",
+        "titleBn": "Better Approach",
+        "level": 3
+      },
+      {
+        "id": "option-2-evenly-divided-grid",
+        "title": "**Option 2: Evenly Divided Grid**",
+        "titleBn": "**Option 2: Evenly Divided Grid**",
+        "level": 3
+      },
+      {
+        "id": "option-3-geohash",
+        "title": "**Option 3: Geohash**",
+        "titleBn": "**Option 3: Geohash**",
+        "level": 3
+      },
+      {
+        "id": "option-4-quadtree",
+        "title": "**Option 4: Quadtree**",
+        "titleBn": "**Option 4: Quadtree**",
+        "level": 3
+      },
+      {
+        "id": "option-5-google-s2",
+        "title": "**Option 5: Google S2**",
+        "titleBn": "**Option 5: Google S2**",
+        "level": 3
+      },
+      {
+        "id": "tradeoff-comparison",
+        "title": "Tradeoff Comparison",
+        "titleBn": "Tradeoff Comparison",
+        "level": 2
+      },
+      {
+        "id": "step-4-scaling-the-database-and-caching-strategy",
+        "title": "Step 4: Scaling the Database and Caching Strategy",
+        "titleBn": "ধাপ 4: Scaling the Database and Caching Strategy",
+        "level": 2
+      },
+      {
+        "id": "scaling-the-business-table",
+        "title": "**Scaling the Business Table**",
+        "titleBn": "**Scaling the Business Table**",
+        "level": 3
+      },
+      {
+        "id": "scaling-the-geospatial-index",
+        "title": "**Scaling the Geospatial Index**",
+        "titleBn": "**Scaling the Geospatial Index**",
+        "level": 3
+      },
+      {
+        "id": "cache-strategy",
+        "title": "**Cache Strategy**",
+        "titleBn": "**Cache Strategy**",
+        "level": 3
+      },
+      {
+        "id": "step-5-deployment-strategy-and-final-architecture",
+        "title": "Step 5: Deployment Strategy and Final Architecture",
+        "titleBn": "ধাপ 5: Deployment Strategy and Final Architecture",
+        "level": 2
+      },
+      {
+        "id": "region-and-availability-zones",
+        "title": "**Region and Availability Zones**",
+        "titleBn": "**Region and Availability Zones**",
+        "level": 3
+      },
+      {
+        "id": "handling-real-time-updates",
+        "title": "**Handling Real-Time Updates**",
+        "titleBn": "**Handling Real-Time Updates**",
+        "level": 3
+      },
+      {
+        "id": "final-system-architecture",
+        "title": "**Final System Architecture**",
+        "titleBn": "**Final System Architecture**",
+        "level": 3
+      },
+      {
+        "id": "steps-to-retrieve-nearby-businesses",
+        "title": "Steps to Retrieve Nearby Businesses",
+        "titleBn": "Steps to Retrieve Nearby Businesses",
+        "level": 2
+      },
+      {
+        "id": "key-optimizations",
+        "title": "Key Optimizations",
+        "titleBn": "Key Optimizations",
+        "level": 2
+      },
+      {
+        "id": "choosing-the-best-indexing-method",
+        "title": "**Choosing the Best Indexing Method**",
+        "titleBn": "**Choosing the Best Indexing Method**",
+        "level": 3
+      },
+      {
+        "id": "references",
+        "title": "References",
+        "titleBn": "References",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "num": 17,
+    "slug": "17-nearby-friends",
+    "title": "Nearby Friends",
+    "titleBn": "নিয়ারবাই ফ্রেন্ডস সিস্টেম",
+    "description": "রেডিস পাব/সাব (Redis Pub/Sub), পিরিয়ডিক লোকেশন আপডেট ও রিয়েল-টাইম ফ্রেন্ড ট্র্যাকিং।",
+    "volume": 2,
+    "readingTime": 12,
+    "sectionCount": 18,
+    "imageCount": 10,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional requirements**",
+        "titleBn": "**Functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope",
+        "title": "**Back-of-the-envelope**",
+        "titleBn": "**Back-of-the-envelope**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level design**",
+        "titleBn": "**High-level design**",
+        "level": 3
+      },
+      {
+        "id": "periodic-location-update",
+        "title": "**Periodic location update**",
+        "titleBn": "**Periodic location update**",
+        "level": 3
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "data-model",
+        "title": "**Data model**",
+        "titleBn": "**Data model**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "how-well-does-each-component-scale",
+        "title": "**How well does each component scale?**",
+        "titleBn": "**How well does each component scale?**",
+        "level": 3
+      },
+      {
+        "id": "scaling-deep-dive-on-redis-pub-sub-component",
+        "title": "**Scaling deep-dive on redis pub/sub component**",
+        "titleBn": "**Scaling deep-dive on redis pub/sub component**",
+        "level": 3
+      },
+      {
+        "id": "adding-removing-friends",
+        "title": "**Adding/removing friends**",
+        "titleBn": "**Adding/removing friends**",
+        "level": 3
+      },
+      {
+        "id": "users-with-many-friends",
+        "title": "**Users with many friends**",
+        "titleBn": "**Users with many friends**",
+        "level": 3
+      },
+      {
+        "id": "nearby-random-person",
+        "title": "**Nearby random person**",
+        "titleBn": "**Nearby random person**",
+        "level": 3
+      },
+      {
+        "id": "alternative-to-redis-pub-sub",
+        "title": "**Alternative to Redis pub/sub**",
+        "titleBn": "**Alternative to Redis pub/sub**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "num": 18,
+    "slug": "18-google-maps",
+    "title": "Design Google Maps",
+    "titleBn": "গুগল ম্যাপস ডিজাইন",
+    "description": "ম্যাপ টাইল রাস্টারিং, জিওস্পেশিয়াল রাউটিং অ্যালগরিদম ও ট্রাফিক প্রেডিকশন আর্কিটেকচার।",
+    "volume": 2,
+    "readingTime": 14,
+    "sectionCount": 13,
+    "imageCount": 22,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "map-101",
+        "title": "**Map 101**",
+        "titleBn": "**Map 101**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "location-service",
+        "title": "**Location service**",
+        "titleBn": "**Location service**",
+        "level": 3
+      },
+      {
+        "id": "navigation-service",
+        "title": "**Navigation service**",
+        "titleBn": "**Navigation service**",
+        "level": 3
+      },
+      {
+        "id": "map-rendering",
+        "title": "**Map rendering**",
+        "titleBn": "**Map rendering**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "data-model",
+        "title": "**Data model**",
+        "titleBn": "**Data model**",
+        "level": 3
+      },
+      {
+        "id": "services",
+        "title": "**Services**",
+        "titleBn": "**Services**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "num": 19,
+    "slug": "19-distributed-message-queue",
+    "title": "Distributed Message Queue",
+    "titleBn": "ডিস্ট্রিবিউটেড মেসেজ কিউ (Kafka/Pulsar)",
+    "description": "পার্টিশনড লগ, কনজিউমার গ্রুপ, রেপ্লিকেশন ও হাই-থ্রুপুট মেসেজ ব্রোকার ডিজাইন।",
+    "volume": 2,
+    "readingTime": 24,
+    "sectionCount": 25,
+    "imageCount": 35,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional requirements**",
+        "titleBn": "**Functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "messaging-models",
+        "title": "**Messaging models**",
+        "titleBn": "**Messaging models**",
+        "level": 3
+      },
+      {
+        "id": "topics-partitions-and-brokers",
+        "title": "**Topics, partitions and brokers**",
+        "titleBn": "**Topics, partitions and brokers**",
+        "level": 3
+      },
+      {
+        "id": "consumer-groups",
+        "title": "**Consumer groups**",
+        "titleBn": "**Consumer groups**",
+        "level": 3
+      },
+      {
+        "id": "high-level-architecture",
+        "title": "**High-level architecture**",
+        "titleBn": "**High-level architecture**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "data-storage",
+        "title": "**Data storage**",
+        "titleBn": "**Data storage**",
+        "level": 3
+      },
+      {
+        "id": "message-data-structure",
+        "title": "**Message data structure**",
+        "titleBn": "**Message data structure**",
+        "level": 3
+      },
+      {
+        "id": "batching",
+        "title": "**Batching**",
+        "titleBn": "**Batching**",
+        "level": 3
+      },
+      {
+        "id": "producer-flow",
+        "title": "**Producer flow**",
+        "titleBn": "**Producer flow**",
+        "level": 3
+      },
+      {
+        "id": "consumer-flow",
+        "title": "**Consumer flow**",
+        "titleBn": "**Consumer flow**",
+        "level": 3
+      },
+      {
+        "id": "consumer-rebalancing",
+        "title": "**Consumer rebalancing**",
+        "titleBn": "**Consumer rebalancing**",
+        "level": 3
+      },
+      {
+        "id": "state-storage",
+        "title": "**State storage**",
+        "titleBn": "**State storage**",
+        "level": 3
+      },
+      {
+        "id": "metadata-storage",
+        "title": "**Metadata storage**",
+        "titleBn": "**Metadata storage**",
+        "level": 3
+      },
+      {
+        "id": "zookeeper",
+        "title": "**ZooKeeper**",
+        "titleBn": "**ZooKeeper**",
+        "level": 3
+      },
+      {
+        "id": "replication",
+        "title": "**Replication**",
+        "titleBn": "**Replication**",
+        "level": 3
+      },
+      {
+        "id": "in-sync-replicas",
+        "title": "**In-sync replicas**",
+        "titleBn": "**In-sync replicas**",
+        "level": 3
+      },
+      {
+        "id": "scalability",
+        "title": "**Scalability**",
+        "titleBn": "**Scalability**",
+        "level": 3
+      },
+      {
+        "id": "data-delivery-semantics",
+        "title": "**Data delivery semantics**",
+        "titleBn": "**Data delivery semantics**",
+        "level": 3
+      },
+      {
+        "id": "advanced-features",
+        "title": "**Advanced features**",
+        "titleBn": "**Advanced features**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "num": 20,
+    "slug": "20-metrics-monitoring-and-alerting-system",
+    "title": "Metrics Monitoring and Alerting System",
+    "titleBn": "মেট্রিক্স মনিটরিং এবং অ্যালার্টিং সিস্টেম",
+    "description": "টাইম-সিরিজ ডাটাবেস (TSDB), মেট্রিক্স কালেকশন এজেন্ট, ড্যাশবোর্ড ও নোটিফিকেশন রুল ইঞ্জিন।",
+    "volume": 2,
+    "readingTime": 17,
+    "sectionCount": 17,
+    "imageCount": 22,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "high-level-requirements-and-assumptions",
+        "title": "**High-level requirements and assumptions**",
+        "titleBn": "**High-level requirements and assumptions**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "fundamentals",
+        "title": "**Fundamentals**",
+        "titleBn": "**Fundamentals**",
+        "level": 3
+      },
+      {
+        "id": "data-model",
+        "title": "**Data model**",
+        "titleBn": "**Data model**",
+        "level": 3
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level Design**",
+        "titleBn": "**High-level Design**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "metrics-collection",
+        "title": "**Metrics collection**",
+        "titleBn": "**Metrics collection**",
+        "level": 3
+      },
+      {
+        "id": "scale-the-metrics-transmission-pipeline",
+        "title": "**Scale the metrics transmission pipeline**",
+        "titleBn": "**Scale the metrics transmission pipeline**",
+        "level": 3
+      },
+      {
+        "id": "where-aggregations-can-happen",
+        "title": "**Where aggregations can happen**",
+        "titleBn": "**Where aggregations can happen**",
+        "level": 3
+      },
+      {
+        "id": "query-service",
+        "title": "**Query Service**",
+        "titleBn": "**Query Service**",
+        "level": 3
+      },
+      {
+        "id": "storage-layer",
+        "title": "**Storage layer**",
+        "titleBn": "**Storage layer**",
+        "level": 3
+      },
+      {
+        "id": "alerting-system",
+        "title": "**Alerting system**",
+        "titleBn": "**Alerting system**",
+        "level": 3
+      },
+      {
+        "id": "visualization-system",
+        "title": "**Visualization system**",
+        "titleBn": "**Visualization system**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap up",
+        "titleBn": "ধাপ 4: Wrap up",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "num": 21,
+    "slug": "21-ad-click-event-aggregation",
+    "title": "Ad Click Event Aggregation",
+    "titleBn": "অ্যাড ক্লিক ইভেন্ট এগ্রিগেশন",
+    "description": "স্ট্রিম প্রসেসিং (Flink/Kafka), ওয়াটারমার্কিং, এক্সেক্টলি-ওয়ান্স সেমান্টিকস ও ক্লিক ডিডুপ্লিকেট।",
+    "volume": 2,
+    "readingTime": 21,
+    "sectionCount": 20,
+    "imageCount": 29,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional requirements**",
+        "titleBn": "**Functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "query-api-design",
+        "title": "**Query API Design**",
+        "titleBn": "**Query API Design**",
+        "level": 3
+      },
+      {
+        "id": "data-model",
+        "title": "**Data model**",
+        "titleBn": "**Data model**",
+        "level": 3
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level design**",
+        "titleBn": "**High-level design**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "streaming-vs-batching",
+        "title": "**Streaming vs. Batching**",
+        "titleBn": "**Streaming vs. Batching**",
+        "level": 3
+      },
+      {
+        "id": "time",
+        "title": "**Time**",
+        "titleBn": "**Time**",
+        "level": 3
+      },
+      {
+        "id": "aggregation-window",
+        "title": "**Aggregation window**",
+        "titleBn": "**Aggregation window**",
+        "level": 3
+      },
+      {
+        "id": "delivery-guarantees",
+        "title": "**Delivery guarantees**",
+        "titleBn": "**Delivery guarantees**",
+        "level": 3
+      },
+      {
+        "id": "data-deduplication",
+        "title": "**Data deduplication**",
+        "titleBn": "**Data deduplication**",
+        "level": 3
+      },
+      {
+        "id": "scale-the-system",
+        "title": "**Scale the system**",
+        "titleBn": "**Scale the system**",
+        "level": 3
+      },
+      {
+        "id": "fault-tolerance",
+        "title": "**Fault Tolerance**",
+        "titleBn": "**Fault Tolerance**",
+        "level": 3
+      },
+      {
+        "id": "data-monitoring-and-correctness",
+        "title": "**Data monitoring and correctness**",
+        "titleBn": "**Data monitoring and correctness**",
+        "level": 3
+      },
+      {
+        "id": "alternative-design",
+        "title": "**Alternative design**",
+        "titleBn": "**Alternative design**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap up",
+        "titleBn": "ধাপ 4: Wrap up",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "num": 22,
+    "slug": "22-hotel-reservation-system",
+    "title": "Hotel Reservation System",
+    "titleBn": "হোটেল বুকিং এবং রিজার্ভেশন সিস্টেম",
+    "description": "ওভারবুকিং প্রতিরোধ, ডিস্ট্রিবিউটেড ট্রানজ্যাকশন, পেসিমিস্টিক ও অপটিমিস্টিক লকিং।",
+    "volume": 2,
+    "readingTime": 18,
+    "sectionCount": 14,
+    "imageCount": 17,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "data-model",
+        "title": "**Data model**",
+        "titleBn": "**Data model**",
+        "level": 3
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level Design**",
+        "titleBn": "**High-level Design**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "improved-data-model",
+        "title": "**Improved data model**",
+        "titleBn": "**Improved data model**",
+        "level": 3
+      },
+      {
+        "id": "concurrency-issues",
+        "title": "**Concurrency issues**",
+        "titleBn": "**Concurrency issues**",
+        "level": 3
+      },
+      {
+        "id": "scalability",
+        "title": "**Scalability**",
+        "titleBn": "**Scalability**",
+        "level": 3
+      },
+      {
+        "id": "data-consistency-among-services",
+        "title": "**Data consistency among services**",
+        "titleBn": "**Data consistency among services**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "num": 23,
+    "slug": "23-distributed-email-service",
+    "title": "Distributed Email Service",
+    "titleBn": "ডিস্ট্রিবিউটেড ইমেইল সার্ভিস",
+    "description": "SMTP, IMAP, POP3 প্রোটোকল, ইমেইল স্টোরেজ স্কেলিং ও স্প্যাম ফিল্টারিং আর্কিটেকচার।",
+    "volume": 2,
+    "readingTime": 13,
+    "sectionCount": 14,
+    "imageCount": 14,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "email-knowledge-101",
+        "title": "**Email knowledge 101**",
+        "titleBn": "**Email knowledge 101**",
+        "level": 3
+      },
+      {
+        "id": "traditional-mail-servers",
+        "title": "**Traditional mail servers**",
+        "titleBn": "**Traditional mail servers**",
+        "level": 3
+      },
+      {
+        "id": "distributed-mail-servers",
+        "title": "**Distributed mail servers**",
+        "titleBn": "**Distributed mail servers**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "metadata-database",
+        "title": "**Metadata database**",
+        "titleBn": "**Metadata database**",
+        "level": 3
+      },
+      {
+        "id": "email-deliverability",
+        "title": "**Email deliverability**",
+        "titleBn": "**Email deliverability**",
+        "level": 3
+      },
+      {
+        "id": "search",
+        "title": "**Search**",
+        "titleBn": "**Search**",
+        "level": 3
+      },
+      {
+        "id": "scalability-and-availability",
+        "title": "**Scalability and availability**",
+        "titleBn": "**Scalability and availability**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "num": 24,
+    "slug": "24-s3-like-object-storage",
+    "title": "S3-like Object Storage",
+    "titleBn": "এস-৩ অবজেক্ট স্টোরেজ ডিজাইন",
+    "description": "ডাটা ও মেটাডাটা নোড সেপারেশন, ইরেজার কোডিং (Erasure Coding) ও হাই ডিউরাবিলিটি স্টোরেজ।",
+    "volume": 2,
+    "readingTime": 17,
+    "sectionCount": 16,
+    "imageCount": 23,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level design**",
+        "titleBn": "**High-level design**",
+        "level": 3
+      },
+      {
+        "id": "uploading-an-object",
+        "title": "**Uploading an object**",
+        "titleBn": "**Uploading an object**",
+        "level": 3
+      },
+      {
+        "id": "downloading-an-object",
+        "title": "**Downloading an object**",
+        "titleBn": "**Downloading an object**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "data-store",
+        "title": "**Data store**",
+        "titleBn": "**Data store**",
+        "level": 3
+      },
+      {
+        "id": "metadata-data-model",
+        "title": "**Metadata data model**",
+        "titleBn": "**Metadata data model**",
+        "level": 3
+      },
+      {
+        "id": "listing-objects-in-a-bucket",
+        "title": "**Listing objects in a bucket**",
+        "titleBn": "**Listing objects in a bucket**",
+        "level": 3
+      },
+      {
+        "id": "object-versioning",
+        "title": "**Object versioning**",
+        "titleBn": "**Object versioning**",
+        "level": 3
+      },
+      {
+        "id": "optimizing-uploads-of-large-files",
+        "title": "**Optimizing uploads of large files**",
+        "titleBn": "**Optimizing uploads of large files**",
+        "level": 3
+      },
+      {
+        "id": "garbage-collection",
+        "title": "**Garbage collection**",
+        "titleBn": "**Garbage collection**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "num": 25,
+    "slug": "25-real-time-gaming-leaderboard",
+    "title": "Real-time Gaming Leaderboard",
+    "titleBn": "রিয়েল-টাইম গেমিং লিডারবোর্ড",
+    "description": "রেডিস সর্টেড সেট (Sorted Set / ZSET) ব্যবহার করে মিলিয়ন প্লেয়ারের রিয়েল-টাইম র‍্যাঙ্কিং।",
+    "volume": 2,
+    "readingTime": 15,
+    "sectionCount": 14,
+    "imageCount": 23,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional requirements**",
+        "titleBn": "**Functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "high-level-architecture",
+        "title": "**High-level architecture**",
+        "titleBn": "**High-level architecture**",
+        "level": 3
+      },
+      {
+        "id": "data-models",
+        "title": "**Data models**",
+        "titleBn": "**Data models**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "to-use-a-cloud-provider-or-not",
+        "title": "**To use a cloud provider or not**",
+        "titleBn": "**To use a cloud provider or not**",
+        "level": 3
+      },
+      {
+        "id": "scaling-redis",
+        "title": "**Scaling Redis**",
+        "titleBn": "**Scaling Redis**",
+        "level": 3
+      },
+      {
+        "id": "alternative-solution-nosql",
+        "title": "**Alternative solution: NoSQL**",
+        "titleBn": "**Alternative solution: NoSQL**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "num": 26,
+    "slug": "26-payment-system",
+    "title": "Payment System",
+    "titleBn": "পেমেন্ট সিস্টেম আর্কিটেকচার",
+    "description": "আইডেমপোটেন্সি (Idempotency), ডাবল-এন্ট্রি লেজার, রিকনসিলিয়েশন ও পেমেন্ট গেটওয়ে ইন্টিগ্রেশন।",
+    "volume": 2,
+    "readingTime": 15,
+    "sectionCount": 22,
+    "imageCount": 10,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "functional-requirements",
+        "title": "**Functional requirements**",
+        "titleBn": "**Functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "pay-in-flow",
+        "title": "**Pay-in flow**",
+        "titleBn": "**Pay-in flow**",
+        "level": 3
+      },
+      {
+        "id": "apis-for-payment-service",
+        "title": "**APIs for payment service**",
+        "titleBn": "**APIs for payment service**",
+        "level": 3
+      },
+      {
+        "id": "payment-service-data-model",
+        "title": "**Payment service data model**",
+        "titleBn": "**Payment service data model**",
+        "level": 3
+      },
+      {
+        "id": "double-entry-ledger-system",
+        "title": "**Double-entry ledger system**",
+        "titleBn": "**Double-entry ledger system**",
+        "level": 3
+      },
+      {
+        "id": "hosted-payment-page",
+        "title": "**Hosted payment page**",
+        "titleBn": "**Hosted payment page**",
+        "level": 3
+      },
+      {
+        "id": "pay-out-flow",
+        "title": "**Pay-out flow**",
+        "titleBn": "**Pay-out flow**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "psp-integration",
+        "title": "**PSP Integration**",
+        "titleBn": "**PSP Integration**",
+        "level": 3
+      },
+      {
+        "id": "reconciliation",
+        "title": "**Reconciliation**",
+        "titleBn": "**Reconciliation**",
+        "level": 3
+      },
+      {
+        "id": "handling-payment-processing-delays",
+        "title": "**Handling payment processing delays**",
+        "titleBn": "**Handling payment processing delays**",
+        "level": 3
+      },
+      {
+        "id": "communication-among-internal-services",
+        "title": "**Communication among internal services**",
+        "titleBn": "**Communication among internal services**",
+        "level": 3
+      },
+      {
+        "id": "handling-failed-payments",
+        "title": "**Handling failed payments**",
+        "titleBn": "**Handling failed payments**",
+        "level": 3
+      },
+      {
+        "id": "exactly-once-delivery",
+        "title": "**Exactly-once delivery**",
+        "titleBn": "**Exactly-once delivery**",
+        "level": 3
+      },
+      {
+        "id": "consistency",
+        "title": "**Consistency**",
+        "titleBn": "**Consistency**",
+        "level": 3
+      },
+      {
+        "id": "payment-security",
+        "title": "**Payment security**",
+        "titleBn": "**Payment security**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "num": 27,
+    "slug": "27-digital-wallet",
+    "title": "Digital Wallet",
+    "titleBn": "ডিজিটাল ওয়ালেট সিস্টেম",
+    "description": "ব্যালেন্স ট্রানজ্যাকশন, Raft কনসেনসাস অ্যালগরিদম, রকিং এবং হাই-থ্রুপুট ওয়ালেট লেজার।",
+    "volume": 2,
+    "readingTime": 18,
+    "sectionCount": 16,
+    "imageCount": 25,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design Scope",
+        "titleBn": "ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ",
+        "level": 2
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "in-memory-sharding-solution",
+        "title": "**In-memory sharding solution**",
+        "titleBn": "**In-memory sharding solution**",
+        "level": 3
+      },
+      {
+        "id": "distributed-transactions",
+        "title": "**Distributed transactions**",
+        "titleBn": "**Distributed transactions**",
+        "level": 3
+      },
+      {
+        "id": "distributed-transaction-using-try-confirm-cancel-tc-c",
+        "title": "**Distributed transaction using Try-Confirm/Cancel (TC/C)**",
+        "titleBn": "**Distributed transaction using Try-Confirm/Cancel (TC/C)**",
+        "level": 3
+      },
+      {
+        "id": "tc-c-failure-modes",
+        "title": "**TC/C Failure modes**",
+        "titleBn": "**TC/C Failure modes**",
+        "level": 3
+      },
+      {
+        "id": "distributed-transaction-using-saga",
+        "title": "**Distributed transaction using Saga**",
+        "titleBn": "**Distributed transaction using Saga**",
+        "level": 3
+      },
+      {
+        "id": "event-sourcing",
+        "title": "**Event sourcing**",
+        "titleBn": "**Event sourcing**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "high-performance-event-sourcing",
+        "title": "**High-performance event sourcing**",
+        "titleBn": "**High-performance event sourcing**",
+        "level": 3
+      },
+      {
+        "id": "reliable-high-performance-event-sourcing",
+        "title": "**Reliable high-performance event sourcing**",
+        "titleBn": "**Reliable high-performance event sourcing**",
+        "level": 3
+      },
+      {
+        "id": "distributed-event-sourcing",
+        "title": "**Distributed event sourcing**",
+        "titleBn": "**Distributed event sourcing**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "num": 28,
+    "slug": "28-stock-exchange",
+    "title": "Stock Exchange",
+    "titleBn": "স্টক এক্সচেঞ্জ ট্রেডিং সিস্টেম",
+    "description": "ম্যাচিং ইঞ্জিন, অর্ডার বুক (L1/L2/L3), মাইক্রোসেকেন্ড লো-লেটেন্সি আর্কিটেকচার ও সিকুয়েন্সার।",
+    "volume": 2,
+    "readingTime": 21,
+    "sectionCount": 21,
+    "imageCount": 24,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "Introduction",
+        "titleBn": "ভূমিকা (Introduction)",
+        "level": 2
+      },
+      {
+        "id": "step-1-understand-the-problem-and-establish-design-scope",
+        "title": "Step 1: Understand the Problem and Establish Design scope",
+        "titleBn": "ধাপ 1: Understand the Problem and Establish Design scope",
+        "level": 2
+      },
+      {
+        "id": "non-functional-requirements",
+        "title": "**Non-functional requirements**",
+        "titleBn": "**Non-functional requirements**",
+        "level": 3
+      },
+      {
+        "id": "back-of-the-envelope-estimation",
+        "title": "**Back-of-the-envelope estimation**",
+        "titleBn": "**Back-of-the-envelope estimation**",
+        "level": 3
+      },
+      {
+        "id": "step-2-propose-high-level-design-and-get-buy-in",
+        "title": "Step 2: Propose High-Level Design and Get Buy-In",
+        "titleBn": "ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ",
+        "level": 2
+      },
+      {
+        "id": "business-knowledge-101",
+        "title": "**Business Knowledge 101**",
+        "titleBn": "**Business Knowledge 101**",
+        "level": 3
+      },
+      {
+        "id": "high-level-design",
+        "title": "**High-level design**",
+        "titleBn": "**High-level design**",
+        "level": 3
+      },
+      {
+        "id": "api-design",
+        "title": "**API Design**",
+        "titleBn": "**API Design**",
+        "level": 3
+      },
+      {
+        "id": "data-models",
+        "title": "**Data models**",
+        "titleBn": "**Data models**",
+        "level": 3
+      },
+      {
+        "id": "step-3-design-deep-dive",
+        "title": "Step 3: Design Deep Dive",
+        "titleBn": "ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)",
+        "level": 2
+      },
+      {
+        "id": "performance",
+        "title": "**Performance**",
+        "titleBn": "**Performance**",
+        "level": 3
+      },
+      {
+        "id": "event-sourcing",
+        "title": "**Event sourcing**",
+        "titleBn": "**Event sourcing**",
+        "level": 3
+      },
+      {
+        "id": "high-availability",
+        "title": "**High availability**",
+        "titleBn": "**High availability**",
+        "level": 3
+      },
+      {
+        "id": "fault-tolerance",
+        "title": "**Fault tolerance**",
+        "titleBn": "**Fault tolerance**",
+        "level": 3
+      },
+      {
+        "id": "matching-algorithms",
+        "title": "**Matching algorithms**",
+        "titleBn": "**Matching algorithms**",
+        "level": 3
+      },
+      {
+        "id": "determinism",
+        "title": "**Determinism**",
+        "titleBn": "**Determinism**",
+        "level": 3
+      },
+      {
+        "id": "market-data-publisher-optimizations",
+        "title": "**Market data publisher optimizations**",
+        "titleBn": "**Market data publisher optimizations**",
+        "level": 3
+      },
+      {
+        "id": "distribution-fairness-of-market-data-and-multicast",
+        "title": "**Distribution fairness of market data and multicast**",
+        "titleBn": "**Distribution fairness of market data and multicast**",
+        "level": 3
+      },
+      {
+        "id": "colocation",
+        "title": "**Colocation**",
+        "titleBn": "**Colocation**",
+        "level": 3
+      },
+      {
+        "id": "network-security",
+        "title": "**Network Security**",
+        "titleBn": "**Network Security**",
+        "level": 3
+      },
+      {
+        "id": "step-4-wrap-up",
+        "title": "Step 4: Wrap Up",
+        "titleBn": "ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)",
+        "level": 2
+      }
+    ]
+  }
+]

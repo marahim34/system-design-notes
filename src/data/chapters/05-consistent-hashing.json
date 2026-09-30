@@ -1,0 +1,105 @@
+{
+  "id": 5,
+  "num": 5,
+  "slug": "05-consistent-hashing",
+  "title": "Design Consistent Hashing",
+  "titleBn": "কনসিস্টেন্ট হ্যাশিং ডিজাইন",
+  "description": "ডিস্ট্রিবিউটেড ক্যাশ ও ডাটাবেসে ভার্চুয়াল নোড এবং হ্যাশ রিং ব্যবহার করে ডাটা রিব্যালান্সিং অপ্টিমাইজেশন।",
+  "volume": 1,
+  "readingTime": 4,
+  "sections": [
+    {
+      "level": 2,
+      "title": "Introduction",
+      "titleBn": "ভূমিকা (Introduction)",
+      "id": "introduction"
+    },
+    {
+      "level": 2,
+      "title": "The Rehashing Problem",
+      "titleBn": "রি-হ্যাশিংয়ের সমস্যা (The Rehashing Problem)",
+      "id": "the-rehashing-problem"
+    },
+    {
+      "level": 3,
+      "title": "Explanation",
+      "titleBn": "Explanation",
+      "id": "explanation"
+    },
+    {
+      "level": 3,
+      "title": "Key Issue",
+      "titleBn": "Key Issue",
+      "id": "key-issue"
+    },
+    {
+      "level": 2,
+      "title": "Consistent Hashing",
+      "titleBn": "কনসিস্টেন্ট হ্যাশিং (Consistent Hashing)",
+      "id": "consistent-hashing"
+    },
+    {
+      "level": 3,
+      "title": "Definition",
+      "titleBn": "Definition",
+      "id": "definition"
+    },
+    {
+      "level": 3,
+      "title": "Key Concepts",
+      "titleBn": "Key Concepts",
+      "id": "key-concepts"
+    },
+    {
+      "level": 2,
+      "title": "Challenges and Solutions",
+      "titleBn": "Challenges and Solutions",
+      "id": "challenges-and-solutions"
+    },
+    {
+      "level": 3,
+      "title": "Two Issues in Basic Approach",
+      "titleBn": "Two Issues in Basic Approach",
+      "id": "two-issues-in-basic-approach"
+    },
+    {
+      "level": 3,
+      "title": "Solution: Virtual Nodes",
+      "titleBn": "Solution: Virtual Nodes",
+      "id": "solution-virtual-nodes"
+    },
+    {
+      "level": 2,
+      "title": "Affected Keys",
+      "titleBn": "Affected Keys",
+      "id": "affected-keys"
+    },
+    {
+      "level": 2,
+      "title": "Benefits of Consistent Hashing",
+      "titleBn": "Benefits of Consistent Hashing",
+      "id": "benefits-of-consistent-hashing"
+    },
+    {
+      "level": 2,
+      "title": "Real-World Applications",
+      "titleBn": "Real-World Applications",
+      "id": "real-world-applications"
+    }
+  ],
+  "imageCount": 10,
+  "prev": {
+    "num": 4,
+    "slug": "04-rate-limiter",
+    "title": "Design A Rate Limiter",
+    "titleBn": "রেট লিমিটার ডিজাইন"
+  },
+  "next": {
+    "num": 6,
+    "slug": "06-key-value-store",
+    "title": "Design A Key-Value Store",
+    "titleBn": "কী-ভ্যালু স্টোর ডিজাইন"
+  },
+  "contentEn": "# Chapter 5: Design Consistent Hashing\n\n## Introduction\nThis chapter explores consistent hashing, a technique essential for achieving horizontal scaling by efficiently distributing requests and data across servers. It minimizes data redistribution when servers are added or removed and ensures an even distribution of data to mitigate issues like server hotspots.\n\n## The Rehashing Problem\n### Explanation\nIn traditional hashing methods, such as `serverIndex = hash(key) % N`, data redistribution becomes problematic when the number of servers changes. For example:\n- Removing a server causes most keys to be reassigned, leading to cache misses.\n- Adding a server results in unnecessary key redistributions.\n\n  <img src=\"/chapters/05-consistent-hashing/images/server-hashing.png\"  alt=\"Server hashing\" width=\"450\">\n\n- This approach works well when the size of the server pool is fixed. However, problems arise when new servers are added, or existing servers are removed.\n\n  <img src=\"/chapters/05-consistent-hashing/images/server-hashing-miss.png\"  alt=\"Server hashing Miss\" width=\"450\">\n\n### Key Issue\nRedistribution of most keys when server count changes causes inefficiency and overload.\n\n## Consistent Hashing\n### Definition\nConsistent hashing ensures that only a fraction of keys are remapped when servers are added or removed. This minimizes disruptions and enhances scalability.\n\n### Key Concepts\n1. **Hash Space and Ring:** The hash space forms a continuous ring, with hash values distributed from `0` to `2^160-1` (e.g., using hash function like SHA-1). By connecting both ends we get a ring.\n    <p align=\"center\">\n    <img src=\"/chapters/05-consistent-hashing/images/hash-ring.png\"  alt=\"Hash Ring\" width=\"450\">\n    </p>\n\n- Using the same hash function f, we map servers based on server IP or name onto the ring.  \n\n    <p align=\"center\">\n    <img src=\"/chapters/05-consistent-hashing/images/server-ring.png\"  alt=\"Server Ring\" width=\"450\">\n    </p>\n\n1. **Server Lookup**\n- A key's server is determined by traversing clockwise on the ring until a server is found.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-lookup.png\"  alt=\"Server Lookup\" width=\"450\">\n  </p>\n\n2. **Adding and Removing Servers**\n- Adding a server redistributes only nearby keys. Only a fraction of keys are redistributed to the new server.\n  \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/adding-server.png\"  alt=\"Adding Server\" width=\"450\">\n  </p>\n\n- Removing a server affects only the keys in its range. Only keys from the removed server are reassigned to the next server clockwise.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/removing-server.png\"  alt=\"Removing Server\" width=\"450\">\n  </p>\n\n## Challenges and Solutions\n### Two Issues in Basic Approach\n1. **Uneven Partition Sizes:** Servers may have unequal data partitions.\n2. **Non-uniform Key Distribution:** Some servers may receive significantly more keys than others.\n\n### Solution: Virtual Nodes\n- Each server is represented by multiple virtual nodes on the ring uniformly distrubuted on the ring.\n- Virtual nodes improve key distribution and balance load. As the number of virtual nodes increases, the distribution of keys       becomes more balanced. This is because the standard deviation gets smaller with more virtual nodes, leading to balanced data distribution.\n   \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/virtual-nodes.png\"   alt=\"Virtual Nodes\" width=\"450\">\n  </p>\n\n## Affected Keys\nWhen servers are added or removed:\n- **Added Server:** Affected keys are those between the new server and its predecessor.\n  In the following example server 4 is added onto the ring. The affected range starts from s4 (newly\n  added node) and moves anticlockwise around the ring until a server is found (s3). Thus, keys\n  located between s3 and s4 need to be redistributed to s4.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-addition.png\"   alt=\"Server Addition\" width=\"450\">\n  </p>\n\n- **Removed Server:** Affected keys are those between the removed server and its predecessor. In the following example when a server (s1) is removed, the affected range starts from s1\n(removed node) and moves anticlockwise around the ring until a server is found (s0). Thus, keys located between s0 and s1 must be redistributed to s2.\n   \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-removed.png\"   alt=\"Server Removed\" width=\"450\">\n  </p>\n\n## Benefits of Consistent Hashing\n- **Minimized Redistribution:** Only a fraction of keys are reassigned.\n- **Scalability:** Enables horizontal scaling.\n- **Mitigates Hotspots:** Balances data distribution to avoid server overload.\n\n## Real-World Applications\n- Amazon Dynamo DB\n- Apache Cassandra\n- Discord\n- Akamai CDN\n- Maglev Load Balancer\n\n",
+  "contentBn": "# অধ্যায় 5: কনসিস্টেন্ট হ্যাশিং ডিজাইন\n\n## ভূমিকা (Introduction)\nThis chapter explores consistent hashing, a technique essential for achieving horizontal scaling by efficiently distributing requests and data across servers. It minimizes data redistribution when servers are added or removed and ensures an even distribution of data to mitigate issues like server hotspots.\n\n## রি-হ্যাশিংয়ের সমস্যা (The Rehashing Problem)\n### Explanation\nIn traditional hashing methods, such as `serverIndex = hash(key) % N`, data redistribution becomes problematic when the number of servers changes. For example:\n- Removing a server causes most keys to be reassigned, leading to cache misses.\n- Adding a server results in unnecessary key redistributions.\n\n  <img src=\"/chapters/05-consistent-hashing/images/server-hashing.png\"  alt=\"Server hashing\" width=\"450\">\n\n- This approach works well when the size of the server pool is fixed. However, problems arise when new servers are added, or existing servers are removed.\n\n  <img src=\"/chapters/05-consistent-hashing/images/server-hashing-miss.png\"  alt=\"Server hashing Miss\" width=\"450\">\n\n### Key Issue\nRedistribution of most keys when server count changes causes inefficiency and overload.\n\n## কনসিস্টেন্ট হ্যাশিং (Consistent Hashing)\n### Definition\nকনসিস্টেন্ট হ্যাশিং (Consistent Hashing) ensures that only a fraction of keys are remapped when servers are added or removed. This minimizes disruptions and enhances scalability.\n\n### Key Concepts\n1. **Hash Space and Ring:** The hash space forms a continuous ring, with hash values distributed from `0` to `2^160-1` (e.g., using hash function like SHA-1). By connecting both ends we get a ring.\n    <p align=\"center\">\n    <img src=\"/chapters/05-consistent-hashing/images/hash-ring.png\"  alt=\"Hash Ring\" width=\"450\">\n    </p>\n\n- Using the same hash function f, we map servers based on server IP or name onto the ring.  \n\n    <p align=\"center\">\n    <img src=\"/chapters/05-consistent-hashing/images/server-ring.png\"  alt=\"Server Ring\" width=\"450\">\n    </p>\n\n1. **Server Lookup**\n- A key's server is determined by traversing clockwise on the ring until a server is found.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-lookup.png\"  alt=\"Server Lookup\" width=\"450\">\n  </p>\n\n2. **Adding and Removing Servers**\n- Adding a server redistributes only nearby keys. Only a fraction of keys are redistributed to the new server.\n  \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/adding-server.png\"  alt=\"Adding Server\" width=\"450\">\n  </p>\n\n- Removing a server affects only the keys in its range. Only keys from the removed server are reassigned to the next server clockwise.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/removing-server.png\"  alt=\"Removing Server\" width=\"450\">\n  </p>\n\n## Challenges and Solutions\n### Two Issues in Basic Approach\n1. **Uneven Partition Sizes:** Servers may have unequal data partitions.\n2. **Non-uniform Key Distribution:** Some servers may receive significantly more keys than others.\n\n### Solution: Virtual Nodes\n- Each server is represented by multiple virtual nodes on the ring uniformly distrubuted on the ring.\n- Virtual nodes improve key distribution and balance load. As the number of virtual nodes increases, the distribution of keys       becomes more balanced. This is because the standard deviation gets smaller with more virtual nodes, leading to balanced data distribution.\n   \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/virtual-nodes.png\"   alt=\"Virtual Nodes\" width=\"450\">\n  </p>\n\n## Affected Keys\nWhen servers are added or removed:\n- **Added Server:** Affected keys are those between the new server and its predecessor.\n  In the following example server 4 is added onto the ring. The affected range starts from s4 (newly\n  added node) and moves anticlockwise around the ring until a server is found (s3). Thus, keys\n  located between s3 and s4 need to be redistributed to s4.\n\n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-addition.png\"   alt=\"Server Addition\" width=\"450\">\n  </p>\n\n- **Removed Server:** Affected keys are those between the removed server and its predecessor. In the following example when a server (s1) is removed, the affected range starts from s1\n(removed node) and moves anticlockwise around the ring until a server is found (s0). Thus, keys located between s0 and s1 must be redistributed to s2.\n   \n  <p align=\"center\">\n  <img src=\"/chapters/05-consistent-hashing/images/server-removed.png\"   alt=\"Server Removed\" width=\"450\">\n  </p>\n\n## Benefits of Consistent Hashing\n- **Minimized Redistribution:** Only a fraction of keys are reassigned.\n- **Scalability:** Enables horizontal scaling.\n- **Mitigates Hotspots:** Balances data distribution to avoid server overload.\n\n## Real-World Applications\n- Amazon Dynamo DB\n- Apache Cassandra\n- Discord\n- Akamai CDN\n- Maglev Load Balancer\n\n"
+}
