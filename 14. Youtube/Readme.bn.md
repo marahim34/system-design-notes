@@ -1,225 +1,225 @@
-# অধ্যায় 14: ইউটিউব ভিডিও প্ল্যাটফর্ম ডিজাইন
+# অধ্যায় 14: ইউটিউব ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-YouTube is a massive video streaming platform supporting video uploads, playback, and various interactions. This chapter focuses on designing a scalable video streaming system with the following core features:
-- **Fast video uploads**
-- **Smooth video streaming**
-- **Ability to change video quality**
-- **Low infrastructure cost**
-- **উচ্চ প্রাপ্যতা (High Availability) and reliability**
+## ভূমিকা
+YouTube হল একটি বিশাল ভিডিও স্ট্রিমিং প্ল্যাটফর্ম যা ভিডিও আপলোড, প্লেব্যাক এবং বিভিন্ন মিথস্ক্রিয়া সমর্থন করে। এই অধ্যায়টি নিম্নোক্ত মূল বৈশিষ্ট্যগুলির সাথে একটি স্কেলযোগ্য ভিডিও স্ট্রিমিং সিস্টেম ডিজাইন করার উপর দৃষ্টি নিবদ্ধ করে:
+- **দ্রুত ভিডিও আপলোড**
+- **মসৃণ ভিডিও স্ট্রিমিং**
+- **ভিডিওর মান পরিবর্তন করার ক্ষমতা**
+- **কম অবকাঠামো খরচ**
+- **উচ্চ প্রাপ্যতা এবং নির্ভরযোগ্যতা**
 
-### Key Statistics (2020)
-- **2 billion monthly active users**
-- **5 billion videos watched per day**
-- **37% of mobile internet traffic comes from YouTube**
-- Available in **80 languages**
-- **$15.1 billion ad revenue** in 2019
-
----
-
-## ধাপ 1: Understand the Problem and Scope
-
-### Core Functionalities
-1. Upload videos
-2. Watch videos
-
-### Supported Platforms
-- Mobile apps, web browsers, and smart TVs
-
-### Assumptions
-- **Daily Active Users (DAU):** 5 million
-- **Average Video Size:** 300 MB
-- **Upload Limits:** Max 1 GB per video
-- **Daily Storage Need:** 150 TB
-- **CDN Costs:** 5 million * 5 videos * 0.3GB * $0.02 =  $150,000/day (using Amazon CloudFront)
+### মূল পরিসংখ্যান (2020)
+- **2 বিলিয়ন মাসিক সক্রিয় ব্যবহারকারী**
+- **প্রতিদিন ৫ বিলিয়ন ভিডিও দেখা হয়**
+- **37% মোবাইল ইন্টারনেট ট্রাফিক ইউটিউব থেকে আসে**
+- **৮০টি ভাষায় উপলব্ধ**
+- **2019 সালে $15.1 বিলিয়ন বিজ্ঞাপন আয়**
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: সমস্যা এবং সুযোগ বুঝুন
 
-### Components
+### মূল কার্যকারিতা
+1. ভিডিও আপলোড করুন
+2. ভিডিও দেখুন
+
+### সমর্থিত প্ল্যাটফর্ম
+- মোবাইল অ্যাপস, ওয়েব ব্রাউজার এবং স্মার্ট টিভি
+
+### অনুমান
+- **দৈনিক সক্রিয় ব্যবহারকারী (DAU):** 5 মিলিয়ন
+- **গড় ভিডিও আকার:** 300 এমবি
+- **আপলোড সীমা:** প্রতি ভিডিও সর্বোচ্চ 1 GB
+- **দৈনিক স্টোরেজ প্রয়োজন:** 150 টিবি
+- **CDN খরচ:** 5 মিলিয়ন * 5 ভিডিও * 0.3GB * $0.02 = $150,000/দিন (Amazon CloudFront ব্যবহার করে)
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের নকশা
+
+### উপাদান
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="High Level Design" width="400">
 </div>
 
-1. **Client:** Devices like smartphones, computers, and TVs.
-2. **CDN (Content Delivery Network):** Stores and streams videos.
-3. **API Servers:** Handles all user interactions except video streaming (e.g., uploads, metadata updates).
-4. **Metadata Database:** Stores video metadata (e.g., title, description, size).
-5. **Original Storage:** Blob storage for uploaded videos.
-6. **Transcoding Servers:** Convert videos into multiple resolutions and formats.
-7. **Transcoded Storage:** Blob storage for transcoded videos.
+1. **ক্লায়েন্ট:** স্মার্টফোন, কম্পিউটার এবং টিভির মতো ডিভাইস।
+2. **CDN (কন্টেন্ট ডেলিভারি নেটওয়ার্ক):** স্টোর এবং স্ট্রিম ভিডিও।
+3. **API সার্ভার:** ভিডিও স্ট্রিমিং (যেমন, আপলোড, মেটাডেটা আপডেট) ব্যতীত সমস্ত ব্যবহারকারীর ইন্টারঅ্যাকশন পরিচালনা করে।
+4. **মেটাডেটা ডেটাবেস:** ভিডিও মেটাডেটা সংরক্ষণ করে (যেমন, শিরোনাম, বিবরণ, আকার)।
+5. **অরিজিনাল স্টোরেজ:** আপলোড করা ভিডিওর জন্য ব্লব স্টোরেজ।
+6. **ট্রান্সকোডিং সার্ভার:** ভিডিওগুলিকে একাধিক রেজোলিউশন এবং ফর্ম্যাটে রূপান্তর করুন৷
+7. **ট্রান্সকোডেড স্টোরেজ:** ট্রান্সকোড করা ভিডিওর জন্য ব্লব স্টোরেজ।
 
 
 ---
 
-### Core Workflows
-#### 1. Video Uploading Flow
-- **Parallel Processes:**
-  1. Upload video to original storage.
-  2. Update video metadata in the database.
+### মূল কর্মপ্রবাহ
+#### 1. ভিডিও আপলোডিং ফ্লো
+- **সমান্তরাল প্রক্রিয়া:**
+  1. মূল সঞ্চয়স্থানে ভিডিও আপলোড করুন৷
+  2. ডেটাবেসে ভিডিও মেটাডেটা আপডেট করুন।
 
-- **Video Upload (Steps):**
+- **ভিডিও আপলোড (পদক্ষেপ):**
 
     <div style="margin-left:3rem">
         <img src="./images/video-uploading-flow.png" alt="Video Upload Flow" width="500">
     </div>
 
-    - [1] Videos are uploaded to blob storage. 
-    - [2] Transcoding servers convert videos to multiple formats.
-    - [3] One trasncoding is complete, following two steps are exectued in parallel.
-        - [3a] Transcoded videos are sent to transcoded storage.
-        - [3b] Transcoding completion events are queued in the completion queue. 
-    - [3a.1] Videos are distributed to the CDN. 
-    - [3b.1] Completion handlers update metadata and inform users. 
+- [1] ভিডিওগুলি ব্লব স্টোরেজে আপলোড করা হয়। 
+    - [২] ট্রান্সকোডিং সার্ভার ভিডিওগুলিকে একাধিক ফরম্যাটে রূপান্তর করে।
+    - [৩] একটি ট্রান্সকোডিং সম্পূর্ণ, নিম্নলিখিত দুটি ধাপ সমান্তরালভাবে চালানো হয়।
+        - [3a] ট্রান্সকোড করা ভিডিও ট্রান্সকোডেড স্টোরেজে পাঠানো হয়।
+        - [3b] ট্রান্সকোডিং সমাপ্তির ঘটনাগুলি সমাপ্তির সারিতে সারিবদ্ধ। 
+    - [3a.1] ভিডিওগুলি CDN-এ বিতরণ করা হয়৷ 
+    - [3b.1] সমাপ্তি হ্যান্ডলাররা মেটাডেটা আপডেট করে এবং ব্যবহারকারীদের জানায়।
 
 
 
-- **Metadata Upload (Steps):**
+- **মেটাডেটা আপলোড (পদক্ষেপ):**
 
     <div style="margin-left:3rem">
         <img src="./images/metadata-upload.png" alt="Metadata Upload" height="500">
     </div>
 
-    - The client in parallel sends a request to update the video metadata 
-    - The request contains video metadata, including file name, size, format, etc.
+- সমান্তরালভাবে ক্লায়েন্ট ভিডিও মেটাডেটা আপডেট করার জন্য একটি অনুরোধ পাঠায় 
+    - অনুরোধে ফাইলের নাম, আকার, বিন্যাস ইত্যাদি সহ ভিডিও মেটাডেটা রয়েছে৷
     
        
 
 
-#### 2. Video Streaming Flow
+#### 2. ভিডিও স্ট্রিমিং ফ্লো
 
 <div style="margin-left: 3em;">
   <img src="./images/video-streaming-flow.png" alt="Video Streaming Flow" height="400">
 </div>
 
-- Videos are streamed directly from the CDN using edge servers to minimize latency.
-- Some of te popular streaming protocols are MPEG_DASH, Apple HLS, Adobe HDS.
--  *Different streaming protocols support different video encodings and playback players.*
+- লেটেন্সি কমাতে এজ সার্ভার ব্যবহার করে ভিডিওগুলি সরাসরি CDN থেকে স্ট্রিম করা হয়।
+- জনপ্রিয় কিছু স্ট্রিমিং প্রোটোকল হল MPEG_DASH, Apple HLS, Adobe HDS।
+- *বিভিন্ন স্ট্রিমিং প্রোটোকল বিভিন্ন ভিডিও এনকোডিং এবং প্লেব্যাক প্লেয়ার সমর্থন করে।*
 
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Video Transcoding
-#### Importance
-1. Raw video consumes large amounts of storage space. It Reduces storage space.
-2. Ensures compatibility across devices and browsers.
-3. Adapts video quality to network conditions.
+### ভিডিও ট্রান্সকোডিং
+#### গুরুত্ব
+1. কাঁচা ভিডিও প্রচুর পরিমাণে সঞ্চয়স্থান খরচ করে। এটি স্টোরেজ স্পেস হ্রাস করে।
+2. ডিভাইস এবং ব্রাউজার জুড়ে সামঞ্জস্যতা নিশ্চিত করে।
+3. নেটওয়ার্ক অবস্থার সাথে ভিডিওর মান মানিয়ে নেয়।
 
-#### Components
-- **Container:** Encapsulates video, audio, and metadata (e.g., MP4, AVI).
-- **Codecs:** Compression and Decompression algorithms (e.g., H.264, VP9).
+#### উপাদান
+- **ধারক:** ভিডিও, অডিও এবং মেটাডেটা (যেমন, MP4, AVI) এনক্যাপসুলেট করে।
+- **কোডেক্স:** কম্প্রেশন এবং ডিকম্প্রেশন অ্যালগরিদম (যেমন, H.264, VP9)।
 
-#### Directed Acyclic Graph (DAG) Model
+#### নির্দেশিত অ্যাসাইক্লিক গ্রাফ (ডিএজি) মডেল
 <div style="margin-left: 3em;">
     <img src="./images/dag-video-transcoding.png" alt="DAG Video Transcoding" width="600">
 </div>
 
-- Transcoding a video is computationally expensive and time-consuming.
-- DAG Model defines tasks like encoding, thumbnail generation, and watermarking.
-- Allows high parallelism in video processing.
+- একটি ভিডিও ট্রান্সকোড করা গণনাগতভাবে ব্যয়বহুল এবং সময়সাপেক্ষ।
+- DAG মডেল এনকোডিং, থাম্বনেইল জেনারেশন এবং ওয়াটারমার্কিং এর মত কাজগুলিকে সংজ্ঞায়িত করে৷
+- ভিডিও প্রক্রিয়াকরণে উচ্চ সমান্তরালতার অনুমতি দেয়।
 
 
-- The original video is split into video, audio, and metadata. 
-    - Video encodings: Videos are converted to support different resolutions, codec, bitrates.
-    - Thumbnail: It can either be uploaded by a user or automatically generated bythe system.
-    - Watermark: Image overlay on top of your video contains identifying information about the video.
+- মূল ভিডিওটি ভিডিও, অডিও এবং মেটাডেটাতে বিভক্ত। 
+    - ভিডিও এনকোডিং: ভিডিওগুলি বিভিন্ন রেজোলিউশন, কোডেক, বিটরেট সমর্থন করতে রূপান্তরিত হয়।
+    - থাম্বনেইল: এটি হয় একটি ব্যবহারকারী দ্বারা আপলোড করা যেতে পারে বা সিস্টেম দ্বারা স্বয়ংক্রিয়ভাবে তৈরি করা যেতে পারে।
+    - ওয়াটারমার্ক: আপনার ভিডিওর উপরে ইমেজ ওভারলে ভিডিও সম্পর্কে শনাক্তকারী তথ্য রয়েছে।
 
 ---
 
-### Video Transcoding Architecture
+### ভিডিও ট্রান্সকোডিং আর্কিটেকচার
 
 <div style="margin-left: 3em;">
 <img src="./images/video-transcoding-architecture.png" alt="Video Transcoding" width="600">
 </div>
 
-1. **Preprocessor:** Splits videos into smaller chunks (GOP alignment). It has 4 responsibilities.
+1. **প্রিপ্রসেসর:** ভিডিওগুলিকে ছোট অংশে বিভক্ত করে (GOP প্রান্তিককরণ)। এতে ৪টি দায়িত্ব রয়েছে।
 
     <div style="margin-left: 3em;">
         <img src="./images/dag-config.png" alt="DAG Config" width="500">
     </div>
 
-    - Video splitting: Video stream is split or further split into smaller Group of Pictures (GOP) alignment.
-    - It split videos by GOP alignment for old clients.
-    - It generates DAG based on configuration files client programmers write. 
-    - It stores GOPs and metadata in temporary storage in case the encoding fails, the system could use persisted data for retry operations.
+- ভিডিও বিভাজন: ভিডিও স্ট্রীম বিভক্ত বা আরও ছোট গ্রুপ অফ পিকচার্স (GOP) অ্যালাইনমেন্টে বিভক্ত।
+    - এটি পুরানো ক্লায়েন্টদের জন্য GOP প্রান্তিককরণ দ্বারা ভিডিও বিভক্ত করে।
+    - এটি ক্লায়েন্ট প্রোগ্রামারদের লেখা কনফিগারেশন ফাইলের উপর ভিত্তি করে DAG তৈরি করে। 
+    - এটি GOPs এবং মেটাডেটা অস্থায়ী সঞ্চয়স্থানে সঞ্চয় করে যদি এনকোডিং ব্যর্থ হয়, সিস্টেম পুনরায় চেষ্টা অপারেশনের জন্য স্থায়ী ডেটা ব্যবহার করতে পারে।
 
 
-2. **DAG Scheduler:** Organizes tasks into sequential or parallel stages.
+2. **DAG শিডিউলার:** কাজগুলিকে ক্রমিক বা সমান্তরাল পর্যায়ে সংগঠিত করে।
     <div style="margin-left: 3em;">
         <img src="./images/dag-scheduler.png" alt="DAG Scheduler" width="500">
     </div>
 
-    - It splits a DAG graph into stages of tasks and puts them in the task queue in the resource manager. 
-    - Stage 1: video, audio, and metadata.
-    - The video file is further split into two tasks in stage 2: video encoding and thumbnail. 
+- এটি একটি DAG গ্রাফকে টাস্কের ধাপে বিভক্ত করে এবং তাদের রিসোর্স ম্যানেজারে টাস্ক সারিতে রাখে। 
+    - পর্যায় 1: ভিডিও, অডিও, এবং মেটাডেটা।
+    - ভিডিও ফাইলটি পর্যায় 2-এ আরও দুটি কাজে বিভক্ত: ভিডিও এনকোডিং এবং থাম্বনেইল।
 
 
-3. **Resource Manager:** Responsible for managing the efficiency of resource allocation.It
-contains 3 queues and a task scheduler.
+3. **রিসোর্স ম্যানেজার:** সম্পদ বরাদ্দের দক্ষতা পরিচালনার জন্য দায়ী।
+3 টি সারি এবং একটি টাস্ক শিডিউল রয়েছে।
     <div style="margin-left: 3em;">
         <img src="./images/resource-manager.png" alt="Resource Manager" width="700">
     </div>
 
-    - Task queue: priority queue that contains tasks to be executed.
-    - Worker queue: priority queue that contains worker utilization info.
-    - Running queue: contains  currently running tasks and workers running the tasks.
-    - Task scheduler: picks the optimal task/worker, and instructs the chosen task worker to execute the job.
+- টাস্ক কিউ: অগ্রাধিকার সারি যাতে কার্য সম্পাদন করা হয়।
+    - কর্মী সারি: অগ্রাধিকার সারি যাতে কর্মী ব্যবহারের তথ্য থাকে।
+    - চলমান সারি: বর্তমানে চলমান কাজ এবং কর্মরত কর্মীরা রয়েছে।
+    - টাস্ক শিডিউলার: সর্বোত্তম টাস্ক/কর্মী বাছাই করে এবং নির্বাচিত টাস্ক কর্মীকে কাজটি সম্পাদনের নির্দেশ দেয়।
 
 
-4. **Task Workers:** Perform transcoding and other operations.
+4. **টাস্ক ওয়ার্কার্স:** ট্রান্সকোডিং এবং অন্যান্য ক্রিয়াকলাপ সম্পাদন করুন।
     <div style="margin-left: 3em;">
         <img src="./images/task-worker.png" alt="Task Worker" width="250">
    </div>
 
-    - Different task workers may run different tasks 
+- বিভিন্ন টাস্ক কর্মীরা বিভিন্ন কাজ চালাতে পারে
 
 
-5. **Temporary Storage:** Stores intermediate data for retries.
-    - The choice of storage system depends on factors like data type, data size, access frequency, data life span, etc. 
-6. **Output:** Transcoded videos ready for distribution.
+5. **অস্থায়ী সঞ্চয়স্থান:** পুনরায় চেষ্টা করার জন্য মধ্যবর্তী ডেটা সঞ্চয় করে।
+    - স্টোরেজ সিস্টেমের পছন্দ ডেটা টাইপ, ডেটা সাইজ, অ্যাক্সেস ফ্রিকোয়েন্সি, ডেটা লাইফ স্প্যান ইত্যাদির উপর নির্ভর করে। 
+6. **আউটপুট:** ট্রান্সকোড করা ভিডিও বিতরণের জন্য প্রস্তুত।
 
 
 ---
 
-## System Optimizations
+## সিস্টেম অপ্টিমাইজেশান
 
-### Speed Optimizations
-1. **Parallel Video Uploads:** Split videos into smaller chunks for faster, resumable uploads.
+### গতি অপ্টিমাইজেশান
+1. **সমান্তরাল ভিডিও আপলোড:** দ্রুত, পুনঃসূচনাযোগ্য আপলোডের জন্য ভিডিওগুলিকে ছোট খণ্ডে ভাগ করুন৷
 
     <img src="./images/video-split.png" alt="Video Split" width="600">
 
-2. **Distributed Upload Centers:** Use CDNs as upload hubs close to users.
-3. **Parallel Processing:** Decouple modules using message queues for high parallelism.
+2. **ডিস্ট্রিবিউটেড আপলোড সেন্টার:** ব্যবহারকারীদের কাছাকাছি আপলোড হাব হিসেবে CDN ব্যবহার করুন।
+3. **প্যারালাল প্রসেসিং:** উচ্চ সমান্তরালতার জন্য বার্তা সারি ব্যবহার করে মডিউলগুলিকে দ্বিগুণ করুন।
 
     <img src="./images/message-queue1.png" alt="Message Queue" width="600">
     <img src="./images/message-queue2.png" alt="Message Queue" height="170" width="500">
 
-### Safety Optimizations
-1. **Pre-Signed URLs:** Restrict video uploads to authorized users.
+### নিরাপত্তা অপ্টিমাইজেশান
+1. **প্রাক-স্বাক্ষরিত URL:** অনুমোদিত ব্যবহারকারীদের জন্য ভিডিও আপলোড সীমাবদ্ধ করুন।
 
     <img src="./images/pres-signed-urls.png" alt="Pre Signed" width="500">
 
-2. **Protect Videos:**
-   - **DRM Systems** (e.g., Apple FairPlay, Google Widevine).
-   - **AES Encryption.**
-   - **Watermarking.**
+2. **ভিডিও সুরক্ষিত করুন:**
+   - **DRM সিস্টেম** (যেমন, Apple FairPlay, Google Widevine)।
+   - **AES এনক্রিপশন।**
+   - **ওয়াটারমার্কিং।**
 
-### Cost-Saving Optimizations
-1. Serve only popular videos via CDN; less popular ones from high-capacity servers.
-2. Encode on-demand for rarely accessed videos.
-3. Regionalize video distribution based on popularity.
-4. Build custom CDNs and partner with ISPs to reduce bandwidth costs.
+### খরচ-সঞ্চয় অপ্টিমাইজেশান
+1. CDN এর মাধ্যমে শুধুমাত্র জনপ্রিয় ভিডিও পরিবেশন করুন; উচ্চ-ক্ষমতার সার্ভার থেকে কম জনপ্রিয়।
+2. খুব কমই অ্যাক্সেস করা ভিডিওগুলির জন্য অন-ডিমান্ড এনকোড করুন৷
+3. জনপ্রিয়তার উপর ভিত্তি করে ভিডিও বিতরণকে আঞ্চলিক করুন।
+4. কাস্টম CDN তৈরি করুন এবং ব্যান্ডউইথ খরচ কমাতে ISP-এর সাথে অংশীদার হন।
 
 ---
 
-## Error Handling
-### Recoverable Errors
-- Retry failed uploads, transcoding, or resource allocation tasks.
+## ত্রুটি হ্যান্ডলিং
+### পুনরুদ্ধারযোগ্য ত্রুটি
+- ব্যর্থ আপলোড, ট্রান্সকোডিং, বা সংস্থান বরাদ্দের কাজগুলি পুনরায় চেষ্টা করুন৷
 
-### Non-Recoverable Errors
-- Stop malformed video processing and return error codes.
+### অ-পুনরুদ্ধারযোগ্য ত্রুটি
+- বিকৃত ভিডিও প্রক্রিয়াকরণ বন্ধ করুন এবং ত্রুটি কোড ফেরত দিন।
 

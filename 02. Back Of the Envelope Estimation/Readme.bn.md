@@ -1,98 +1,98 @@
-# অধ্যায় 2: ব্যাক-অফ-দ্য-এনভেলপ হিসাব ও অনুমান
+# অধ্যায় 2: ব্যাক-অফ-দ্য-এনভেলপ অনুমান
 
-## ভূমিকা (Introduction)
-Back-of-the-envelope estimation is a crucial skill in system design interviews. It involves making quick, rough calculations to assess system capacity or performance. According to Jeff Dean, Google Senior Fellow, these estimates help evaluate whether designs meet requirements through thought experiments and common performance benchmarks.
+## ভূমিকা
+ব্যাক-অফ-দ্য-এনভেলপ অনুমান সিস্টেম ডিজাইন ইন্টারভিউতে একটি গুরুত্বপূর্ণ দক্ষতা। এটি সিস্টেমের ক্ষমতা বা কর্মক্ষমতা মূল্যায়ন করার জন্য দ্রুত, মোটামুটি গণনা করা জড়িত। জেফ ডিনের মতে, গুগল সিনিয়র ফেলো, এই অনুমানগুলি চিন্তা পরীক্ষা এবং সাধারণ কর্মক্ষমতা বেঞ্চমার্কের মাধ্যমে ডিজাইনগুলি প্রয়োজনীয়তা পূরণ করে কিনা তা মূল্যায়ন করতে সহায়তা করে৷
 
-This chapter covers key concepts, methodologies, and examples to build proficiency in scalability and estimation.
+এই অধ্যায়ে মাপযোগ্যতা এবং অনুমানে দক্ষতা তৈরি করার জন্য মূল ধারণা, পদ্ধতি এবং উদাহরণগুলি কভার করে।
 
 ---
 
-## সেকশন 1: Key Concepts
+## বিভাগ 1: মূল ধারণা
 
-### Power of Two
-Understanding data volume in terms of powers of two is fundamental:
+### পাওয়ার অফ টু
+দুটির ক্ষমতার পরিপ্রেক্ষিতে ডেটা ভলিউম বোঝা মৌলিক:
 
 <img src="./images/power-of-two.png" alt="power-of-two" width="500" />
 
-This knowledge helps in performing accurate storage and bandwidth calculations.
+এই জ্ঞান সঠিক স্টোরেজ এবং ব্যান্ডউইথ গণনা সম্পাদন করতে সাহায্য করে।
 
 ---
 
-### Latency Numbers Every Programmer Should Know
-Latency numbers represent the time taken for various operations in computing systems. These provide insights into relative performance:
+### লেটেন্সি নম্বর প্রত্যেক প্রোগ্রামারকে জানা উচিত
+লেটেন্সি নম্বরগুলি কম্পিউটিং সিস্টেমে বিভিন্ন অপারেশনের জন্য নেওয়া সময়ের প্রতিনিধিত্ব করে। এগুলি আপেক্ষিক কর্মক্ষমতা সম্পর্কে অন্তর্দৃষ্টি প্রদান করে:
 
-| Operation                | Latency (2020) |
-|--------------------------|----------------|
-| L1 Cache Access          | 0.5 ns         |
-| L2 Cache Access          | 7 ns           |
-| Main Memory Access       | 100 ns         |
-| SSD Random Read          | 150 µs         |
-| HDD Random Seek          | 10 ms          |
-| Round-Trip in Data Center| 500 µs         |
-| Inter-Region Data Center | 150 ms         |
+| অপারেশন | লেটেন্সি (2020) |
+|------------------------------------------------------------|
+| L1 ক্যাশে অ্যাক্সেস | 0.5 এনএস |
+| L2 ক্যাশে অ্যাক্সেস | 7 এনএস |
+| প্রধান মেমরি অ্যাক্সেস | 100 এনএস |
+| SSD র্যান্ডম রিড | 150 µs |
+| HDD র‍্যান্ডম সিক | 10 ms |
+| ডাটা সেন্টারে রাউন্ড-ট্রিপ| 500 µs |
+| আন্তঃ অঞ্চল ডেটা সেন্টার | 150 ms |
 
-**Key Insights:**
-- Memory is fast, disk is slow.
-- Avoid disk seeks whenever possible.
-- Compress data before transmitting over the internet to save bandwidth.
+**মূল অন্তর্দৃষ্টি:**
+- মেমরি দ্রুত, ডিস্ক ধীর।
+- যখনই সম্ভব ডিস্ক অনুসন্ধান এড়িয়ে চলুন.
+- ব্যান্ডউইথ বাঁচাতে ইন্টারনেটে ট্রান্সমিট করার আগে ডেটা কম্প্রেস করুন।
 
 
 ---
 
-### Availability Numbers
-উচ্চ প্রাপ্যতা (High Availability) (HA) ensures minimal downtime. Availability is expressed in **nines**:
-- **99% (Two Nines):** ~3.65 days/year of downtime
-- **99.9% (Three Nines):** ~8.8 hours/year of downtime
-- **99.99% (Four Nines):** ~52 minutes/year of downtime
-- **99.999% (Five Nines):** ~5.3 minutes/year of downtime
-- **99.9999% (Six Nines):** ~31.56 seconds/year of downtime
+### প্রাপ্যতা সংখ্যা
+উচ্চ প্রাপ্যতা (HA) সর্বনিম্ন ডাউনটাইম নিশ্চিত করে। প্রাপ্যতা **নয়** এ প্রকাশ করা হয়েছে:
+- **99% (টু নাইন):** ~3.65 দিন/বছর ডাউনটাইম
+- **99.9% (থ্রি নাইন):** ~8.8 ঘন্টা/বছর ডাউনটাইম
+- **99.99% (চার নাইন):** ~52 মিনিট/বছর ডাউনটাইম
+- **99.999% (ফাইভ নাইন):** ~5.3 মিনিট/বছর ডাউনটাইম
+- **৯৯.৯৯৯৯% (ছয় নাইন):** ~৩১.৫৬ সেকেন্ড/বছর ডাউনটাইম
 
 
-Cloud providers like Amazon, Google, and Microsoft aim for SLAs (Service Level Agreements) of **99.9% or higher**.
+Amazon, Google, এবং Microsoft-এর মতো ক্লাউড প্রদানকারীরা **99.9% বা তার বেশি** SLA (সার্ভিস লেভেল এগ্রিমেন্ট) লক্ষ্য করে।
 
 ---
 
-## সেকশন 2: Example Estimation - Twitter QPS and Storage Requirements
+## বিভাগ 2: উদাহরণ অনুমান - Twitter QPS এবং স্টোরেজ প্রয়োজনীয়তা
 
-### Assumptions
-- **300 million monthly active users (MAU).**
-- **50% daily active users (DAU).**
-- **Average tweets/user/day:** 2.
-- **10% of tweets contain media.**
-- **Data retention:** 5 years.
+### অনুমান
+- **300 মিলিয়ন মাসিক সক্রিয় ব্যবহারকারী (MAU)।**
+- **50% দৈনিক সক্রিয় ব্যবহারকারী (DAU)।**
+- **গড় টুইট/ব্যবহারকারী/দিন:** ২.
+- **টুইটের ১০% মিডিয়া ধারণ করে।**
+- **ডেটা ধরে রাখা:** ৫ বছর।
 
-### Estimations
-1. **Query Per Second (QPS):**
+### অনুমান
+1. **কোয়েরি প্রতি সেকেন্ড (QPS):**
    - DAU = \( 300M x 50\% = 150M \)
-   - Tweets QPS = \( 150M x 2 tweets / 24 hour / 3600 seconds = ~3500 )
-   - Peak QPS = \( 2 x 3500 = ~7000 \)
+   - টুইট QPS = \( 150M x 2 টুইট / 24 ঘন্টা / 3600 সেকেন্ড = ~3500 )
+   - পিক QPS = \( 2 x 3500 = ~7000 \)
 
-2. **Media Storage:**
-   - **Tweet Size Components:**
-     - `tweet_id`: 64 bytes
-     - `text`: 140 bytes
-     - `media`: 1 MB
-   - **Daily Media Storage:** \( 150M x 2 x 10\% x 1MB = 30TB per day \)
-   - **5-Year Storage:** \( 30TB x 365 x 5 = ~55PB \)
+2. **মিডিয়া স্টোরেজ:**
+   - **টুইট সাইজ উপাদান:**
+     - `tweet_id`: ৬৪ বাইট
+     - `টেক্সট`: 140 বাইট
+     - `মিডিয়া`: 1 এমবি
+   - **দৈনিক মিডিয়া স্টোরেজ:** \( 150M x 2 x 10\% x 1MB = 30TB প্রতি দিন \)
+   - **5-বছরের স্টোরেজ:** \( 30TB x 365 x 5 = ~55PB \)
 
 ---
 
-## সেকশন 3: Tips for Effective Estimation
+## বিভাগ 3: কার্যকরী অনুমানের জন্য টিপস
 
-### 1. Rounding and Approximation
-Precision is not critical; focus on the process. Simplify complex calculations using round numbers. For example:
-- \( 99987 / 9.1 \) can be approximated as \( 100,000 / 10 = 10,000 \).
+### 1. বৃত্তাকার এবং আনুমানিক
+নির্ভুলতা সমালোচনামূলক নয়; প্রক্রিয়ার উপর ফোকাস করুন। বৃত্তাকার সংখ্যা ব্যবহার করে জটিল গণনা সহজ করুন। যেমন:
+- \( 99987 / 9.1 \) আনুমানিক \( 100,000 / 10 = 10,000 \) হিসাবে হতে পারে।
 
-### 2. Write Down Assumptions
-Document assumptions clearly for future reference.
+### 2. অনুমান লিখুন
+ভবিষ্যতের রেফারেন্সের জন্য স্পষ্টভাবে নথি অনুমান।
 
-### 3. Label Units
-Avoid ambiguity by labeling units (e.g., `5 MB` instead of `5`).
+### 3. লেবেল ইউনিট
+ইউনিট লেবেল করে অস্পষ্টতা এড়িয়ে চলুন (যেমন, `5` এর পরিবর্তে `5 MB`)।
 
-### 4. Common Estimation Scenarios
-- **QPS (Queries Per Second):** Measure traffic intensity.
-- **Peak QPS:** Account for traffic spikes.
-- **Storage Requirements:** Estimate total data needs.
-- **Cache Requirements:** Evaluate memory requirements for caching.
-- **Number of Servers:** Calculate hardware needs based on workload.
+### 4. সাধারণ অনুমান পরিস্থিতি
+- **QPS (প্রতি সেকেন্ডে প্রশ্ন):** ট্র্যাফিকের তীব্রতা পরিমাপ করুন।
+- **পিক QPS:** ট্রাফিক স্পাইকের জন্য অ্যাকাউন্ট।
+- **সঞ্চয়স্থানের প্রয়োজনীয়তা:** মোট ডেটার প্রয়োজন অনুমান করুন।
+- **ক্যাশের প্রয়োজনীয়তা:** ক্যাশ করার জন্য মেমরির প্রয়োজনীয়তা মূল্যায়ন করুন।
+- **সার্ভারের সংখ্যা:** কাজের চাপের উপর ভিত্তি করে হার্ডওয়্যারের চাহিদা গণনা করুন।
 

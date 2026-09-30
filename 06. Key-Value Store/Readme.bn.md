@@ -1,262 +1,262 @@
-# অধ্যায় 6: কী-ভ্যালু স্টোর ডিজাইন
+# অধ্যায় 6: একটি মূল-মূল্যের দোকান ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-A **key-value store** is a type of non-relational database where data is stored as key-value pairs. Each key is unique, and values are accessed using these keys. This chapter details how to design a scalable, high-availability distributed key-value store that supports operations like:
-- `put(key, value)` for inserting data.
-- `get(key)` for retrieving data.
+## ভূমিকা
+একটি **কী-ভ্যালু স্টোর** হল এক ধরনের অ-রিলেশনাল ডাটাবেস যেখানে ডেটা কী-মান পেয়ার হিসেবে সংরক্ষণ করা হয়। প্রতিটি কী অনন্য, এবং এই কীগুলি ব্যবহার করে মানগুলি অ্যাক্সেস করা হয়। এই অধ্যায়ে বিশদ বিবরণ দেওয়া হয়েছে কীভাবে একটি পরিমাপযোগ্য, উচ্চ-উপলভ্যতা বিতরণ করা কী-মূল্যের দোকান যা অপারেশনগুলিকে সমর্থন করে:
+- ডেটা সন্নিবেশ করার জন্য `পুট(কী, মান)`।
+- ডেটা পুনরুদ্ধারের জন্য `গেট(কী)`।
 
-### Characteristics of the Design
-- Small key-value pairs (<10 KB).
-- Supports big data with high availability and scalability.
-- Automatic scaling and tunable consistency.
-- কম লেটেন্সি (Low Latency).
-
----
-
-## Single Server Key-Value Store
-### Implementation
-- Use a **hash table** to store key-value pairs in memory.
-- Optimizations:
-  - Data compression.
-  - Storing less frequently accessed data on disk.
-
-### Limitation
-A single server's memory is limited, requiring a **distributed approach** for scalability.
+### ডিজাইনের বৈশিষ্ট্য
+- ছোট কী-মানের জোড়া (<10 KB)।
+- উচ্চ প্রাপ্যতা এবং মাপযোগ্যতা সহ বড় ডেটা সমর্থন করে।
+- স্বয়ংক্রিয় স্কেলিং এবং টিউনযোগ্য ধারাবাহিকতা।
+- কম বিলম্ব।
 
 ---
 
-## Distributed Key-Value Store
-A **distributed key-value store** partitions data across multiple servers and must address trade-offs outlined by the **CAP theorem**.
+## একক সার্ভার কী-ভ্যালু স্টোর
+### বাস্তবায়ন
+- মেমরিতে কী-মান জোড়া সংরক্ষণ করতে একটি **হ্যাশ টেবিল** ব্যবহার করুন।
+- অপ্টিমাইজেশান:
+  - ডেটা কম্প্রেশন।
+  - ডিস্কে কম ঘন ঘন অ্যাক্সেস করা ডেটা সংরক্ষণ করা।
 
-### CAP Theorem
-1. **Consistency:** All clients see the same data simultaneously.
-2. **Availability:** The system responds to every request, even if some nodes are down.
-3. **Partition Tolerance:** The system continues to operate despite network partitions.
+### সীমাবদ্ধতা
+একটি একক সার্ভারের মেমরি সীমিত, স্কেলেবিলিটির জন্য একটি **ডিস্ট্রিবিউটেড পদ্ধতি** প্রয়োজন।
 
-**Trade-off:** According to CAP theorem only two of the three guarantees can be achieved.
+---
+
+## বিতরণ করা কী-মূল্যের দোকান
+একটি **ডিস্ট্রিবিউটেড কী-ভ্যালু স্টোর** একাধিক সার্ভার জুড়ে ডেটা পার্টিশন করে এবং অবশ্যই **CAP উপপাদ্য** দ্বারা বর্ণিত ট্রেড-অফের সমাধান করতে হবে।
+
+### CAP উপপাদ্য
+1. **সংগতি:** সমস্ত ক্লায়েন্ট একই সাথে একই ডেটা দেখতে পায়।
+2. **উপলভ্যতা:** সিস্টেম প্রতিটি অনুরোধে সাড়া দেয়, এমনকি কিছু নোড ডাউন থাকলেও।
+3. **পার্টিশন টলারেন্স:** নেটওয়ার্ক পার্টিশন থাকা সত্ত্বেও সিস্টেমটি চলতে থাকে।
+
+**ট্রেড-অফ:** CAP উপপাদ্য অনুসারে তিনটি গ্যারান্টির মধ্যে শুধুমাত্র দুটিই অর্জন করা যায়।
 
 <p align="center">
   <img src="./images/cap.png" alt="CAP" width="400">
 </p>
 
-#### System Types:
-- **CP Systems:** Consistency and partition tolerance while sacrificing availability (e.g., banking systems).
-- **AP Systems:** Availability and partition tolerance while sacrificing consistency (e.g., eventual consistency).
-- **CA Systems:** Consistency and Availability while sacrificing partition tolerance.
+#### সিস্টেমের ধরন:
+- **CP সিস্টেম:** প্রাপ্যতা (যেমন, ব্যাঙ্কিং সিস্টেম) ত্যাগ করার সময় ধারাবাহিকতা এবং পার্টিশন সহনশীলতা।
+- **এপি সিস্টেম:** ধারাবাহিকতা (যেমন, চূড়ান্ত সামঞ্জস্য) বলি দেওয়ার সময় উপলব্ধতা এবং পার্টিশন সহনশীলতা।
+- **CA সিস্টেম:** পার্টিশন সহনশীলতা বলি দেওয়ার সময় ধারাবাহিকতা এবং উপলব্ধতা।
 
-    **Since network failure is unavoidable, a distributed system must tolerate network partition. Thus, a CA system cannot exist in real-world applications.**
+**যেহেতু নেটওয়ার্ক ব্যর্থতা অনিবার্য, একটি বিতরণ করা সিস্টেমকে অবশ্যই নেটওয়ার্ক পার্টিশন সহ্য করতে হবে। সুতরাং, একটি CA সিস্টেম বাস্তব-বিশ্বের অ্যাপ্লিকেশনগুলিতে বিদ্যমান থাকতে পারে না৷**
 
-    In a distributed system, partitions are inevitable. When a partition occurs, we must choose between consistency and availability. For example, if node n3 goes down, 
-    any data written to nodes n1 or n2 cannot be propagated to n3. Conversely, if data is written to n3 but not yet propagated to n1 and n2, nodes n1 and n2 will have stale data.
+একটি বিতরণ ব্যবস্থায়, পার্টিশন অনিবার্য। যখন একটি পার্টিশন ঘটে, আমাদের অবশ্যই ধারাবাহিকতা এবং প্রাপ্যতার মধ্যে নির্বাচন করতে হবে। উদাহরণস্বরূপ, যদি নোড n3 নিচে যায়, 
+    নোড n1 বা n2 এ লেখা কোনো তথ্য n3 তে প্রচার করা যাবে না। বিপরীতভাবে, যদি ডেটা n3 তে লেখা হয় কিন্তু এখনও n1 এবং n2 তে প্রচারিত না হয়, নোড n1 এবং n2-এ পুরানো ডেটা থাকবে।
 
-    <p align="center">
+<p align="center">
     <img src="./images/server-down.png"  alt="Server down" width="400">
-    </p>
+</p>
     
-- If we choose CP system, we must block all write operations to n1 and n2 to avoid data inconsistency.
-- If we choose AP system, the system keeps accepting reads, even though it might return stale data. 
-For writes, n1 and n2 keep accepting writes,
-and data will be synced to n3 when the network partition is resolved.
+- যদি আমরা CP সিস্টেম বেছে নিই, তাহলে ডেটার অসামঞ্জস্যতা এড়াতে আমাদের অবশ্যই n1 এবং n2 তে সমস্ত লেখার ক্রিয়াকলাপ ব্লক করতে হবে।
+- যদি আমরা AP সিস্টেম বেছে নিই, সিস্টেমটি পঠন গ্রহণ করতে থাকে, যদিও এটি বাসি ডেটা ফেরত দিতে পারে। 
+লেখার জন্য, n1 এবং n2 লেখাগুলি গ্রহণ করতে থাকুন,
+এবং নেটওয়ার্ক পার্টিশনের সমাধান হয়ে গেলে ডেটা n3-তে সিঙ্ক করা হবে।
 
 ---
 
-## System Components
-### 1. Data Partitioning
-- **Technique:** Consistent Hashing is used to distribute data across multiple servers evenly.
-- **Advantages:**
-  - Automatic scaling with server addition/removal.
-  - Heterogeneity through virtual nodes. The number of virtual nodes for a server is proportional to the server capacity.
+## সিস্টেম উপাদান
+### 1. ডেটা পার্টিশনিং
+- **টেকনিক:** সামঞ্জস্যপূর্ণ হ্যাশিং একাধিক সার্ভারে সমানভাবে ডেটা বিতরণ করতে ব্যবহৃত হয়।
+- **সুবিধা:**
+  - সার্ভার সংযোজন/অপসারণের সাথে স্বয়ংক্রিয় স্কেলিং।
+  - ভার্চুয়াল নোডের মাধ্যমে ভিন্নতা। একটি সার্ভারের জন্য ভার্চুয়াল নোডের সংখ্যা সার্ভারের ক্ষমতার সমানুপাতিক।
 
-### 2. Data Replication
-- Replicate data across `N` servers for high availability.
-- The N servers are chosen by walking clockwise from the server position and choose the first N servers on the ring to store data copies.Place replicas in distinct data centers to improve reliability in case of virtual nodes.
+### 2. ডেটা প্রতিলিপি
+- উচ্চ প্রাপ্যতার জন্য `N` সার্ভার জুড়ে ডেটা প্রতিলিপি করুন।
+- N সার্ভারগুলিকে সার্ভারের অবস্থান থেকে ঘড়ির কাঁটার দিকে হেঁটে বেছে নেওয়া হয় এবং ডেটা অনুলিপিগুলি সংরক্ষণ করার জন্য রিং-এ প্রথম N সার্ভারগুলি বেছে নেওয়া হয়৷ ভার্চুয়াল নোডের ক্ষেত্রে নির্ভরযোগ্যতা উন্নত করতে স্বতন্ত্র ডেটা সেন্টারে প্রতিলিপিগুলি রাখুন৷
 
-    <p align="center">
+<p align="center">
     <img src="./images/data-replication.png" alt="Data replication" width="300">
-    </p>
+</p>
 
-### 3. Consistency
-Since data is replicated at multiple nodes, it must be synchronized across replicas.
-- **Quorum Consensus:**
-  - `N`: Total replicas.
-  - `W`: Write quorum size. For a write to be considered successful, write must be acknowledged from W replicas.
-  - `R`: Read quorum size. For a read to be considered as successful, read must wait for responses from at least R replicas.
-  - **Rule:** `W + R > N` ensures strong consistency.
-  - The configuration of W, R and N is a typical tradeoff between latency and consistency. 
+### 3. ধারাবাহিকতা
+যেহেতু ডেটা একাধিক নোডে প্রতিলিপি করা হয়, তাই এটি প্রতিলিপি জুড়ে সিঙ্ক্রোনাইজ করা আবশ্যক।
+- **কোরাম সম্মতি:**
+  - `N`: মোট প্রতিলিপি।
+  - `W`: কোরামের আকার লিখুন। একটি লেখা সফল বলে বিবেচিত হওয়ার জন্য, W replicas থেকে লিখতে হবে।
+  - `R`: কোরামের আকার পড়ুন। একটি পঠন সফল হিসাবে বিবেচিত হওয়ার জন্য, পাঠকে কমপক্ষে R প্রতিলিপিগুলির প্রতিক্রিয়াগুলির জন্য অপেক্ষা করতে হবে৷
+  - **নিয়ম:** `W + R > N` শক্তিশালী ধারাবাহিকতা নিশ্চিত করে।
+  - W, R এবং N এর কনফিগারেশন হল লেটেন্সি এবং কনসিসটেন্সির মধ্যে একটি সাধারণ ট্রেডঅফ।
 
-    <p align="center">
+<p align="center">
     <img src="./images/quorum-consensus.png"   alt="Quorum consensus" width="400">
-    </p>
+</p>
     
-    - If R = 1 and W = N, the system is optimized for a fast read.
-    - If W = 1 and R = N, the system is optimized for fast write.
-    - If W + R > N, strong consistency is guaranteed (Usually N = 3, W = R = 2).
-    - If W + R <= N, strong consistency is not guaranteed.
+- যদি R = 1 এবং W = N, সিস্টেমটি দ্রুত পড়ার জন্য অপ্টিমাইজ করা হয়।
+    - যদি W = 1 এবং R = N, সিস্টেমটি দ্রুত লেখার জন্য অপ্টিমাইজ করা হয়।
+    - যদি W + R > N, শক্তিশালী ধারাবাহিকতা নিশ্চিত করা হয় (সাধারণত N = 3, W = R = 2)।
+    - যদি W + R <= N, শক্তিশালী ধারাবাহিকতা নিশ্চিত করা হয় না।
 
-- **Models**:
-  - **Strong Consistency:** A read operation returns a value corresponding to the result of the most updated write data item.
-  - **Weak Consistency:** Subsequent read operations may not see the most updated value.
-  - **Eventual Consistency:** Given enough time, all updates are propagated, and all replicas are consisten
+- **মডেল**:
+  - **দৃঢ় সামঞ্জস্যতা:** একটি পঠিত ক্রিয়াকলাপ সবচেয়ে আপডেট করা লেখা ডেটা আইটেমের ফলাফলের সাথে সম্পর্কিত একটি মান প্রদান করে।
+  - **দুর্বল সামঞ্জস্যতা:** পরবর্তী পঠিত ক্রিয়াকলাপগুলি সর্বাধিক আপডেট হওয়া মান দেখতে নাও পারে৷
+  - **প্রকৃত সামঞ্জস্য:** পর্যাপ্ত সময় দেওয়া, সমস্ত আপডেট প্রচার করা হয়, এবং সমস্ত প্রতিলিপিগুলি সামঞ্জস্যপূর্ণ হয়
 
 
-### 4. Inconsistency Resolution
-Replication gives high availability but causes inconsistencies among replicas. Versioning and
-vector locks are used to solve inconsistency problems.
-- **Versioning:** 
-    - Use **vector clocks** to track data versions and resolve conflicts.
-    - Versioning means treating each data modification as a new immutable version of data.
+### 4. অসঙ্গতি সমাধান
+প্রতিলিপি উচ্চ প্রাপ্যতা দেয় কিন্তু প্রতিলিপিগুলির মধ্যে অসঙ্গতি সৃষ্টি করে। সংস্করণ এবং
+ভেক্টর লকগুলি অসঙ্গতি সমস্যা সমাধান করতে ব্যবহৃত হয়।
+- **সংস্করণ:** 
+    - ডেটা সংস্করণগুলি ট্র্যাক করতে এবং বিরোধগুলি সমাধান করতে **ভেক্টর ঘড়ি** ব্যবহার করুন৷
+    - সংস্করণ করা মানে প্রতিটি ডেটা পরিবর্তনকে ডেটার একটি নতুন অপরিবর্তনীয় সংস্করণ হিসাবে বিবেচনা করা।
         <div>
         <img src="./images/consistent-server.png"   alt="Consisten hashing" width="400">
         <img src="./images/inconsistent-server.png"   alt="Inconsistent server" height="230">
         </div>
     
-    - Server 1 changes the name , and server 2 also changes the name. These two changes are performed simultaneously. Now, we have conflicting values, called versions v1 and v2.
+- সার্ভার 1 নাম পরিবর্তন করে, এবং সার্ভার 2ও নাম পরিবর্তন করে। এই দুটি পরিবর্তন একযোগে সঞ্চালিত হয়. এখন, আমাদের পরস্পরবিরোধী মান আছে, যাকে বলা হয় v1 এবং v2 সংস্করণ।
 
 
-- **Vector Clock**
-    1. **Setup**: A vector clock is a [server, version] pair associated with a data item. It can be used to check
-        if one version precedes, succeeds, or in conflict with others.
-        - Assume a vector clock represented by D([S1, v1], [S2, v2], …, [Sn, vn]), If data item D is written to server
-        Si, the system must perform one of the following tasks.
-        - Where: `D` is the data item.`Si` is the server identifier.`vi` is the version counter for the data at server `Si`.
+- **ভেক্টর ঘড়ি**
+    1. **সেটআপ**: একটি ভেক্টর ঘড়ি হল একটি ডেটা আইটেমের সাথে যুক্ত [সার্ভার, সংস্করণ] জোড়া। এটি পরীক্ষা করতে ব্যবহার করা যেতে পারে
+        যদি একটি সংস্করণ পূর্বে হয়, সফল হয়, বা অন্যের সাথে দ্বন্দ্বে।
+        - D([S1, v1], [S2, v2], …, [Sn, vn] দ্বারা উপস্থাপিত একটি ভেক্টর ঘড়ি ধরে নিন, যদি ডেটা আইটেম D সার্ভারে লেখা হয়
+        তাই, সিস্টেমকে অবশ্যই নিম্নলিখিত কাজগুলির মধ্যে একটি করতে হবে।
+        - যেখানে: `D` হল ডেটা আইটেম৷ `Si` হল সার্ভার শনাক্তকারী৷ `vi` হল সার্ভার `Si`-এ ডেটার সংস্করণ কাউন্টার৷
 
-    2. **Updating the Vector Clock:**  When a data item is modified at a server:
-        - If the server exists in the vector clock, its version counter is incremented.
-        - Otherwise, a new entry is added to the vector clock.
+2. **ভেক্টর ঘড়ি আপডেট করা:** যখন একটি সার্ভারে একটি ডেটা আইটেম পরিবর্তন করা হয়:
+        - ভেক্টর ঘড়িতে সার্ভারটি বিদ্যমান থাকলে, এর সংস্করণ কাউন্টার বৃদ্ধি করা হয়।
+        - অন্যথায়, ভেক্টর ঘড়িতে একটি নতুন এন্ট্রি যোগ করা হয়।
 
-    3. **Conflict Detection:**
-        - **No Conflict:** A version X is an ancestor of version Y if all counters in X are less than or equal to those in Y.
-        - **Conflict Exists:** Two versions are siblings if there is at least one counter in Y that is less than its counterpart in X.
+3. **দ্বন্দ্ব সনাক্তকরণ:**
+        - **কোন দ্বন্দ্ব নেই:** একটি সংস্করণ X সংস্করণ Y এর পূর্বপুরুষ যদি X-এর সমস্ত কাউন্টার Y-এর থেকে কম বা সমান হয়।
+        - **বিরোধ বিদ্যমান:** দুটি সংস্করণ ভাইবোন হয় যদি Y-তে অন্তত একটি কাউন্টার থাকে যা X-এর কাউন্টার থেকে কম।
 
-    4. **Conflict Resolution:** When conflicts are detected (sibling versions), the system relies on application-specific logic or client intervention to   reconcile the data.
+4. **দ্বন্দ্ব সমাধান:** যখন দ্বন্দ্ব সনাক্ত করা হয় (সহোদর সংস্করণ), সিস্টেমটি ডেটা পুনর্মিলনের জন্য অ্যাপ্লিকেশন-নির্দিষ্ট যুক্তি বা ক্লায়েন্ট হস্তক্ষেপের উপর নির্ভর করে।
 
-        <p align="center">
+<p align="center">
         <img src="./images/vector-clock.png"  alt="Server hashing" width="500">
-        </p>
+</p>
 
-- **Challenges:**
-  - Increased complexity for clients.
-  - Vector clock size may grow with many updates, requiring trimming strategies to limit its size.
+- **চ্যালেঞ্জ:**
+  - ক্লায়েন্টদের জন্য জটিলতা বৃদ্ধি।
+  - ভেক্টর ঘড়ির আকার অনেক আপডেটের সাথে বাড়তে পারে, এর আকার সীমিত করার জন্য ছাঁটাই করার কৌশল প্রয়োজন।
 
 
-### 5. Handling Failures
+### 5. হ্যান্ডলিং ব্যর্থতা
 
-#### a. Failure Detection
-It is insufficient to believe that a server is down because another server says so.Usually, it requires at least two independent sources of information to mark a server down.
-- **Gossip Protocol:**
+#### ক ব্যর্থতা সনাক্তকরণ
+এটি বিশ্বাস করা অপর্যাপ্ত যে একটি সার্ভার ডাউন আছে কারণ অন্য একটি সার্ভার তাই বলে৷ সাধারণত, একটি সার্ভার ডাউন চিহ্নিত করতে কমপক্ষে দুটি স্বাধীন তথ্যের উত্স প্রয়োজন৷
+- **গসিপ প্রোটোকল:**
     <div style="margin-left:3rem">
         <img src="./images/gossip-protocol.png"  alt="Gossip protocol" width="600">
     </div>
 
-    - Each node maintains member IDs and heartbeat counters.
-    - Each node periodically increments its heartbeat counter.
-    - Each node periodically sends heartbeats to a set of random nodes.
-    - If the heartbeat has not increased for more than predefined periods, the member is
-    considered as offline
+- প্রতিটি নোড সদস্য আইডি এবং হার্টবিট কাউন্টার বজায় রাখে।
+    - প্রতিটি নোড পর্যায়ক্রমে তার হার্টবিট কাউন্টার বৃদ্ধি করে।
+    - প্রতিটি নোড পর্যায়ক্রমে র্যান্ডম নোডের একটি সেটে হার্টবিট পাঠায়।
+    - হৃদস্পন্দন পূর্বনির্ধারিত সময়ের চেয়ে বেশি না হলে সদস্য
+    অফলাইন হিসাবে বিবেচিত
 
 
 
-#### b. Temporary Failures
-- **Sloppy Quorum:** Use healthy nodes to maintain operations temporarily.
+#### খ. অস্থায়ী ব্যর্থতা
+- **মলিন কোরাম:** অস্থায়ীভাবে অপারেশন বজায় রাখতে স্বাস্থ্যকর নোড ব্যবহার করুন।
         <p align="center">
         <img src="./images/sloppy-quorum.png"   alt="Sloppy Quorum" width="400">
-        </p>
+</p>
 
-    - After detecting failures, the system needs to deploy certain mechanisms to ensure availability
-    - Instead of enforcing the quorum requirement, the system chooses the first W healthy servers for writes and first R
-    healthy servers for reads on the hash ring. 
-    - Offline servers are ignored. If a server is unavailable, another server will process requests temporarily
+- ব্যর্থতা শনাক্ত করার পরে, উপলব্ধতা নিশ্চিত করার জন্য সিস্টেমটিকে নির্দিষ্ট ব্যবস্থা স্থাপন করতে হবে
+    - কোরামের প্রয়োজনীয়তা প্রয়োগ করার পরিবর্তে, সিস্টেমটি লেখার জন্য প্রথম W সুস্থ সার্ভারগুলি বেছে নেয় এবং প্রথম R
+    হ্যাশ রিং এ পড়ার জন্য স্বাস্থ্যকর সার্ভার। 
+    - অফলাইন সার্ভার উপেক্ষা করা হয়. একটি সার্ভার অনুপলব্ধ হলে, অন্য সার্ভার অস্থায়ীভাবে অনুরোধগুলি প্রক্রিয়া করবে৷
 
 
-- **Hinted Handoff:** Offline servers catch up with changes upon recovery.
-    - When the down server is up, changes will be pushed back to achieve data consistency
+- **ইন্টেড হ্যান্ডঅফ:** অফলাইন সার্ভারগুলি পুনরুদ্ধার করার পরে পরিবর্তনগুলি ধরবে৷
+    - ডাউন সার্ভার আপ হয়ে গেলে, ডেটা সামঞ্জস্য অর্জনের জন্য পরিবর্তনগুলিকে পিছনে ঠেলে দেওয়া হবে৷
 
-#### c. Permanent Failures
-- Use **Merkle Trees** for efficient synchronization between replicas.
-    A **Merkle Tree** (or hash tree) is a data structure to efficiently detect and resolve inconsistencies between replicas during permanent failures. 
+#### গ. স্থায়ী ব্যর্থতা
+- প্রতিলিপিগুলির মধ্যে দক্ষ সিঙ্ক্রোনাইজেশনের জন্য **মার্কেল ট্রিস** ব্যবহার করুন৷
+    একটি **মার্কেল ট্রি** (বা হ্যাশ ট্রি) স্থায়ী ব্যর্থতার সময় প্রতিলিপিগুলির মধ্যে অসঙ্গতিগুলি দক্ষতার সাথে সনাক্ত এবং সমাধান করার জন্য একটি ডেটা কাঠামো।
 
-- Working
-    1. **Structure:**
-        - **Leaf Nodes** store the hash of individual data blocks.
-        - **Non-Leaf Nodes** store the hash of their child nodes.
-        - The **root hash** represents the combined state of all data in the tree.
+- কাজ করছে
+    1. **গঠন:**
+        - **লিফ নোড** পৃথক ডেটা ব্লকের হ্যাশ সংরক্ষণ করে।
+        - **নন-লিফ নোড** তাদের চাইল্ড নোডের হ্যাশ সংরক্ষণ করে।
+        - **রুট হ্যাশ** গাছের সমস্ত ডেটার সম্মিলিত অবস্থার প্রতিনিধিত্ব করে।
 
-    2. **Building a Merkle Tree:**
-        - **Step 1:** Divide the key space into buckets.
+2. **মার্কেল ট্রি তৈরি করা:**
+        - **ধাপ 1:** কী স্পেসকে বালতিতে ভাগ করুন।
             
             <img src="./images/key-bucket.png"   alt="Key Bucket" width="500">
 
-        - **Step 2:** Hash each key in a bucket using uniform hashing.
+- **ধাপ 2:** ইউনিফর্ম হ্যাশিং ব্যবহার করে একটি বালতিতে প্রতিটি কী হ্যাশ করুন।
 
             <img src="./images/hash-key-bucket.png"   alt="Hash Key Bucket" width="500">
 
-        - **Step 3:** Create a single hash for each bucket.
+- **ধাপ 3:** প্রতিটি বালতির জন্য একটি একক হ্যাশ তৈরি করুন।
         
             <img src="./images/hash-bucket.png"   alt="Hash Bucket" width="500">
 
-        - **Step 4:** Combine hashes of buckets to compute higher-level hashes, culminating in the root hash.
+- **ধাপ 4:** উচ্চ-স্তরের হ্যাশগুলি গণনা করতে বালতিগুলির হ্যাশগুলিকে একত্রিত করুন, রুট হ্যাশের সমাপ্তিতে৷
 
             <img src="./images/merkel-tree.png"   alt="Merkel Tree" width="500">
 
 
 
-    3. **Synchronization:**
-        - To synchronize two replicas:
-            - Compare their root hashes.
-            - If the root hashes match, the replicas are consistent.
-            - If the root hashes differ, compare child hashes recursively to identify inconsistent buckets.
-        - Only the inconsistent data is synchronized.
+3. **সিঙ্ক্রোনাইজেশন:**
+        - দুটি প্রতিলিপি সিঙ্ক্রোনাইজ করতে:
+            - তাদের রুট হ্যাশ তুলনা করুন.
+            - যদি রুট হ্যাশগুলি মিলে যায়, প্রতিলিপিগুলি সামঞ্জস্যপূর্ণ।
+            - যদি রুট হ্যাশগুলি ভিন্ন হয়, তাহলে অসামঞ্জস্যপূর্ণ বালতিগুলি সনাক্ত করতে চাইল্ড হ্যাশগুলি পুনরাবৃত্তিমূলকভাবে তুলনা করুন।
+        - শুধুমাত্র অসামঞ্জস্যপূর্ণ ডেটা সিঙ্ক্রোনাইজ করা হয়।
 
-- Advantages
-    - **Efficiency:** Only inconsistent data is synchronized, reducing data transfer.
-    - **Scalability:** Effective for large datasets with minimal synchronization overhead.
-    - **Reliability:** Ensures data consistency across replicas.
+- সুবিধা
+    - **দক্ষতা:** শুধুমাত্র অসামঞ্জস্যপূর্ণ ডেটা সিঙ্ক্রোনাইজ করা হয়, ডেটা স্থানান্তর হ্রাস করে৷
+    - **স্কেলযোগ্যতা:** ন্যূনতম সিঙ্ক্রোনাইজেশন ওভারহেড সহ বড় ডেটাসেটের জন্য কার্যকর।
+    - **বিশ্বস্ততা:** প্রতিলিপি জুড়ে ডেটা সামঞ্জস্য নিশ্চিত করে।
 
 
-### 6. Handling Data Center Outages
-- Replicate data across multiple data centers to ensure availability during outages.
+### 6. ডেটা সেন্টার বিভ্রাট পরিচালনা করা
+- বিভ্রাটের সময় প্রাপ্যতা নিশ্চিত করতে একাধিক ডেটা সেন্টার জুড়ে ডেটা প্রতিলিপি করুন।
 
 ---
 
-## Write and Read Paths
-### 1. Write Path (Based on Cassandra architecture)
+## পাথ লিখুন এবং পড়ুন
+### 1. পথ লিখুন (ক্যাসান্দ্রা স্থাপত্যের উপর ভিত্তি করে)
 
 <div style="margin-left:3rem">
     <img src="./images/write-path.png"   alt="Hash Bucket" width="500">
 </div>
 
-- Persist the write in a **commit log**.
-- Save data to a **memory cache**.
-- Flush data to **SSTable** (Sorted String Table) on disk when cache is full.
+- একটি **কমিট লগ** এ লেখাটি চালিয়ে যান।
+- একটি **মেমরি ক্যাশে** ডেটা সংরক্ষণ করুন।
+- ক্যাশে পূর্ণ হলে ডিস্কে **SSTable** (সর্টেড স্ট্রিং টেবিল) এ ডেটা ফ্লাশ করুন।
 
    
 
-### 2. Read Path
+### 2. পথ পড়ুন
 <div style="margin-left:3rem">
     <img src="./images/read-path.png"   alt="Hash Bucket" width="500">
     <img src="./images/read-path-without-cache.png"   alt="Hash Bucket" width="500">
 </div>
 
-- Check **memory cache** for the data.
-- If absent, use a **Bloom Filter** to locate the data in SSTables.
-- Retrieve and return the data.
+- ডেটার জন্য **মেমরি ক্যাশে** চেক করুন।
+- অনুপস্থিত থাকলে, SSTables-এ ডেটা সনাক্ত করতে একটি **ব্লুম ফিল্টার** ব্যবহার করুন।
+- পুনরুদ্ধার করুন এবং ডেটা ফেরত দিন।
 
 
 ---
 
-## Final Architecture
+## চূড়ান্ত আর্কিটেকচার
 
 <p align="center">
 <img src="./images/final-architecture.png"   alt="Hash Bucket" width="500">
 </p>
 
 
--  Clients communicate with the key-value store through simple APIs: get(key) and put(key,
-value).
-- A coordinator is a node that acts as a proxy between the client and the key-value store.
-- Nodes are distributed on a ring using consistent hashing.
-- The system is completely decentralized so adding and moving nodes can be automatic.
-- Data is replicated at multiple nodes.
-- There is no single point of failure as every node has the same set of responsibilities.
+- ক্লায়েন্টরা সাধারণ API-এর মাধ্যমে কী-ভ্যালু স্টোরের সাথে যোগাযোগ করে: get(key) এবং put(key,
+মান)।
+- একটি সমন্বয়কারী একটি নোড যা ক্লায়েন্ট এবং কী-মান স্টোরের মধ্যে একটি প্রক্সি হিসাবে কাজ করে।
+- নোডগুলি সামঞ্জস্যপূর্ণ হ্যাশিং ব্যবহার করে একটি রিংয়ে বিতরণ করা হয়।
+- সিস্টেমটি সম্পূর্ণ বিকেন্দ্রীকৃত তাই নোড যোগ করা এবং সরানো স্বয়ংক্রিয় হতে পারে।
+- একাধিক নোডে ডেটা প্রতিলিপি করা হয়।
+- ব্যর্থতার কোন একক বিন্দু নেই কারণ প্রতিটি নোডের দায়িত্বের একই সেট রয়েছে।
 
 

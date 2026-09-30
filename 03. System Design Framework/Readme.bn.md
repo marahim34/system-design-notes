@@ -1,115 +1,115 @@
-# অধ্যায় 3: সিস্টেম ডিজাইন ইন্টারভিউ ফ্রেমওয়ার্ক
+# অধ্যায় 3: সিস্টেম ডিজাইন ইন্টারভিউয়ের জন্য একটি কাঠামো
 
-## ভূমিকা (Introduction)
-System design interviews are a key part of the hiring process, simulating real-life problem-solving scenarios. These interviews evaluate not just technical skills but also collaboration, communication, and the ability to handle ambiguous requirements.
+## ভূমিকা
+সিস্টেম ডিজাইন ইন্টারভিউ হল নিয়োগ প্রক্রিয়ার একটি মূল অংশ, বাস্তব জীবনের সমস্যা সমাধানের পরিস্থিতি অনুকরণ করে। এই সাক্ষাত্কারগুলি কেবল প্রযুক্তিগত দক্ষতাই নয় বরং সহযোগিতা, যোগাযোগ এবং অস্পষ্ট প্রয়োজনীয়তাগুলি পরিচালনা করার ক্ষমতাকেও মূল্যায়ন করে।
 
-This chapter introduces a **4-step framework** for navigating system design interviews effectively.
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-
-### Key Objectives
-- Clarify requirements and assumptions.
-- Avoid jumping into solutions prematurely.
-- Showcase critical thinking by asking good questions.
-
-### Approach
-- **Ask Clarifying Questions:**
-  - What are the most important features?
-  - What scale does the system need to handle?
-  - Are we building for web, mobile, or both?
-  - Are there existing technologies or constraints?
-
-- **Document Assumptions:** Write assumptions on a whiteboard or paper for reference.
-
-### Example
-**Problem:** Design a news feed system.  
-**Questions:**
-- Is it a mobile app, web app, or both?
-- How many friends can a user have?
-- Should the feed include images and videos?
-- Is the feed sorted by reverse chronological order?
+এই অধ্যায়টি কার্যকরভাবে সিস্টেম ডিজাইন ইন্টারভিউ নেভিগেট করার জন্য একটি **4-পদক্ষেপ কাঠামো** উপস্থাপন করেছে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-### Key Objectives
-- Develop a high-level architecture.
-- Collaborate with the interviewer to refine the design.
+### মূল উদ্দেশ্য
+- প্রয়োজনীয়তা এবং অনুমান স্পষ্ট করুন।
+- অকালে সমাধানে ঝাঁপিয়ে পড়া এড়িয়ে চলুন।
+- ভাল প্রশ্ন জিজ্ঞাসা করে সমালোচনামূলক চিন্তাভাবনা প্রদর্শন করুন।
 
-### Approach
-- **Draft a Blueprint:**
-  - Use box diagrams for key components (e.g., clients, APIs, databases, caches, CDNs).
-  - Treat the interviewer as a teammate to refine the design.
+### এপ্রোচ
+- **স্পষ্টকারী প্রশ্ন জিজ্ঞাসা করুন:**
+  - সবচেয়ে গুরুত্বপূর্ণ বৈশিষ্ট্য কি?
+  - সিস্টেম পরিচালনা করতে কি স্কেল প্রয়োজন?
+  - আমরা কি ওয়েব, মোবাইল বা উভয়ের জন্য তৈরি করছি?
+  - বিদ্যমান প্রযুক্তি বা সীমাবদ্ধতা আছে?
 
-- **Perform Back-of-the-Envelope Calculations:**
-  - Ensure the design can handle the scale constraints.
+- **ডকুমেন্ট অনুমান:** রেফারেন্সের জন্য একটি হোয়াইটবোর্ড বা কাগজে অনুমান লিখুন।
 
-- **Walk Through Use Cases:** Identify edge cases and validate design assumptions.
-
-### Example
-For a news feed system, divide the design into:
-1. **Feed Publishing Flow:** Writing posts into databases and populating friends' feeds.
-2. **Feed Retrieval Flow:** Aggregating and displaying friends' posts in reverse chronological order.
-
----
-
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
-
-### Key Objectives
-- Dive into critical components.
-- Showcase depth of understanding and adaptability.
-
-### Approach
-- **Prioritize Key Components:** Focus on areas most relevant to the problem.
-- **Discuss Bottlenecks:** Identify potential performance issues and propose solutions.
-- **Balance Detail:** Avoid over-engineering or unnecessary deep dives.
-
-### Example Topics
-- **URL Shortener:** Focus on hash function design.
-- **Chat System:** Explore latency reduction and online/offline status handling.
-- **News Feed System:** Examine feed publishing and retrieval processes.
+### উদাহরণ
+**সমস্যা:** একটি নিউজ ফিড সিস্টেম ডিজাইন করুন।  
+**প্রশ্ন:**
+- এটি কি একটি মোবাইল অ্যাপ, ওয়েব অ্যাপ, নাকি উভয়ই?
+- একজন ব্যবহারকারীর কতজন বন্ধু থাকতে পারে?
+- ফিডে কি ছবি এবং ভিডিও থাকা উচিত?
+- ফিড কি বিপরীত কালানুক্রমিক ক্রম অনুসারে সাজানো হয়েছে?
 
 ---
 
-## ধাপ 4: Wrap-Up
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
 
-### Key Objectives
-- Highlight areas for improvement.
-- Recap the design and discuss follow-ups.
+### মূল উদ্দেশ্য
+- একটি উচ্চ-স্তরের আর্কিটেকচার বিকাশ করুন।
+- নকশা পরিমার্জিত করতে ইন্টারভিউয়ারের সাথে সহযোগিতা করুন।
 
-### Approach
-- **Identify Bottlenecks:** Discuss potential limitations and scaling strategies.
-- **Summarize Design:** Recap major design decisions and trade-offs.
-- **Propose Enhancements:**
-  - How to scale from 1 million to 10 million users.
-  - Error handling for server failures or network issues.
+### এপ্রোচ
+- **একটি ব্লুপ্রিন্ট খসড়া:**
+  - মূল উপাদানগুলির জন্য বক্স ডায়াগ্রাম ব্যবহার করুন (যেমন, ক্লায়েন্ট, API, ডাটাবেস, ক্যাশে, CDN)।
+  - নকশা পরিমার্জিত করার জন্য সাক্ষাত্কারকারীকে একজন সতীর্থ হিসাবে ব্যবহার করুন।
 
----
+- **খামের পিছনের গণনাগুলি সম্পাদন করুন:**
+  - নিশ্চিত করুন যে নকশাটি স্কেলের সীমাবদ্ধতাগুলি পরিচালনা করতে পারে।
 
-## Best Practices
+- **ওয়াক থ্রু ইউজ কেস:** এজ কেস সনাক্ত করুন এবং ডিজাইন অনুমান যাচাই করুন।
 
-### Dos
-- **Ask Questions:** Clarify ambiguities before diving into solutions.
-- **Communicate:** Share your thought process with the interviewer.
-- **Iterate with the Interviewer:** Treat them as a collaborator.
-- **Show Flexibility:** Suggest alternative approaches and refine your design.
-- **Focus on Critical Components:** Prioritize key parts of the system.
-
-### Don’ts
-- **Avoid Premature Solutions:** Don’t design before understanding the requirements.
-- **Don’t Go Silent:** Communicate regularly during the process.
-- **Avoid Over-Engineering:** Focus on practical, scalable solutions.
+### উদাহরণ
+একটি নিউজ ফিড সিস্টেমের জন্য, নকশাটিকে ভাগ করুন:
+1. **ফিড পাবলিশিং ফ্লো:** ডাটাবেসে পোস্ট লেখা এবং বন্ধুদের ফিড পপুলেট করা।
+2. **ফিড পুনরুদ্ধার প্রবাহ:** বিপরীত কালানুক্রমিক ক্রমে বন্ধুদের পোস্ট একত্রিত করা এবং প্রদর্শন করা।
 
 ---
 
-## Time Management
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Suggested Time Allocation (for 45-Minute Interviews):
-1. **Understand Problem and Scope:** 3–10 minutes
-2. **High-Level Design and Buy-In:** 10–15 minutes
-3. **Deep Dive:** 10–25 minutes
-4. **Wrap-Up:** 3–5 minutes
+### মূল উদ্দেশ্য
+- সমালোচনামূলক উপাদান মধ্যে ডুব.
+- বোঝার গভীরতা এবং অভিযোজনযোগ্যতা প্রদর্শন করুন।
+
+### এপ্রোচ
+- **প্রধান উপাদানগুলিকে অগ্রাধিকার দিন:** সমস্যাটির সাথে সবচেয়ে প্রাসঙ্গিক ক্ষেত্রগুলিতে ফোকাস করুন৷
+- **বাটলনেক নিয়ে আলোচনা করুন:** সম্ভাব্য কর্মক্ষমতা সমস্যা চিহ্নিত করুন এবং সমাধানের প্রস্তাব করুন।
+- **ব্যালেন্স বিশদ:** অতিরিক্ত ইঞ্জিনিয়ারিং বা অপ্রয়োজনীয় গভীর ডাইভ এড়িয়ে চলুন।
+
+### উদাহরণ বিষয়
+- **ইউআরএল শর্টনার:** হ্যাশ ফাংশন ডিজাইনে ফোকাস করুন।
+- **চ্যাট সিস্টেম:** বিলম্ব কমানো এবং অনলাইন/অফলাইন স্ট্যাটাস হ্যান্ডলিং অন্বেষণ করুন।
+- **নিউজ ফিড সিস্টেম:** ফিড প্রকাশনা এবং পুনরুদ্ধার প্রক্রিয়া পরীক্ষা করুন।
+
+---
+
+## ধাপ 4: মোড়ানো
+
+### মূল উদ্দেশ্য
+- উন্নতির জন্য ক্ষেত্রগুলি হাইলাইট করুন।
+- নকশা পুনরুদ্ধার করুন এবং ফলো-আপ নিয়ে আলোচনা করুন।
+
+### এপ্রোচ
+- **বিঘ্ন চিহ্নিত করুন:** সম্ভাব্য সীমাবদ্ধতা এবং স্কেলিং কৌশল নিয়ে আলোচনা করুন।
+- **ডিজাইনের সংক্ষিপ্ত বিবরণ:** প্রধান ডিজাইনের সিদ্ধান্ত এবং ট্রেড-অফগুলিকে পুনঃক্যাপ করুন।
+- **উন্নতির প্রস্তাব:**
+  - কিভাবে 1 মিলিয়ন থেকে 10 মিলিয়ন ব্যবহারকারী স্কেল করা যায়।
+  - সার্ভার ব্যর্থতা বা নেটওয়ার্ক সমস্যাগুলির জন্য ত্রুটি পরিচালনা।
+
+---
+
+## সর্বোত্তম অনুশীলন
+
+### ডস
+- **প্রশ্ন জিজ্ঞাসা করুন:** সমাধানে ডুব দেওয়ার আগে অস্পষ্টতাগুলি পরিষ্কার করুন।
+- **যোগাযোগ করুন:** ইন্টারভিউয়ারের সাথে আপনার চিন্তার প্রক্রিয়া শেয়ার করুন।
+- **সাক্ষাত্কারকারীর সাথে পুনরাবৃত্তি করুন:** তাদের সাথে সহযোগী হিসাবে আচরণ করুন।
+- **নমনীয়তা দেখান:** বিকল্প পদ্ধতির পরামর্শ দিন এবং আপনার নকশা পরিমার্জন করুন।
+- **গুরুত্বপূর্ণ উপাদানগুলিতে ফোকাস করুন:** সিস্টেমের মূল অংশগুলিকে অগ্রাধিকার দিন৷
+
+### করবেন না
+- **অকাল সমাধান এড়িয়ে চলুন:** প্রয়োজনীয়তা বোঝার আগে ডিজাইন করবেন না।
+- **নিঃশব্দে যান না:** প্রক্রিয়া চলাকালীন নিয়মিত যোগাযোগ করুন।
+- **ওভার-ইঞ্জিনিয়ারিং এড়িয়ে চলুন:** ব্যবহারিক, পরিমাপযোগ্য সমাধানগুলিতে ফোকাস করুন।
+
+---
+
+## সময় ব্যবস্থাপনা
+
+### প্রস্তাবিত সময় বরাদ্দ (৪৫ মিনিটের সাক্ষাৎকারের জন্য):
+1. **সমস্যা এবং সুযোগ বুঝুন:** 3-10 মিনিট
+2. **হাই-লেভেল ডিজাইন এবং বাই-ইন:** 10-15 মিনিট
+3. **ডিপ ডাইভ:** 10-25 মিনিট
+4. **র্যাপ-আপ:** 3-5 মিনিট
 

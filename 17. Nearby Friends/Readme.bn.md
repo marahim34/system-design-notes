@@ -1,229 +1,229 @@
-# অধ্যায় 17: নিয়ারবাই ফ্রেন্ডস সিস্টেম
+# অধ্যায় 17: কাছাকাছি বন্ধুরা
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-This chapter focuses on designing a scalable backend for an application which enables user to share their location and discover friends who are **nearby**.
+এই অধ্যায়টি একটি অ্যাপ্লিকেশনের জন্য একটি স্কেলযোগ্য ব্যাকএন্ড ডিজাইন করার উপর ফোকাস করে যা ব্যবহারকারীকে তাদের অবস্থান ভাগ করে নিতে এবং **আশেপাশে** বন্ধুদের আবিষ্কার করতে সক্ষম করে।
 
-The major difference with the proximity chapter is that in this problem, **locations constantly change**, whereas in that one, business addresses more or less stay the same.
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-
-Some questions to drive the interview:
- * C: How geographically close is considered to be "nearby"?
- * I: 5 miles, this number should be configurable
- * C: Is distance calculated as straight-line distance vs. taking into consideration eg a river in-between friends
- * I: Yes, that is a reasonable assumption
- * C: How many users does the app have?
- * I: 1bil users and 10% of them use the nearby friends feature
- * C: Do we need to store location history?
- * I: Yes, it can be valuable for eg machine learning
- * C: Can we assume inactive friends will disappear from the feature in 10min
- * I: Yes
- * C: Do we need to worry about GDPR, etc?
- * I: No, for simlicity's sake
-
-### **Functional requirements**
-
- * Users should be able to see nearby friends on their mobile app. Each friend has a distance and timestamp, indicating when the location was updated
- * Nearby friends list should be updated every few seconds
-
-### **Non-functional requirements**
-
-- **কম লেটেন্সি (Low Latency)**: it's important to receive location updates without too much delay
-- **Reliability**: Occassional data point loss is acceptable, but system should be generally available
-- **Eventual consistency**: Location data store doesn't need strong consistency. Few seconds delay in receiving location data in different replicas is acceptable
-
-### **Back-of-the-envelope**
-
-Some estimations to determine potential scale:
- * Nearby friends are friends within 5mile radius
- * Location refresh interval is 30s. Human walking speed is slow, hence, no need to update location too frequently.
- * On average, 100mil users use the feature every day \w 10% concurrent users, ie 10mil
- * On average, a user has 400 friends, all of them use the nearby friends feature
- * App displays 20 nearby friends per page
- * **Location Update QPS** = 10mil / 30 == ~334k updates per second
+প্রক্সিমিটি অধ্যায়ের সাথে প্রধান পার্থক্য হল এই সমস্যাটিতে, **অবস্থানগুলি ক্রমাগত পরিবর্তিত হয়**, যেখানে একটিতে, ব্যবসার ঠিকানা কমবেশি একই থাকে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-Before exploring API and data model design, we'll study the communication protocol we'll use as it's less ubiquitous than traditional request-response communication model.
+ইন্টারভিউ চালানোর জন্য কিছু প্রশ্ন:
+ * C: ভৌগোলিকভাবে কতটা কাছাকাছি "আশেপাশে" বলে বিবেচিত হয়?
+ * আমি: 5 মাইল, এই নম্বরটি কনফিগারযোগ্য হওয়া উচিত
+ * সি: দূরত্বকে কি সরলরেখার দূরত্ব হিসাবে গণনা করা হয় বনাম. বিবেচনায় নেওয়া যেমন বন্ধুদের মধ্যে একটি নদী
+ * আমি: হ্যাঁ, এটি একটি যুক্তিসঙ্গত অনুমান
+ * C: অ্যাপটির কতজন ব্যবহারকারী আছে?
+ * আমি: 1 বিলিয়ন ব্যবহারকারী এবং তাদের মধ্যে 10% কাছাকাছি বন্ধুদের বৈশিষ্ট্য ব্যবহার করে
+ * সি: আমাদের কি লোকেশন হিস্ট্রি সঞ্চয় করতে হবে?
+ * আমি: হ্যাঁ, এটি যেমন মেশিন লার্নিং এর জন্য মূল্যবান হতে পারে
+ * সি: আমরা কি অনুমান করতে পারি যে নিষ্ক্রিয় বন্ধুরা 10 মিনিটের মধ্যে বৈশিষ্ট্য থেকে অদৃশ্য হয়ে যাবে
+ *আমি: হ্যাঁ
+ * সি: আমাদের কি জিডিপিআর ইত্যাদি নিয়ে চিন্তা করতে হবে?
+ * আমি: না, সরলতার জন্য
 
-### **High-level design**
+### **কার্যকর প্রয়োজনীয়তা**
 
-At a high-level we'd want to establish effective message passing between peers. This can be done via a peer-to-peer protocol, but that's not practical for a mobile app with flaky connection and tight power consumption constraints.
+* ব্যবহারকারীরা তাদের মোবাইল অ্যাপে কাছাকাছি বন্ধুদের দেখতে সক্ষম হওয়া উচিত। প্রতিটি বন্ধুর একটি দূরত্ব এবং টাইমস্ট্যাম্প রয়েছে যা নির্দেশ করে যে অবস্থানটি কখন আপডেট করা হয়েছিল
+ * কাছাকাছি বন্ধুদের তালিকা প্রতি কয়েক সেকেন্ডে আপডেট করা উচিত
 
-A more practical approach is to use a shared backend as a fan-out mechanism towards friends you want to reach:
+### **অকার্যকর প্রয়োজনীয়তা**
+
+- **কম লেটেন্সি**: খুব বেশি দেরি না করে লোকেশন আপডেট পাওয়া গুরুত্বপূর্ণ
+- **নির্ভরযোগ্যতা**: মাঝে মাঝে ডেটা পয়েন্ট ক্ষতি গ্রহণযোগ্য, তবে সিস্টেমটি সাধারণত উপলব্ধ হওয়া উচিত
+- **প্রকৃত সামঞ্জস্য**: অবস্থান ডেটা স্টোরের শক্তিশালী ধারাবাহিকতার প্রয়োজন নেই। বিভিন্ন প্রতিলিপিতে অবস্থানের ডেটা পেতে কয়েক সেকেন্ড বিলম্ব গ্রহণযোগ্য
+
+### **খামের পিছনে**
+
+সম্ভাব্য স্কেল নির্ধারণের জন্য কিছু অনুমান:
+ * কাছাকাছি বন্ধুরা 5 মাইল ব্যাসার্ধের মধ্যে বন্ধু
+ * অবস্থান রিফ্রেশ ব্যবধান 30s হয়. মানুষের হাঁটার গতি ধীর, তাই ঘন ঘন অবস্থান আপডেট করার দরকার নেই।
+ * গড়ে, 100 মিলিয়ন ব্যবহারকারী প্রতিদিন বৈশিষ্ট্যটি ব্যবহার করেন \w 10% সমবর্তী ব্যবহারকারী, অর্থাৎ 10 মিলিয়ন
+ * গড়ে একজন ব্যবহারকারীর 400 জন বন্ধু থাকে, তারা সবাই কাছাকাছি বন্ধু বৈশিষ্ট্য ব্যবহার করে
+ * অ্যাপ প্রতি পৃষ্ঠায় 20 জন কাছাকাছি বন্ধু প্রদর্শন করে
+ * **লোকেশন আপডেট QPS** = 10mil / 30 == ~334k আপডেট প্রতি সেকেন্ডে
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+
+API এবং ডেটা মডেল ডিজাইন অন্বেষণ করার আগে, আমরা যে যোগাযোগ প্রোটোকলটি ব্যবহার করব তা অধ্যয়ন করব কারণ এটি প্রচলিত অনুরোধ-প্রতিক্রিয়া যোগাযোগ মডেলের চেয়ে কম সর্বব্যাপী।
+
+### **উচ্চ-স্তরের নকশা**
+
+উচ্চ-স্তরে আমরা সমবয়সীদের মধ্যে কার্যকর বার্তা প্রেরণ করতে চাই। এটি একটি পিয়ার-টু-পিয়ার প্রোটোকলের মাধ্যমে করা যেতে পারে, তবে এটি ফ্ল্যাকি সংযোগ এবং আঁটসাঁট বিদ্যুত খরচের সীমাবদ্ধতার সাথে একটি মোবাইল অ্যাপের জন্য ব্যবহারিক নয়।
+
+আপনি যে বন্ধুদের কাছে পৌঁছাতে চান তাদের প্রতি ফ্যান-আউট মেকানিজম হিসাবে একটি শেয়ার্ড ব্যাকএন্ড ব্যবহার করা একটি আরও ব্যবহারিক পদ্ধতি:
 
 <div style="margin-left:3rem">
     <img src="./images/fan-out-backend.png" alt="fan-out-backend" width="500" />
 </div>
 
-What does the backend do?
- * Receives location updates from all active users
- * For each location update, find all active users which should receive it and forward it to them
- * Do not forward location data if distance between friends is beyond the configured threshold
+ব্যাকএন্ড কি করে?
+ * সমস্ত সক্রিয় ব্যবহারকারীদের থেকে অবস্থান আপডেট গ্রহণ করে
+ * প্রতিটি অবস্থান আপডেটের জন্য, সমস্ত সক্রিয় ব্যবহারকারীদের খুঁজুন যারা এটি গ্রহণ করবে এবং তাদের কাছে এটি ফরওয়ার্ড করবে
+ * বন্ধুদের মধ্যে দূরত্ব কনফিগার করা প্রান্তিকের বাইরে থাকলে অবস্থানের ডেটা ফরোয়ার্ড করবেন না
 
-This sounds simple but the challenge is to design the system for the scale we're operating with.
+এটি সহজ শোনাচ্ছে কিন্তু চ্যালেঞ্জ হল আমরা যে স্কেলের সাথে কাজ করছি তার জন্য সিস্টেমটি ডিজাইন করা।
 
-We'll start with a simpler design at first and discuss a more advanced approach in the deep dive:
+আমরা প্রথমে একটি সহজ নকশা দিয়ে শুরু করব এবং গভীর ডুবে আরও উন্নত পদ্ধতি নিয়ে আলোচনা করব:
 
 <div style="margin-left:3rem">
     <img src="./images/simple-high-level-design.png" alt="simple-high-level-design" width="500" />
 </div>
 
-- **Load balancer**: spreads traffic across rest API servers as well as bidirectional web socket servers
-- **Rest API servers**: handles auxiliary tasks such as managing friends, updating profiles, etc
-- **Websocket servers**: stateful servers, which forward location update requests to respective clients. It also manages seeding the mobile client with nearby friends locations at initialization (discussed in detail later).
-- **Redis location cache**: used to store most recent location data for each active user. There is a TTL set on each entry in the cache. When the TTL expires, user is no longer active and their data is removed from the cache.
-- **User database**: stores user and friendship data. Either a relational or NoSQL database can be used for this purpose.
-- **Location history database**: stores a history of user location data, not necessarily used directly within nearby friends feature, but instead used to track historical data for analytical purposes
-- **Redis pubsub**: used as a lightweight message bus which enables different topics for each user channel for location updates.
+- **লোড ব্যালেন্সার**: বাকি API সার্ভারের পাশাপাশি দ্বিমুখী ওয়েব সকেট সার্ভার জুড়ে ট্রাফিক ছড়িয়ে দেয়
+- **বিশ্রাম API সার্ভার**: বন্ধুদের পরিচালনা, প্রোফাইল আপডেট করা ইত্যাদির মতো সহায়ক কাজগুলি পরিচালনা করে
+- **ওয়েবসকেট সার্ভার**: স্টেটফুল সার্ভার, যা সংশ্লিষ্ট ক্লায়েন্টদের কাছে অবস্থান আপডেট করার অনুরোধ পাঠায়। এটি শুরুতে কাছাকাছি বন্ধুদের অবস্থানের সাথে মোবাইল ক্লায়েন্ট সিডিং পরিচালনা করে (পরে বিস্তারিত আলোচনা করা হয়েছে)।
+- **লোকেশন ক্যাশে রিডিস**: প্রতিটি সক্রিয় ব্যবহারকারীর জন্য সাম্প্রতিক অবস্থানের ডেটা সঞ্চয় করতে ব্যবহৃত হয়। ক্যাশে প্রতিটি এন্ট্রিতে একটি TTL সেট আছে। TTL মেয়াদ শেষ হয়ে গেলে, ব্যবহারকারী আর সক্রিয় থাকে না এবং তাদের ডেটা ক্যাশে থেকে সরানো হয়।
+- **ব্যবহারকারী ডাটাবেস**: ব্যবহারকারী এবং বন্ধুত্বের ডেটা সঞ্চয় করে। হয় একটি রিলেশনাল বা NoSQL ডাটাবেস এই উদ্দেশ্যে ব্যবহার করা যেতে পারে।
+- **অবস্থান ইতিহাস ডাটাবেস**: ব্যবহারকারীর অবস্থানের ডেটার ইতিহাস সংরক্ষণ করে, অগত্যা সরাসরি কাছাকাছি বন্ধুদের বৈশিষ্ট্যের মধ্যে ব্যবহার করা হয় না, বরং বিশ্লেষণমূলক উদ্দেশ্যে ঐতিহাসিক ডেটা ট্র্যাক করতে ব্যবহৃত হয়
+- **Redis pubsub**: একটি লাইটওয়েট মেসেজ বাস হিসেবে ব্যবহৃত হয় যা অবস্থান আপডেটের জন্য প্রতিটি ব্যবহারকারীর চ্যানেলের জন্য বিভিন্ন বিষয় সক্ষম করে।
 
 <div style="margin-left:3rem">
     <img src="./images/redis-pubsub-usage.png" alt="redis-pubsub-usage" width="500" />
 </div>
 
-In the above example, websocket servers subscribe to channels for the users which are connected to them & forward location updates whenever they receive them to appropriate users.
+উপরের উদাহরণে, ওয়েবসকেট সার্ভারগুলি তাদের সাথে সংযুক্ত ব্যবহারকারীদের জন্য চ্যানেলগুলিতে সাবস্ক্রাইব করে এবং যখনই তারা উপযুক্ত ব্যবহারকারীদের কাছে সেগুলি গ্রহণ করে তখনই অবস্থান আপডেটগুলি ফরওয়ার্ড করে৷
 
-### **Periodic location update**
+### **পর্যায়ক্রমিক অবস্থান আপডেট**
 
-Here's how the periodic location update flow works:
+পর্যায়ক্রমিক অবস্থান আপডেট প্রবাহ কিভাবে কাজ করে তা এখানে:
 
 <div style="margin-left:3rem">
     <img src="./images/periodic-location-update.png" alt="periodic-location-update" width="500" />
 </div>
 
- * Mobile client sends a location update to the load balancer
- * Load balancer forwards location update to the websocket server's persistent connection for that client
- * Websocket server saves location data to location history database
- * Location data is updated in location cache. Websocket server also saves location data in-memory for subsequent distance calculations for that user
- * Websocket server publishes location data in user's channel via redis pub sub
- * Redis pubsub broadcasts location update to all subscribers for that user channel, ie servers responsible for the friends of that user
- * Subscribed web socket servers receive location update, calculate which users the update should be sent to and sends it
+* মোবাইল ক্লায়েন্ট লোড ব্যালেন্সারে একটি অবস্থান আপডেট পাঠায়
+ * লোড ব্যালেন্সার সেই ক্লায়েন্টের জন্য ওয়েবসকেট সার্ভারের অবিরাম সংযোগে অবস্থান আপডেট ফরোয়ার্ড করে
+ * ওয়েবসকেট সার্ভার অবস্থানের ইতিহাস ডেটাবেসে অবস্থান ডেটা সংরক্ষণ করে
+ * অবস্থান ডেটা অবস্থান ক্যাশে আপডেট করা হয়. ওয়েবসকেট সার্ভার সেই ব্যবহারকারীর জন্য পরবর্তী দূরত্ব গণনার জন্য মেমরিতে অবস্থানের ডেটা সংরক্ষণ করে
+ * ওয়েবসকেট সার্ভার রেডিস পাব সাবের মাধ্যমে ব্যবহারকারীর চ্যানেলে অবস্থানের ডেটা প্রকাশ করে
+ * Redis pubsub সেই ব্যবহারকারীর চ্যানেলের জন্য সমস্ত গ্রাহকদের অবস্থান আপডেট সম্প্রচার করে, অর্থাৎ সেই ব্যবহারকারীর বন্ধুদের জন্য দায়ী সার্ভারগুলি
+ * সাবস্ক্রাইব করা ওয়েব সকেট সার্ভারগুলি অবস্থান আপডেট পায়, কোন ব্যবহারকারীদের কাছে আপডেটটি পাঠানো উচিত তা গণনা করে এবং এটি পাঠায়
 
-Here's a more detailed version of the same flow:
+এখানে একই প্রবাহের আরও বিশদ সংস্করণ রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/detailed-periodic-location-update.png" alt="detailed-periodic-location-update" width="500" />
 </div>
 
-On average, there's going to be 40 location updates to forward as a user has 400 friends on average and 10% of them are online at a time.
+গড়ে, ফরওয়ার্ড করার জন্য 40টি অবস্থান আপডেট হতে চলেছে কারণ একজন ব্যবহারকারীর গড়ে 400 জন বন্ধু রয়েছে এবং তাদের মধ্যে 10% একবারে অনলাইনে থাকে৷
 
-### **API Design**
+### **এপিআই ডিজাইন**
 
-Websocket Routines we'll need to support:
- * periodic location update - user sends location data to websocket server
- * client receives location update - server sends friend location data and timestamp
- * websocket client initialization - client sends user location, server sends back nearby friends location data
- * Subscribe to a new friend - websocket server sends a friend ID mobile client is supposed to track eg when friend appears online for the first time
- * Unsubscribe a friend - websocket server sends a friend ID, mobile client is supposed to unsubscribe from due to eg friend going offline
+ওয়েবসকেট রুটিনগুলি আমাদের সমর্থন করতে হবে:
+ * পর্যায়ক্রমিক অবস্থান আপডেট - ব্যবহারকারী ওয়েবসকেট সার্ভারে অবস্থানের ডেটা পাঠায়
+ * ক্লায়েন্ট লোকেশন আপডেট পায় - সার্ভার বন্ধুর অবস্থান ডেটা এবং টাইমস্ট্যাম্প পাঠায়
+ * ওয়েবসকেট ক্লায়েন্ট সূচনা - ক্লায়েন্ট ব্যবহারকারীর অবস্থান পাঠায়, সার্ভার কাছাকাছি বন্ধুদের অবস্থানের ডেটা পাঠায়
+ * একটি নতুন বন্ধুর সাথে সাবস্ক্রাইব করুন - ওয়েবসকেট সার্ভার একটি বন্ধু আইডি পাঠায় মোবাইল ক্লায়েন্ট ট্র্যাক করার কথা, যেমন বন্ধু প্রথমবার অনলাইনে উপস্থিত হলে
+ * বন্ধুকে আনসাবস্ক্রাইব করুন - ওয়েবসকেট সার্ভার একটি বন্ধুর আইডি পাঠায়, মোবাইল ক্লায়েন্টের সদস্যতা ত্যাগ করা উচিত যেমন বন্ধু অফলাইনে যাচ্ছে
 
-HTTP API - traditional request/response payloads for auxiliary responsibilities.
+HTTP API - অক্জিলিয়ারী দায়িত্বের জন্য ঐতিহ্যগত অনুরোধ/প্রতিক্রিয়া পেলোড।
 
-### **Data model**
+### **ডেটা মডেল**
 
- * The location cache will store a mapping between `user_id` and `lat,long,timestamp`. Redis is a great choice for this cache as we only care about current location and it supports TTL eviction which we need for our use-case.
- * Location history table stores the same data but in a relational table \w the four columns stated above. Cassandra can be used for this data as it is optimized for write-heavy loads.
+* অবস্থান ক্যাশে `user_id` এবং `lat,long,timestamp`-এর মধ্যে একটি ম্যাপিং সংরক্ষণ করবে। রেডিস এই ক্যাশের জন্য একটি দুর্দান্ত পছন্দ কারণ আমরা শুধুমাত্র বর্তমান অবস্থান সম্পর্কে যত্নশীল এবং এটি টিটিএল উচ্ছেদকে সমর্থন করে যা আমাদের ব্যবহারের ক্ষেত্রে প্রয়োজন।
+ * অবস্থান ইতিহাস টেবিল একই ডেটা সঞ্চয় করে কিন্তু একটি রিলেশনাল টেবিলে \w উপরে বর্ণিত চারটি কলাম। ক্যাসান্ড্রা এই ডেটার জন্য ব্যবহার করা যেতে পারে কারণ এটি লেখা-ভারী লোডের জন্য অপ্টিমাইজ করা হয়েছে।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-Let's discuss how we scale the high-level design so that it works at the scale we're targetting.
+আসুন আমরা আলোচনা করি কিভাবে আমরা উচ্চ-স্তরের ডিজাইন স্কেল করি যাতে এটি আমাদের লক্ষ্য করা স্কেলে কাজ করে।
 
-### **How well does each component scale?**
+### **প্রতিটি উপাদান কতটা ভালোভাবে স্কেল করে?**
 
-- **API servers**: can be easily scaled via autoscaling groups and replicating server instances
-- **Websocket servers**: we can easily scale out the ws servers, but we need to ensure we gracefully shutdown existing connections when tearing down a server. Eg we can mark a server as "draining" in the load balancer and stop sending connections to it, prior to being finally removed from the server pool
-- **Client initialization**: when a client first connects to a server, it fetches the user's friends, subscribes to their channels on redis pubsub, fetches their location from cache and finally forwards to client
-- **User database**: We can shard the database based on user_id. It might also make sense to expose user/friends data via a dedicated service and API, managed by a dedicated team
-- **Location cache**: We can shard the cache easily by spinning up several redis nodes. Also, the TTL puts a limit on the max memory we could have taken up at a time. But we still want to handle the large write load
-- **Redis pub/sub server**: we leverage the fact that no memory is consumed if there are channels initialized but are not in use. Hence, we can pre-allocate channels for all users who use the nearby friends feature to avoid having to deal with eg bringing up a new channel when a user comes online and notifying active websocket servers
+- **API সার্ভার**: অটোস্কেলিং গ্রুপ এবং সার্ভারের উদাহরণের প্রতিলিপি করার মাধ্যমে সহজেই স্কেল করা যেতে পারে
+- **ওয়েবসকেট সার্ভার**: আমরা সহজেই ws সার্ভারগুলিকে স্কেল করতে পারি, তবে আমাদের নিশ্চিত করতে হবে যে আমরা একটি সার্ভার ছিঁড়ে যাওয়ার সময় বিদ্যমান সংযোগগুলিকে সুন্দরভাবে বন্ধ করে দিচ্ছি। উদাহরণস্বরূপ, সার্ভার পুল থেকে শেষ পর্যন্ত সরানোর আগে আমরা লোড ব্যালেন্সারে একটি সার্ভারকে "ড্রেনিং" হিসাবে চিহ্নিত করতে পারি এবং এতে সংযোগ পাঠানো বন্ধ করতে পারি
+- **ক্লায়েন্ট ইনিশিয়ালাইজেশন**: যখন কোনো ক্লায়েন্ট প্রথম কোনো সার্ভারের সাথে সংযোগ করে, এটি ব্যবহারকারীর বন্ধুদের নিয়ে আসে, redis pubsub-এ তাদের চ্যানেলে সদস্যতা নেয়, ক্যাশে থেকে তাদের অবস্থান নিয়ে আসে এবং অবশেষে ক্লায়েন্টের কাছে ফরোয়ার্ড করে
+- **ব্যবহারকারীর ডাটাবেস**: আমরা user_id এর উপর ভিত্তি করে ডাটাবেস শার্ড করতে পারি। এটি একটি ডেডিকেটেড টিম দ্বারা পরিচালিত একটি ডেডিকেটেড পরিষেবা এবং API এর মাধ্যমে ব্যবহারকারী/বন্ধুদের ডেটা প্রকাশ করার অর্থও হতে পারে
+- **লোকেশন ক্যাশে**: আমরা বেশ কয়েকটি রেডিস নোড স্পিন করে সহজেই ক্যাশে শর্ড করতে পারি। এছাড়াও, TTL সর্বোচ্চ মেমরির একটি সীমা রাখে যা আমরা একবারে নিতে পারতাম। কিন্তু আমরা এখনও বড় লেখার লোড পরিচালনা করতে চাই
+- **রেডিস পাব/সাব সার্ভার**: আমরা এই সত্যটি ব্যবহার করি যে চ্যানেলগুলি শুরু করা হলেও ব্যবহারে না থাকলে কোনও মেমরি নষ্ট হয় না। তাই, আমরা সমস্ত ব্যবহারকারীদের জন্য চ্যানেলগুলি আগে থেকে বরাদ্দ করতে পারি যারা কাছাকাছি বন্ধুদের বৈশিষ্ট্য ব্যবহার করে এমন সমস্যাগুলি এড়াতে যেমন কোনও ব্যবহারকারী অনলাইনে এলে একটি নতুন চ্যানেল আনা এবং সক্রিয় ওয়েবসকেট সার্ভারগুলিকে সূচিত করা।
 
-### **Scaling deep-dive on redis pub/sub component**
+### **রেডিস পাব/সাব কম্পোনেন্টে গভীর-ডাইভ স্কেলিং**
 
-We will need around 200gb of memory to maintain all pub/sub channels. This can be achieved by using 2 redis servers with 100gb each.
+সমস্ত পাব/সাব চ্যানেল বজায় রাখতে আমাদের প্রায় 200gb মেমরির প্রয়োজন হবে। এটি প্রতিটি 100gb সহ 2টি রেডিস সার্ভার ব্যবহার করে অর্জন করা যেতে পারে।
 
-Given that we need to push ~14mil location updates per second, we will however need at least 140 redis servers to handle that amount of load, assuming that a single server can handle ~100k pushes per second.
+প্রদত্ত যে আমাদের প্রতি সেকেন্ডে ~14মিলিক অবস্থান আপডেটগুলি পুশ করতে হবে, তবে এই পরিমাণ লোড পরিচালনা করার জন্য আমাদের কমপক্ষে 140টি রেডিস সার্ভারের প্রয়োজন হবে, ধরে নিই যে একটি একক সার্ভার প্রতি সেকেন্ডে ~100k পুশ পরিচালনা করতে পারে।
 
-Hence, we'll need a distributed redis server cluster to handle the intense CPU load.
+তাই, তীব্র CPU লোড পরিচালনা করার জন্য আমাদের একটি বিতরণ করা redis সার্ভার ক্লাস্টার প্রয়োজন হবে।
 
-In order to support a distributed redis cluster, we'll need to utilize a service discovery component, such as zookeeper or etcd, to keep track of which servers are alive.
+একটি বিতরণ করা রেডিস ক্লাস্টারকে সমর্থন করার জন্য, কোন সার্ভারগুলি জীবিত রয়েছে তা ট্র্যাক করার জন্য আমাদের একটি পরিষেবা আবিষ্কার উপাদান, যেমন জুকিপার বা etcd ব্যবহার করতে হবে৷
 
-What we need to encode in the service discovery component is this data:
+পরিষেবা আবিষ্কারের উপাদানটিতে আমাদের যা এনকোড করতে হবে তা হল এই ডেটা:
 
 <div style="margin-left:3rem">
     <img src="./images/channel-distribution-data.png" alt="channel-distribution-data" width="500" />
 </div>
 
-Web socket servers use that encoded data, fetched from zookeeper to determine where a particular channel lives. For efficiency, the hash ring data can be cached in-memory on each websocket server.
+ওয়েব সকেট সার্ভারগুলি একটি নির্দিষ্ট চ্যানেল কোথায় থাকে তা নির্ধারণ করতে চিড়িয়াখানার কাছ থেকে আনা সেই এনকোড করা ডেটা ব্যবহার করে। দক্ষতার জন্য, হ্যাশ রিং ডেটা প্রতিটি ওয়েবসকেট সার্ভারে মেমরিতে ক্যাশে করা যেতে পারে।
 
-In terms of scaling the server cluster up or down, we can setup a daily job to scale the cluster as needed based on historical traffic data. We can also overprovision the cluster to handle spikes in loads.
+সার্ভার ক্লাস্টারকে উপরে বা নিচে স্কেল করার ক্ষেত্রে, আমরা ঐতিহাসিক ট্র্যাফিক ডেটার উপর ভিত্তি করে প্রয়োজন অনুসারে ক্লাস্টার স্কেল করার জন্য একটি দৈনিক কাজ সেটআপ করতে পারি। লোডের মধ্যে স্পাইকগুলি পরিচালনা করার জন্য আমরা ক্লাস্টারটিকে অতিরিক্ত ব্যবস্থাও করতে পারি।
 
-The redis cluster can be treated as a stateful storage server as there is some state maintained for the channels and there is a need for coordination with subscribers so that they hand-off to newly provisioned nodes in the cluster.
+রেডিস ক্লাস্টারটিকে একটি স্টেটফুল স্টোরেজ সার্ভার হিসাবে বিবেচনা করা যেতে পারে কারণ চ্যানেলগুলির জন্য কিছু স্টেট রক্ষণাবেক্ষণ রয়েছে এবং গ্রাহকদের সাথে সমন্বয়ের প্রয়োজন রয়েছে যাতে তারা ক্লাস্টারে নতুন প্রবিধান করা নোডগুলিতে হ্যান্ড-অফ করে।
 
-We have to be mindful of some potential issues during scaling operations:
- * There will be a lot of resubscription requests from the web socket servers due to channels being moved around
- * Some location updates might be missed from clients during the operation, which is acceptable for this problem, but we should still minimize it from happening. Consider doing such operation when traffic is at lowest point of the day.
- * We can leverage consistent hashing to minimize amount of channels moved in the event of adding/removing servers
+স্কেলিং অপারেশনের সময় আমাদের কিছু সম্ভাব্য সমস্যা সম্পর্কে সচেতন হতে হবে:
+ * চ্যানেলগুলি ঘুরে যাওয়ার কারণে ওয়েব সকেট সার্ভার থেকে প্রচুর পুনঃসাবস্ক্রিপশনের অনুরোধ থাকবে
+ * অপারেশন চলাকালীন ক্লায়েন্টদের কাছ থেকে কিছু অবস্থানের আপডেট মিস হতে পারে, যা এই সমস্যার জন্য গ্রহণযোগ্য, তবে আমাদের এটিকে ঘটতে থেকে হ্রাস করা উচিত। যখন ট্রাফিক দিনের সর্বনিম্ন পয়েন্টে থাকে তখন এই ধরনের অপারেশন করার কথা বিবেচনা করুন।
+ * সার্ভার যোগ/মুছে ফেলার ক্ষেত্রে সরানো চ্যানেলের পরিমাণ কমাতে আমরা ধারাবাহিক হ্যাশিং ব্যবহার করতে পারি
 
 <div style="margin-left:3rem">
     <img src="./images/consistent-hashing.png" alt="consistent-hashing" width="500" />
 </div>
 
-### **Adding/removing friends**
+### **বন্ধুদের যোগ/সরানো**
 
-Whenever a friend is added/removed, websocket server responsible for affected user needs to subscribe/unsubscribe from the friend's channel.
+যখনই কোনো বন্ধুকে যুক্ত/সরানো হয়, প্রভাবিত ব্যবহারকারীর জন্য দায়ী ওয়েবসকেট সার্ভারকে বন্ধুর চ্যানেল থেকে সদস্যতা/আনসাবস্ক্রাইব করতে হবে।
 
-Since the "nearby friends" feature is part of a larger app, we can assume that a callback on the mobile client side can be registered whenever any of the events occur and the client will send a message to the websocket server to do the appropriate action.
+যেহেতু "নিকটবর্তী বন্ধু" বৈশিষ্ট্যটি একটি বৃহত্তর অ্যাপের অংশ, তাই আমরা অনুমান করতে পারি যে মোবাইল ক্লায়েন্ট সাইডে একটি কলব্যাক নিবন্ধিত হতে পারে যখনই কোনো ঘটনা ঘটবে এবং ক্লায়েন্ট যথাযথ ব্যবস্থা নেওয়ার জন্য ওয়েবসকেট সার্ভারে একটি বার্তা পাঠাবে৷
 
-### **Users with many friends**
+### **অনেক বন্ধুর সাথে ব্যবহারকারী**
 
-We can put a cap on the total number of friends one can have, eg facebook has a cap of 5000 max friends.
+আমরা একজনের মোট বন্ধুর সংখ্যার উপর একটি ক্যাপ রাখতে পারি, যেমন ফেসবুকের সর্বোচ্চ 5000 বন্ধুর ক্যাপ রয়েছে।
 
-The websocket server handling the "whale" user might have a higher load on its end, but as long as we have enough web socket servers, we should be okay.
+"তিমি" ব্যবহারকারীকে পরিচালনা করা ওয়েবসকেট সার্ভারের শেষের দিকে বেশি লোড থাকতে পারে, কিন্তু যতক্ষণ আমাদের কাছে যথেষ্ট ওয়েব সকেট সার্ভার আছে, ততক্ষণ আমাদের ঠিক থাকা উচিত।
 
-### **Nearby random person**
+### ** কাছাকাছি এলোমেলো ব্যক্তি**
 
-What if the interviewer wants to update the design to include a feature where we can occasionally see a random person pop up on our nearby friends map?
+যদি সাক্ষাত্কারকারী এমন একটি বৈশিষ্ট্য অন্তর্ভুক্ত করার জন্য ডিজাইনটি আপডেট করতে চান যেখানে আমরা মাঝে মাঝে আমাদের কাছাকাছি বন্ধুদের মানচিত্রে একজন এলোমেলো ব্যক্তিকে পপ আপ দেখতে পারি?
 
-One way to handle this is to define a pool of pubsub channels, based on geohash:
+এটি পরিচালনা করার একটি উপায় হল জিওহ্যাশের উপর ভিত্তি করে পাবসাব চ্যানেলগুলির একটি পুল সংজ্ঞায়িত করা:
 
 <div style="margin-left:3rem">
     <img src="./images/geohash-pubsub.png" alt="geohash-pubsub" width="500" />
 </div>
 
-Anyone within the geohash subscribes to the appropriate channel to receive location updates for random users:
+জিওহ্যাশের মধ্যে থাকা যে কেউ এলোমেলো ব্যবহারকারীদের জন্য অবস্থান আপডেট পেতে উপযুক্ত চ্যানেলে সদস্যতা নেয়:
 
 <div style="margin-left:3rem">
     <img src="./images/location-updates-geohash.png" alt="location-updates-geohash" width="500" />
 </div>
 
-We could also subscribe to several geohashes to handle cases where someone is close but in a bordering geohash:
+আমরা এমন কিছু জিওহ্যাশে সাবস্ক্রাইব করতে পারি যেখানে কেউ কাছাকাছি থাকে কিন্তু বর্ডারিং জিওহ্যাশে থাকে:
 
 <div style="margin-left:3rem">
     <img src="./images/geohash-borders.png" alt="geohash-borders" width="500" />
 </div>
 
-### **Alternative to Redis pub/sub**
+### ** রেডিস পাব/সাবের বিকল্প**
 
-An alternative to using Redis for pub/sub is to leverage Erlang - a general programming language, optimized for distributed computing applications.
+পাব/সাবের জন্য রেডিস ব্যবহারের একটি বিকল্প হল এরল্যাং-এর সুবিধা নেওয়া - একটি সাধারণ প্রোগ্রামিং ভাষা, বিতরণ করা কম্পিউটিং অ্যাপ্লিকেশনের জন্য অপ্টিমাইজ করা।
 
-With it, we can spawn millions of small, erland processes which communicate with each other. We can handle both websocket connections and pub/sub channels within the distributed erlang application.
+এটির সাহায্যে, আমরা লক্ষ লক্ষ ছোট, এরল্যান্ড প্রসেস তৈরি করতে পারি যা একে অপরের সাথে যোগাযোগ করে। আমরা বিতরণ করা এরল্যাং অ্যাপ্লিকেশনের মধ্যে ওয়েবসকেট সংযোগ এবং পাব/সাব চ্যানেল উভয়ই পরিচালনা করতে পারি।
 
-A challenge with using Erlang, though, is that it's a niche programming language and it could be hard to source strong erlang developers.
+Erlang ব্যবহার করার ক্ষেত্রে একটি চ্যালেঞ্জ, যদিও, এটি একটি বিশেষ প্রোগ্রামিং ভাষা এবং শক্তিশালী এরল্যাং ডেভেলপারদের উৎস করা কঠিন হতে পারে।
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-We successfully designed a system, supporting the nearby friends features.
+আমরা সফলভাবে একটি সিস্টেম ডিজাইন করেছি, কাছাকাছি বন্ধুদের বৈশিষ্ট্যগুলিকে সমর্থন করে৷
 
-Core components:
-- **Web socket servers**: real-time comms between client and server
-- **Redis**: fast read and write of location data + pub/sub channels
+মূল উপাদান:
+- **ওয়েব সকেট সার্ভার**: ক্লায়েন্ট এবং সার্ভারের মধ্যে রিয়েল-টাইম যোগাযোগ
+- **রেডিস**: অবস্থান ডেটা + পাব/সাব চ্যানেলগুলির দ্রুত পড়া এবং লেখা
 
-We also explored how to scale restful api servers, websocket servers, data layer, redis pub/sub servers and we also explored an alternative to using Redis Pub/Sub. We also explored a "random nearby person" feature.
+আমরা কীভাবে বিশ্রামহীন এপিআই সার্ভার, ওয়েবসকেট সার্ভার, ডেটা লেয়ার, রেডিস পাব/সাব সার্ভারগুলি স্কেল করতে হয় তাও অন্বেষণ করেছি এবং আমরা রেডিস পাব/সাব ব্যবহার করার বিকল্পও অন্বেষণ করেছি। আমরা একটি "এলোমেলো কাছাকাছি ব্যক্তি" বৈশিষ্ট্যটিও অন্বেষণ করেছি৷

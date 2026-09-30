@@ -1,152 +1,152 @@
-# অধ্যায় 9: ওয়েব ক্রলার ডিজাইন
+# অধ্যায় 9: একটি ওয়েব ক্রলার ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-A **web crawler**, also known as a spider or robot, is used to discover and collect web content, such as web pages, images, and videos. This chapter focuses on designing a scalable web crawler for **search engine indexing**.
+## ভূমিকা
+একটি **ওয়েব ক্রলার**, যা একটি মাকড়সা বা রোবট নামেও পরিচিত, ওয়েব পৃষ্ঠা, ছবি এবং ভিডিওর মতো ওয়েব সামগ্রী আবিষ্কার ও সংগ্রহ করতে ব্যবহৃত হয়। এই অধ্যায়টি **সার্চ ইঞ্জিন ইন্ডেক্সিং** এর জন্য একটি মাপযোগ্য ওয়েব ক্রলার ডিজাইন করার উপর ফোকাস করে।
 
-### Applications of Web Crawlers
-1. **Search Engine Indexing:** Collect web pages to create searchable indexes (e.g., Googlebot).
-2. **Web Archiving:** Preserve web data for future use (e.g., US Library of Congress).
-3. **Web Mining:** Extract knowledge from web data (e.g., financial analysis of shareholder reports).
-4. **Web Monitoring:** Detect copyright or trademark infringements.
+### ওয়েব ক্রলারের অ্যাপ্লিকেশন
+1. **সার্চ ইঞ্জিন ইন্ডেক্সিং:** অনুসন্ধানযোগ্য সূচী তৈরি করতে ওয়েব পৃষ্ঠাগুলি সংগ্রহ করুন (যেমন, Googlebot)।
+2. **ওয়েব আর্কাইভিং:** ভবিষ্যতে ব্যবহারের জন্য ওয়েব ডেটা সংরক্ষণ করুন (যেমন, ইউএস লাইব্রেরি অফ কংগ্রেস)।
+3. **ওয়েব মাইনিং:** ওয়েব ডেটা থেকে জ্ঞান আহরণ করুন (যেমন, শেয়ারহোল্ডার রিপোর্টের আর্থিক বিশ্লেষণ)।
+4. **ওয়েব মনিটরিং:** কপিরাইট বা ট্রেডমার্ক লঙ্ঘন সনাক্ত করুন।
 
-### Design Challenges
-A good web crawler must address:
-- **Scalability:** Handle billions of pages using parallelization.
-- **Robustness:** Manage bad HTML, crashes, and malicious links.
-- **Politeness:** Avoid overwhelming servers with too many requests.
-- **Extensibility:** Support new content types with minimal changes.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-
-### রিকোয়ারমেন্টস (Requirements)
-1. Crawl **1 billion web pages per month** (400 pages/second, peak 800 QPS).
-2. Collect **HTML-only content**.
-3. Track new and updated pages.
-4. Ignore duplicate content.
-5. Store crawled data for **5 years**, requiring ~30 PB of storage.
+### ডিজাইন চ্যালেঞ্জ
+একটি ভাল ওয়েব ক্রলারকে অবশ্যই ঠিকানা দিতে হবে:
+- **মাপযোগ্যতা:** সমান্তরালকরণ ব্যবহার করে কোটি কোটি পৃষ্ঠা পরিচালনা করুন।
+- **দৃঢ়তা:** খারাপ HTML, ক্র্যাশ এবং ক্ষতিকারক লিঙ্কগুলি পরিচালনা করুন৷
+- **ভদ্রতা:** অত্যধিক অনুরোধ সহ অপ্রতিরোধ্য সার্ভার এড়িয়ে চলুন।
+- **এক্সটেনসিবিলিটি:** ন্যূনতম পরিবর্তন সহ নতুন বিষয়বস্তু প্রকারকে সমর্থন করুন।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: সমস্যা বোঝা
 
-### Components
+### প্রয়োজনীয়তা
+1. ক্রল করুন **প্রতি মাসে 1 বিলিয়ন ওয়েব পেজ** (400 পৃষ্ঠা/সেকেন্ড, সর্বোচ্চ 800 QPS)।
+2. **শুধুমাত্র HTML সামগ্রী** সংগ্রহ করুন।
+3. নতুন এবং আপডেট করা পৃষ্ঠাগুলি ট্র্যাক করুন৷
+4. ডুপ্লিকেট কন্টেন্ট উপেক্ষা করুন।
+5. **5 বছর** জন্য ক্রল করা ডেটা সঞ্চয় করুন, ~30 PB স্টোরেজ প্রয়োজন৷
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের নকশা
+
+### উপাদান
 <p align="center">
 <img src="./images/web-crawler-architecture.png" alt="Web Crawler Architecture" width="700">
 </p>
 
-1. **Seed URLs:** Starting points for the crawler.
-    - Need to selective as a good starting point that a crawler can utilize to traverse as many links as possible.
-    - Can be based on locality based on different popular website or based on topics.
-    - Strategies: Categorize by locality or topic (e.g., sports, healthcare).
+1. **বীজ URL:** ক্রলারের জন্য শুরুর পয়েন্ট।
+    - একটি ভাল প্রারম্ভিক বিন্দু হিসাবে নির্বাচন করা প্রয়োজন যা একজন ক্রলারকে যতটা সম্ভব লিঙ্কগুলি অতিক্রম করতে ব্যবহার করতে পারে৷
+    - বিভিন্ন জনপ্রিয় ওয়েবসাইটের উপর ভিত্তি করে বা বিষয়ের উপর ভিত্তি করে স্থানীয়তার উপর ভিত্তি করে করা যেতে পারে।
+    - কৌশল: এলাকা বা বিষয় (যেমন, খেলাধুলা, স্বাস্থ্যসেবা) দ্বারা শ্রেণীবদ্ধ করুন।
 
-2. **URL Frontier:** Stores URLs to be downloaded.
-   - Implemented as a **FIFO queue**.
+2. **ইউআরএল ফ্রন্টিয়ার:** ডাউনলোড করার জন্য ইউআরএল সংরক্ষণ করে।
+   - একটি **FIFO সারি** হিসাবে বাস্তবায়িত।
 
-3. **HTML Downloader:** Downloads web pages from URLs provided by the URL Frontier.
+3. **HTML ডাউনলোডার:** ইউআরএল ফ্রন্টিয়ার দ্বারা প্রদত্ত ইউআরএল থেকে ওয়েব পেজ ডাউনলোড করে।
 
-4. **DNS Resolver:** Converts URLs to IP addresses.
+4. **DNS সমাধানকারী:** URLগুলিকে IP ঠিকানায় রূপান্তর করে।
 
-5. **Content Parser:** Validates and parses web pages.
-   - Discards malformed pages.
+5. **কন্টেন্ট পার্সার:** ওয়েব পেজ যাচাই করে এবং পার্স করে।
+   - বিকৃত পৃষ্ঠাগুলি বাতিল করে।
 
-6. **Content Seen?:** Checks for duplicate content using hash comparisons (compare the hash values of the two web pages).
+6. **কন্টেন্ট দেখেছেন?:** হ্যাশ তুলনা ব্যবহার করে ডুপ্লিকেট কন্টেন্ট পরীক্ষা করে (দুটি ওয়েব পৃষ্ঠার হ্যাশ মান তুলনা করুন)।
 
-7. **Content Storage:** Stores HTML pages on disk (popular content in memory to reduce latency).
+7. **কন্টেন্ট স্টোরেজ:** ডিস্কে এইচটিএমএল পেজ স্টোর করে (লেটেন্সি কমাতে মেমরিতে জনপ্রিয় কন্টেন্ট)।
 
-8. **URL Extractor:** Extracts new links from parsed pages.
+8. **URL Extractor:** পার্স করা পৃষ্ঠাগুলি থেকে নতুন লিঙ্কগুলি বের করে।
 
-9. **URL Filter:** Excludes blacklisted or erroneous URLs.
+9. **ইউআরএল ফিল্টার:** কালো তালিকাভুক্ত বা ভুল ইউআরএল বাদ দেয়।
 
-10. **URL Seen?** Tracks visited URLs to avoid duplication.
+10. **URL দেখা হয়েছে?** ডুপ্লিকেশন এড়াতে ভিজিট করা ইউআরএল ট্র্যাক করে।
 
-11. **URL Storage:** Stores already visited URLs.
-
-
----
-
-### Workflow
-1. Add **Seed URLs** to the URL Frontier.
-2. **HTML Downloader** fetches URLs and resolves their IPs via the DNS Resolver.
-3. **Content Parser** validates and passes content to the "Content Seen?" component.
-4. If the content is new, extract links via the **URL Extractor**.
-5. Filter and add unique links to the URL Frontier.
+11. **ইউআরএল স্টোরেজ:** ইতিমধ্যেই ভিজিট করা ইউআরএল স্টোর করে।
 
 
 ---
 
-## ধাপ 3: Deep Dive into Key Components
-### DFS/BFS
--  The web can be though of as a directed graph where web pages are nodes and hyperlinks (URLs) as edges.
--  BFS is usually used for graph traversal as the depth can be be very deep thus DFS is not ideal.
--  Standard BFS does not take the priority of a URL into consideration, not every page has the same level of quality and importance.
+### কর্মপ্রবাহ
+1. URL ফ্রন্টিয়ারে **সিড ইউআরএল** যোগ করুন।
+2. **এইচটিএমএল ডাউনলোডার** ইউআরএল নিয়ে আসে এবং তাদের আইপি ডিএনএস রিজলভারের মাধ্যমে সমাধান করে।
+3. **কন্টেন্ট পার্সার** যাচাই করে এবং "কন্টেন্ট দেখেছেন?" উপাদান
+4. বিষয়বস্তু নতুন হলে, **URL Extractor** এর মাধ্যমে লিঙ্কগুলি বের করুন৷
+5. ইউআরএল ফ্রন্টিয়ারে অনন্য লিঙ্কগুলি ফিল্টার করুন এবং যোগ করুন।
 
 
-### URL Frontier
-- **Politeness:** 
-    - Ensure only one request per host at a time. Add a dealy b/w two download tasks.
-    - Use a mapping from hostnames to queues and worker (download) threads.
-    - Each downloader thread has a separate FIFO queue and only downloads URLs from that queue.
+---
+
+## ধাপ 3: মূল উপাদানগুলিতে গভীরভাবে ডুব দিন
+### ডিএফএস/বিএফএস
+- ওয়েব একটি নির্দেশিত গ্রাফ হিসাবে হতে পারে যেখানে ওয়েব পৃষ্ঠাগুলি নোড এবং হাইপারলিঙ্কগুলি (URL) প্রান্ত হিসাবে।
+- BFS সাধারণত গ্রাফ ট্রাভার্সালের জন্য ব্যবহৃত হয় কারণ গভীরতা খুব গভীর হতে পারে তাই DFS আদর্শ নয়।
+- স্ট্যান্ডার্ড BFS একটি URL এর অগ্রাধিকার বিবেচনা করে না, প্রতিটি পৃষ্ঠার গুণমান এবং গুরুত্ব একই স্তরের নয়।
+
+
+### ইউআরএল ফ্রন্টিয়ার
+- **ভদ্রতা:** 
+    - একবারে হোস্ট প্রতি শুধুমাত্র একটি অনুরোধ নিশ্চিত করুন। একটি ডিলি b/w দুটি ডাউনলোড টাস্ক যোগ করুন.
+    - হোস্টনাম থেকে সারি এবং কর্মী (ডাউনলোড) থ্রেডগুলিতে একটি ম্যাপিং ব্যবহার করুন।
+    - প্রতিটি ডাউনলোডার থ্রেডের একটি পৃথক FIFO সারি থাকে এবং শুধুমাত্র সেই সারি থেকে URL ডাউনলোড করে।
 
         <img src="./images/politeness.png" alt="Politeness" width="500">
 
-    - **Queue router:** Ensures that each queue (b1, b2, … bn) only contains URLs from the same host.
-    - **Mapping table:** It maps each host to a queue.
-    - **Queue selector:** Each worker thread is mapped to a FIFO queue, and it only downloads URLs from that queue. The queue selection logic is done by the Queue selector.
-    - **Worker thread 1 to N.** A worker thread downloads web pages sequentially from the same host. A delay can be added between two download tasks.
+- **সারি রাউটার:** নিশ্চিত করে যে প্রতিটি সারিতে (b1, b2, … bn) শুধুমাত্র একই হোস্টের URL রয়েছে।
+    - **ম্যাপিং টেবিল:** এটি প্রতিটি হোস্টকে একটি সারিতে ম্যাপ করে।
+    - **সারি নির্বাচক:** প্রতিটি কর্মী থ্রেড একটি FIFO সারিতে ম্যাপ করা হয় এবং এটি শুধুমাত্র সেই সারি থেকে URL ডাউনলোড করে। সারি নির্বাচন যুক্তি সারি নির্বাচক দ্বারা সম্পন্ন করা হয়.
+    - **ওয়ার্কার থ্রেড 1 থেকে N.** একজন ওয়ার্কার থ্রেড একই হোস্ট থেকে ক্রমানুসারে ওয়েব পেজ ডাউনলোড করে। দুটি ডাউনলোড কাজের মধ্যে একটি বিলম্ব যোগ করা যেতে পারে।
 
-- **Priority:** 
-    - Assign higher priority to important pages (e.g., by PageRank or update frequency).
+- **অগ্রাধিকার:** 
+    - গুরুত্বপূর্ণ পৃষ্ঠাগুলিতে উচ্চ অগ্রাধিকার বরাদ্দ করুন (যেমন, পেজর্যাঙ্ক বা আপডেট ফ্রিকোয়েন্সি অনুসারে)।
 
         <img src="./images/prioritizer.png" alt="Politeness" width="500">
     
-    - **Prioritizer:** It takes URLs as input and computes the priorities.
-    - **Queue f1 to fn:** Each queue has an assigned priority. Queues with high priority are selected with higher probability.
-    - **Queue selector:** Randomly choose a queue with a bias towards queues with higher priority.
-    - **Front queues:** manage prioritization
-    - **Back queues:** manage politeness
+- **অগ্রাধিকারকারী:** এটি ইউআরএলগুলিকে ইনপুট হিসাবে নেয় এবং অগ্রাধিকারগুলি গণনা করে৷
+    - **সারি f1 থেকে fn:** প্রতিটি সারির একটি নির্দিষ্ট অগ্রাধিকার রয়েছে৷ উচ্চ অগ্রাধিকার সহ সারিগুলি উচ্চ সম্ভাবনার সাথে নির্বাচন করা হয়।
+    - **সারি নির্বাচক:** এলোমেলোভাবে উচ্চ অগ্রাধিকার সহ সারিগুলির প্রতি পক্ষপাতিত্ব সহ একটি সারি বেছে নিন।
+    - **সামনের সারি:** অগ্রাধিকার পরিচালনা করুন
+    - **পিছনের সারি:** ভদ্রতা পরিচালনা করুন
 
-- **Freshness:** Recrawl based on update history or importance.
+- **সতেজতা:** আপডেট ইতিহাস বা গুরুত্বের উপর ভিত্তি করে পুনরায় ক্রল করুন।
 
 
-### HTML Downloader
-- **Robots.txt Compliance:** Respect rules in robots.txt files.
-- **Performance Optimizations:**
-  1. Distributed crawling using multiple servers.
-  2. Use a **DNS cache** to avoid repeated lookups.
-  3. Geographically distribute crawl servers for faster downloads.
-  4. Use a short timeout to avoid slow or unresponsive servers.
+### এইচটিএমএল ডাউনলোডার
+- **Robots.txt সম্মতি:** robots.txt ফাইলে নিয়ম মেনে চলুন।
+- **পারফরম্যান্স অপ্টিমাইজেশান:**
+  1. একাধিক সার্ভার ব্যবহার করে ক্রলিং বিতরণ করা হয়েছে।
+  2. বারবার লুকআপ এড়াতে একটি **DNS ক্যাশে** ব্যবহার করুন।
+  3. দ্রুত ডাউনলোডের জন্য ভৌগলিকভাবে ক্রল সার্ভার বিতরণ করুন৷
+  4. ধীর বা প্রতিক্রিয়াশীল সার্ভার এড়াতে একটি সংক্ষিপ্ত সময়সীমা ব্যবহার করুন।
 
-### Robustness
-1. **Consistent Hashing:** Distribute load among servers effectively.
-2. **Error Handling:** Prevent system crashes from exceptions.
-3. **Data Validation:** Ensure content integrity.
+### দৃঢ়তা
+1. **সামঞ্জস্যপূর্ণ হ্যাশিং:** সার্ভারের মধ্যে কার্যকরভাবে লোড বিতরণ করুন।
+2. **ত্রুটি হ্যান্ডলিং:** ব্যতিক্রম থেকে সিস্টেম ক্র্যাশ প্রতিরোধ করুন।
+3. **ডেটা বৈধকরণ:** বিষয়বস্তুর অখণ্ডতা নিশ্চিত করুন।
 
-### Extensibility
-- Add modules for new content types (e.g., PNG downloader, web monitor).
-- Example: Plug in a module to monitor web content for copyright violations.
+### এক্সটেনসিবিলিটি
+- নতুন বিষয়বস্তুর প্রকারের জন্য মডিউল যোগ করুন (যেমন, PNG ডাউনলোডার, ওয়েব মনিটর)।
+- উদাহরণ: কপিরাইট লঙ্ঘনের জন্য ওয়েব সামগ্রী নিরীক্ষণ করতে একটি মডিউল প্লাগ ইন করুন৷
 
     <img src="./images/extensibility.png" alt="Politeness" width="600">
 ---
 
-### Avoiding Problematic Content
-1. **Duplicate Content:** Detect using hash comparisons.
-2. **Spider Traps:** Avoid infinite loops with techniques like URL length limits.
-3. **Data Noise:** Filter irrelevant content like ads or spam.
+### সমস্যাযুক্ত বিষয়বস্তু এড়িয়ে চলা
+1. **ডুপ্লিকেট কন্টেন্ট:** হ্যাশ তুলনা ব্যবহার করে সনাক্ত করুন।
+2. **মাকড়সার ফাঁদ:** ইউআরএল দৈর্ঘ্য সীমার মতো কৌশল সহ অসীম লুপ এড়িয়ে চলুন।
+3. **ডেটা নয়েজ:** বিজ্ঞাপন বা স্প্যামের মতো অপ্রাসঙ্গিক বিষয়বস্তু ফিল্টার করুন।
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
-### Key Takeaways
-1. Web crawlers must balance scalability, robustness, politeness, and extensibility.
-2. **Politeness** prevents overloading servers, while **priority** ensures important pages are crawled first.
-3. Efficient storage and error handling are crucial for handling large-scale crawling.
+## ধাপ 4: মোড়ানো
+### মূল গ্রহণ
+1. ওয়েব ক্রলারদের অবশ্যই মাপযোগ্যতা, দৃঢ়তা, ভদ্রতা এবং এক্সটেনসিবিলিটির ভারসাম্য বজায় রাখতে হবে।
+2. **ভদ্রতা** সার্ভারকে ওভারলোডিং প্রতিরোধ করে, যখন **অগ্রাধিকার** নিশ্চিত করে যে গুরুত্বপূর্ণ পৃষ্ঠাগুলি প্রথমে ক্রল করা হয়েছে৷
+3. বড় আকারের ক্রলিং পরিচালনার জন্য দক্ষ সঞ্চয়স্থান এবং ত্রুটি পরিচালনা অত্যন্ত গুরুত্বপূর্ণ।
 
-### Additional Considerations
-- **Server-Side Rendering:** Handle dynamic content generated by JavaScript or AJAX.
-- **Anti-Spam Measures:** Exclude low-quality or irrelevant pages.
-- **Database Sharding:** Scale the data layer using replication and sharding.
-- **Horizontal Scaling:** Use stateless servers to scale crawl jobs efficiently.
-- **Analytics:** Collect and analyze data for insights.
+### অতিরিক্ত বিবেচনা
+- **সার্ভার-সাইড রেন্ডারিং:** জাভাস্ক্রিপ্ট বা AJAX দ্বারা উত্পন্ন গতিশীল বিষয়বস্তু পরিচালনা করুন।
+- **স্প্যাম-বিরোধী ব্যবস্থা:** নিম্নমানের বা অপ্রাসঙ্গিক পৃষ্ঠাগুলি বাদ দিন।
+- **ডাটাবেস শার্ডিং:** রেপ্লিকেশন এবং শার্ডিং ব্যবহার করে ডাটা লেয়ার স্কেল করুন।
+- **অনুভূমিক স্কেলিং:** দক্ষতার সাথে ক্রল কাজগুলি স্কেল করতে স্টেটলেস সার্ভার ব্যবহার করুন।
+- **বিশ্লেষণ:** অন্তর্দৃষ্টির জন্য ডেটা সংগ্রহ এবং বিশ্লেষণ করুন।
 

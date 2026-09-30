@@ -154,6 +154,8 @@ export default function App() {
           isResourcesActive={isResourcesActive}
           onSelectResources={selectResources}
           onOpenGlossary={() => setIsGlossaryOpen(true)}
+          activeVolume={activeVolume}
+          onSelectVolume={setActiveVolume}
         />
 
         {/* Center Content Area */}

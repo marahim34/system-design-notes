@@ -1,132 +1,132 @@
-# অধ্যায় 4: রেট লিমিটার ডিজাইন
+# অধ্যায় 4: একটি রেট লিমিটার ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-This chapter explores the design and implementation of a rate limiter—a system component used to control traffic rates sent by clients or services. Rate limiters are crucial for preventing abuse, reducing costs, and ensuring the stability of server resources. Examples of their use include limiting posts, account creations, and reward claims.
+## ভূমিকা
+এই অধ্যায়টি একটি রেট লিমিটারের নকশা এবং বাস্তবায়নের অন্বেষণ করে - একটি সিস্টেম উপাদান যা ক্লায়েন্ট বা পরিষেবাগুলির দ্বারা প্রেরিত ট্র্যাফিক হার নিয়ন্ত্রণ করতে ব্যবহৃত হয়। অপব্যবহার প্রতিরোধ, খরচ কমাতে এবং সার্ভার সংস্থানগুলির স্থিতিশীলতা নিশ্চিত করার জন্য রেট লিমিটারগুলি অত্যন্ত গুরুত্বপূর্ণ৷ তাদের ব্যবহারের উদাহরণগুলির মধ্যে পোস্ট সীমিত করা, অ্যাকাউন্ট তৈরি করা এবং পুরস্কারের দাবি অন্তর্ভুক্ত।
 
-## রেট লিমিটিংয়ের সুবিধাসমূহ
-- **DoS আক্রমণ প্রতিরোধ:** Blocking excess calls to avoid resource starvation.
-- **খরচ সাশ্রয়:** Limiting unnecessary requests to reduce server expenses.
-- **ওভারলোড প্রতিরোধ:** Filtering out excessive requests to stabilize server performance.
+## হার সীমাবদ্ধতার সুবিধা
+- **DOS আক্রমণ প্রতিরোধ:** সম্পদ অনাহার এড়াতে অতিরিক্ত কল ব্লক করা।
+- **খরচ কমানো:** সার্ভারের খরচ কমাতে অপ্রয়োজনীয় অনুরোধ সীমিত করা।
+- **অভারলোড প্রতিরোধ করা:** সার্ভারের কর্মক্ষমতা স্থিতিশীল করার জন্য অতিরিক্ত অনুরোধগুলি ফিল্টার করা।
 
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-### মূল বৈশিষ্ট্যসমূহ (Key Features)
-- Server-side API rate limiter.
-- Support for multiple throttle rules.
-- Handle large-scale systems in distributed environments.
-- Option for a standalone service or application-level code.
-- Inform users when throttled.
+## ধাপ 1: সমস্যা বোঝা
+### মূল বৈশিষ্ট্য
+- সার্ভার-সাইড এপিআই রেট লিমিটার।
+- একাধিক থ্রোটল নিয়মের জন্য সমর্থন।
+- বিতরণ করা পরিবেশে বড় মাপের সিস্টেম পরিচালনা করুন।
+- একটি স্বতন্ত্র পরিষেবা বা অ্যাপ্লিকেশন-স্তরের কোডের বিকল্প।
+- থ্রোটল হলে ব্যবহারকারীদের জানান।
 
-### রিকোয়ারমেন্টস (Requirements)
-- Accurate request throttling.
-- Minimal latency.
-- Low memory usage.
-- Distributed capability.
-- Clear exception handling.
-- ফল্ট টলারেন্স বা ত্রুটি সহনশীলতা (Fault Tolerance).
+### প্রয়োজনীয়তা
+- সঠিক অনুরোধ থ্রোটলিং।
+- ন্যূনতম বিলম্ব।
+- কম মেমরি ব্যবহার।
+- বিতরণ ক্ষমতা।
+- পরিষ্কার ব্যতিক্রম হ্যান্ডলিং.
+- উচ্চ দোষ সহনশীলতা।
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
-### Placement Options
+## ধাপ 2: উচ্চ-স্তরের নকশা
+### বসানো বিকল্প
 <div style="margin-left:2rem">
     <img src="./images/rate_limiter_architecture.png"  alt="Rate Limiting Middleware Architecture" width="550">
 </div>
 
-1. **ক্লায়েন্ট-সাইড ইমপ্লিমেন্টেশন:** Unreliable due to potential misuse.
-2. **সার্ভার-সাইড ইমপ্লিমেন্টেশন:** Preferred for control and reliability.
-3. **মিডলওয়্যার (API Gateway):** A flexible option for integrated rate limiting.
+1. **ক্লায়েন্ট-সাইড ইমপ্লিমেন্টেশন:** সম্ভাব্য অপব্যবহারের কারণে অবিশ্বস্ত।
+2. **সার্ভার-সাইড ইমপ্লিমেন্টেশন:** নিয়ন্ত্রণ এবং নির্ভরযোগ্যতার জন্য পছন্দ।
+3. **মিডলওয়্যার (API গেটওয়ে):** সমন্বিত হার সীমিত করার জন্য একটি নমনীয় বিকল্প।
 
 
-### Guidelines for Placement
-- Evaluate current tech stack and choose efficient options.
-- Select appropriate algorithms based on business needs.
-- Use an API gateway if microservices are employed.
-- Opt for commercial solutions if resources are limited.
+### স্থান নির্ধারণের জন্য নির্দেশিকা
+- বর্তমান প্রযুক্তিগত স্ট্যাক মূল্যায়ন করুন এবং দক্ষ বিকল্প নির্বাচন করুন।
+- ব্যবসার প্রয়োজনের উপর ভিত্তি করে উপযুক্ত অ্যালগরিদম নির্বাচন করুন।
+- মাইক্রোসার্ভিস নিযুক্ত হলে একটি API গেটওয়ে ব্যবহার করুন।
+- সম্পদ সীমিত হলে বাণিজ্যিক সমাধান বেছে নিন।
 
-## ধাপ ৩: রেট লিমিটিং অ্যালগরিদমসমূহ
-### ১. টোকেন বাকেট অ্যালগরিদম (Token Bucket)
+## ধাপ 3: রেট লিমিটিং অ্যালগরিদম
+### 1. টোকেন বালতি
 <div style="margin-left:2rem">
   <img src="./images/token-bucket.png"  alt="Token Bucket Algorithm" width="550">
 </div>
 
-- **Description:** একটি নির্দিষ্ট হারে বাকেটে টোকেন জমা হয়; প্রতিটি রিকোয়েস্ট একটি করে টোকেন খরচ করে।
-- **Parameters:** Bucket size and refill rate.
-- **Pros:** বাস্তবায়ন সহজ, মেমোরি সাশ্রয়ী এবং হঠাৎ ট্রাফিক চাপ (bursts) সামলাতে পারে।
-- **Cons:** প্যারামিটারগুলো সঠিকভাবে টিউন করা প্রয়োজন।
+- **বিবরণ:** টোকেন একটি বালতিতে একটি নির্দিষ্ট হারে যোগ করা হয়; প্রতিটি অনুরোধ একটি টোকেন গ্রাস করে।
+- **প্যারামিটার:** বালতির আকার এবং রিফিল রেট।
+- **সুবিধা:** বাস্তবায়ন করা সহজ, মেমরি-দক্ষ, ট্রাফিক বিস্ফোরণ সমর্থন করে।
+- **কনস:** সতর্ক প্যারামিটার টিউনিং প্রয়োজন।
 
 
 
-### ২. লিকিং বাকেট অ্যালগরিদম (Leaking Bucket)
+### 2. লিকিং বালতি
 <div style="margin-left:2rem">
   <img src="./images/leaking-bucket.png"  alt="Leaking Bucket Algorithm" width="550">
 </div>
 
-- **Description:** Processes requests at a fixed rate using a FIFO queue.
-- **Pros:** Memory-efficient, stable outflow rate.
-- **Cons:** Traffic bursts may delay recent requests.
+- **বিবরণ:** ফিফো সারি ব্যবহার করে একটি নির্দিষ্ট হারে অনুরোধগুলি প্রক্রিয়া করে।
+- **সুবিধা:** মেমরি-দক্ষ, স্থিতিশীল বহিঃপ্রবাহ হার।
+- **কনস:** ট্র্যাফিক বিস্ফোরণ সাম্প্রতিক অনুরোধগুলি বিলম্বিত করতে পারে।
   
 
-  Example: https://github.com/uber-go/ratelimit
+উদাহরণ: https://github.com/uber-go/ratelimit
 
 
 
-### ৩. ফিক্সড উইন্ডো কাউন্টার (Fixed Window Counter)
+### 3. ফিক্সড উইন্ডো কাউন্টার
 <div style="margin-left:2rem">
   <img src="./images/fixed-window-counter.png"  alt="Fixed Window Counter" width="550">
 </div>
 
-- **Description:** Divides time into fixed intervals and uses counters to limit requests.
-- **Pros:** Simple, efficient for specific use cases.
-- **Cons:** Traffic spikes at window edges can exceed limits.
+- **বিবরণ:** সময়কে নির্দিষ্ট ব্যবধানে ভাগ করে এবং অনুরোধ সীমিত করতে কাউন্টার ব্যবহার করে।
+- **সুবিধা:** সহজ, নির্দিষ্ট ব্যবহারের ক্ষেত্রে দক্ষ।
+- **কনস:** জানালার প্রান্তে ট্রাফিক স্পাইক সীমা অতিক্রম করতে পারে।
 
-- Sudden burst of traffic at the edges of time windows
-could cause more requests than allowed quota to go through.
+- সময় জানালার প্রান্তে ট্র্যাফিকের হঠাৎ বিস্ফোরণ
+অনুমতি দেওয়া কোটার চেয়ে বেশি অনুরোধের কারণ হতে পারে।
 
   <img src="./images/fixed-window-issue.png"  alt="Fixed Window Issue" width="550">
 
 
-### ৪. স্লাইডিং উইন্ডো লগ (Sliding Window Log)
+### 4. স্লাইডিং উইন্ডো লগ
 <div style="margin-left:2rem">
   <img src="./images/sliding-window-log.png"  alt="Sliding Window Log" width="550">
 </div>
 
-- **Description:** Tracks timestamps to allow a rolling time window.
-- **Pros:** Accurate rate limiting.
-- **Cons:** High memory consumption.
+- **বিবরণ:** একটি রোলিং টাইম উইন্ডোর অনুমতি দিতে টাইমস্ট্যাম্পগুলি ট্র্যাক করে৷
+- **সুবিধা:** সঠিক হার সীমিত।
+- **অপরাধ:** উচ্চ মেমরি খরচ।
   
 
 
-### ৫. স্লাইডিং উইন্ডো কাউন্টার (Sliding Window Counter)
+### 5. স্লাইডিং উইন্ডো কাউন্টার
 <div style="margin-left:2rem">
   <img src="./images/sliding-window-counter.png"  alt="Fixed Window Counter" width="550">
 </div>
 
-- **Description:** Combines fixed window and sliding log methods for smoothing spikes.
-- **Pros:** Memory-efficient, handles traffic bursts.
-- **Cons:** Approximation may not be perfectly strict.
+- **বিবরণ:** মসৃণ স্পাইকগুলির জন্য নির্দিষ্ট উইন্ডো এবং স্লাইডিং লগ পদ্ধতিগুলিকে একত্রিত করে৷
+- **সুবিধা:** মেমরি-দক্ষ, ট্রাফিক বিস্ফোরণ পরিচালনা করে।
+- **অপরাধ:** অনুমান পুরোপুরি কঠোর নাও হতে পারে।
   
 
 
 
-## High-Level Architecture
+## উচ্চ-স্তরের আর্কিটেকচার
 <div style="margin-left:2rem">
   <img src="./images/architecture.png" style="margin-left: 40px; margin-top: 40px; margin-bottom: 20px;" alt="Architecture" width="550">
 </div>
 
-- **Data Storage:** Use in-memory caching (e.g., Redis) for fast counter operations.
-- **Steps:**
-  1. Client sends request to middleware.
-  2. Middleware checks counters in Redis.
-  3. Request is processed or rejected based on limits.
+- **ডেটা স্টোরেজ:** দ্রুত কাউন্টার অপারেশনের জন্য ইন-মেমরি ক্যাশিং (যেমন, রেডিস) ব্যবহার করুন।
+- **পদক্ষেপ:**
+  1. ক্লায়েন্ট মিডলওয়্যারকে অনুরোধ পাঠায়।
+  2. মিডলওয়্যার রেডিসে কাউন্টার চেক করে।
+  3. সীমার উপর ভিত্তি করে অনুরোধ প্রক্রিয়া বা প্রত্যাখ্যান করা হয়।
 
 
-## Advanced Considerations
-### Distributed Environments
-- **Challenges:** Race conditions, synchronization issues.
-- **Solutions:** Use locks, Lua scripts, or sorted sets in Redis. Employ centralized data stores for synchronization.
+## উন্নত বিবেচনা
+### পরিবেশিত পরিবেশ
+- **চ্যালেঞ্জ:** রেসের অবস্থা, সিঙ্ক্রোনাইজেশন সমস্যা।
+- **সমাধান:** রেডিসে লক, লুয়া স্ক্রিপ্ট বা সাজানো সেট ব্যবহার করুন। সিঙ্ক্রোনাইজেশনের জন্য কেন্দ্রীভূত ডেটা স্টোর নিয়োগ করুন।
 
-### Performance Optimizations
-- Multi-data center setups for reduced latency.
-- Eventual consistency models for synchronization.
+### কর্মক্ষমতা অপ্টিমাইজেশান
+- কম লেটেন্সির জন্য মাল্টি-ডেটা সেন্টার সেটআপ।
+- সিঙ্ক্রোনাইজেশনের জন্য ঘটনাগত ধারাবাহিকতা মডেল।
 
-### Monitoring
-- Regular analytics to ensure algorithm effectiveness and adjust rules as needed.
+### মনিটরিং
+- অ্যালগরিদমের কার্যকারিতা নিশ্চিত করতে এবং প্রয়োজন অনুসারে নিয়মগুলি সামঞ্জস্য করতে নিয়মিত বিশ্লেষণ।
 

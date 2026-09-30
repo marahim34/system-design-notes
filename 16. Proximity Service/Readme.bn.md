@@ -1,129 +1,129 @@
-# অধ্যায় 16: প্রক্সিমিটি সার্ভিস (কাছের স্থান খোঁজা)
+# অধ্যায় 16: প্রক্সিমিটি সার্ভিস
 
-## ভূমিকা (Introduction)
-A **proximity service** is designed to find nearby locations, such as restaurants, hotels, gas stations, and other businesses. This functionality is used in applications like **Google Maps** and **Yelp** to help users discover places within a defined radius.
+## ভূমিকা
+রেস্তোরাঁ, হোটেল, গ্যাস স্টেশন এবং অন্যান্য ব্যবসার মতো কাছাকাছি অবস্থানগুলি খুঁজে পেতে একটি **প্রক্সিমিটি পরিষেবা** ডিজাইন করা হয়েছে৷ এই কার্যকারিতা ব্যবহারকারীদের একটি সংজ্ঞায়িত ব্যাসার্ধের মধ্যে স্থানগুলি আবিষ্কার করতে সাহায্য করার জন্য **Google Maps** এবং **Yelp** এর মতো অ্যাপ্লিকেশনগুলিতে ব্যবহার করা হয়৷
 
 
-## ধাপ 1: Understanding the Problem and Establishing Scope
+## ধাপ 1: সমস্যা বোঝা এবং সুযোগ স্থাপন
 
-### **Functional Requirements**
-1. **Search for businesses** based on user location (latitude, longitude) and search radius.
-2. **Allow business owners** to add, update, or delete businesses (not real-time).
-3. **Provide detailed business information** when requested.
+### **কার্যকর প্রয়োজনীয়তা**
+1. ব্যবহারকারীর অবস্থান (অক্ষাংশ, দ্রাঘিমাংশ) এবং অনুসন্ধান ব্যাসার্ধের উপর ভিত্তি করে **ব্যবসার জন্য অনুসন্ধান করুন**।
+2. **ব্যবসার মালিকদের** ব্যবসা যোগ, আপডেট বা মুছে ফেলার অনুমতি দিন (রিয়েল-টাইম নয়)।
+3. **বিস্তারিত ব্যবসার তথ্য প্রদান করুন** যখন অনুরোধ করা হয়।
 
-### **Non-Functional Requirements**
-- **কম লেটেন্সি (Low Latency)**: Users should get quick responses.
-- **Data privacy**: Compliance with GDPR and CCPA regulations.
-- **উচ্চ প্রাপ্যতা (High Availability)**: Handle peak-hour spikes in busy locations.
+### **অ-কার্যকর প্রয়োজনীয়তা**
+- **নিম্ন বিলম্ব**: ব্যবহারকারীদের দ্রুত প্রতিক্রিয়া পাওয়া উচিত।
+- **ডেটা গোপনীয়তা**: GDPR এবং CCPA প্রবিধানের সাথে সম্মতি।
+- **উচ্চ প্রাপ্যতা**: ব্যস্ত অবস্থানে পিক-আওয়ার স্পাইকগুলি পরিচালনা করুন।
 
-### **Back-of-the-Envelope Estimation**
-- **100 million daily active users**.
-- **200 million businesses** in the system.
-- **Search QPS Calculation**:
-  - Users make **5 searches per day**.
-  - **Search QPS** = (100M × 5) / 86,400 ≈ **5,000 QPS**.
+### **খামের পিছনের অনুমান**
+- **100 মিলিয়ন দৈনিক সক্রিয় ব্যবহারকারী**।
+- সিস্টেমে **200 মিলিয়ন ব্যবসা**।
+- **QPS গণনা অনুসন্ধান করুন**:
+  - ব্যবহারকারীরা প্রতিদিন **5টি অনুসন্ধান করে**।
+  - **QPS অনুসন্ধান করুন** = (100M × 5) / 86,400 ≈ **5,000 QPS**।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 2: উচ্চ-স্তরের নকশা
 
-### **API Design**
-#### **Search Nearby Businesses**
-GET /v1/search/nearby
+### **এপিআই ডিজাইন**
+#### ** কাছাকাছি ব্যবসা অনুসন্ধান করুন**
+/v1/অনুসন্ধান/ কাছাকাছি পান
 
-- **Request Parameters**:
-  - `latitude`: User’s location latitude.
-  - `longitude`: User’s location longitude.
-  - `radius`: Search radius (default: 5000m).
+- **অনুরোধ প্যারামিটার**:
+  - `অক্ষাংশ`: ব্যবহারকারীর অবস্থানের অক্ষাংশ।
+  - `দ্রাঘিমাংশ`: ব্যবহারকারীর অবস্থান দ্রাঘিমাংশ।
+  - `ব্যাসার্ধ`: অনুসন্ধান ব্যাসার্ধ (ডিফল্ট: 5000m)।
 
-#### **Business APIs**
-| API Endpoint                     | Description                                      |
-|-----------------------------------|--------------------------------------------------|
-| `GET /v1/businesses/{id}`         | Fetch detailed business info                    |
-| `POST /v1/businesses`             | Add a new business                              |
-| `PUT /v1/businesses/{id}`         | Update business details                         |
-| `DELETE /v1/businesses/{id}`      | Remove a business from the system               |
+#### **বিজনেস APIs**
+| API এন্ডপয়েন্ট | বর্ণনা |
+|----------------------------------------------------------------------------
+| `GET /v1/businesses/{id}` | বিস্তারিত ব্যবসার তথ্য আনুন |
+| `POST /v1/ব্যবসা` | একটি নতুন ব্যবসা যোগ করুন |
+| `PUT /v1/ব্যবসা/{id}` | ব্যবসার বিবরণ আপডেট করুন |
+| `মুছুন /v1/ব্যবসা/{id}` | সিস্টেম থেকে একটি ব্যবসা সরান |
 
 
-### **Data Model**
-- Since the read volume is high because two features are very commonly used, a realtional database such as MySQL is a good fit.
-  - Search for nearby businesses
-  - View the detailed information of a business
+### **ডেটা মডেল**
+- যেহেতু রিড ভলিউম বেশি কারণ দুটি বৈশিষ্ট্য খুব সাধারণভাবে ব্যবহৃত হয়, তাই একটি বাস্তবিক ডাটাবেস যেমন MySQL একটি উপযুক্ত।
+  - কাছাকাছি ব্যবসার জন্য অনুসন্ধান করুন
+  - একটি ব্যবসার বিস্তারিত তথ্য দেখুন
 
-### **Data Schema**
-- Key Database tables are the business table and the geospatial index table
-- The business table consists the detailed information about a business.
+### **ডেটা স্কিমা**
+- মূল ডাটাবেস সারণী হল ব্যবসার টেবিল এবং ভূ-স্থানিক সূচক টেবিল
+- ব্যবসায়িক টেবিলে একটি ব্যবসা সম্পর্কে বিস্তারিত তথ্য থাকে।
 
-### **High-Level System Architecture**
-The system comprises of two parts: Location based service (LBS) and business related service.
+### **উচ্চ-স্তরের সিস্টেম আর্কিটেকচার**
+সিস্টেমটি দুটি অংশ নিয়ে গঠিত: অবস্থান ভিত্তিক পরিষেবা (LBS) এবং ব্যবসা সম্পর্কিত পরিষেবা।
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="HLD" width="400" />
 </div>
 
-- **Location-Based Service (LBS)**: 
-  - Processes location-based search queries.
-  - Read-heavy service with no write requests.
-  - QPS is high especially during peak hours in dense areas and the system is stateless.
-- **Business Service**: Deals with two types of requests.
-  - Business owners create, update or delete businesses.
-  - Customers view detailed information about a business.
-- **Load Balancer**: Routes traffic to LBS and Business service.
-- **Database Cluster**: 
-  - Uses **primary-replica architecture** for read-heavy workloads.
-  - There might be some discrepancy between data read b/w data read by LBS and data written by by primary database.
-  - This incosistency is not an issue beacuase the business information is not updated in real-time.
+- **অবস্থান-ভিত্তিক পরিষেবা (LBS)**: 
+  - অবস্থান-ভিত্তিক অনুসন্ধান প্রশ্নগুলি প্রক্রিয়া করে।
+  - কোন লেখার অনুরোধ ছাড়াই রিড-হেভি সার্ভিস।
+  - QPS বেশি থাকে বিশেষ করে ঘন এলাকায় পিক আওয়ারে এবং সিস্টেমটি রাষ্ট্রহীন।
+- **ব্যবসায়িক পরিষেবা**: দুই ধরনের অনুরোধ নিয়ে কাজ করে।
+  - ব্যবসার মালিকরা ব্যবসা তৈরি, আপডেট বা মুছে দিন।
+  - গ্রাহকরা একটি ব্যবসা সম্পর্কে বিস্তারিত তথ্য দেখেন।
+- **লোড ব্যালেন্সার**: এলবিএস এবং ব্যবসায়িক পরিষেবাতে ট্রাফিককে রুট করে।
+- **ডাটাবেস ক্লাস্টার**: 
+  - পড়া-ভারী কাজের চাপের জন্য **প্রাথমিক-প্রতিরূপ আর্কিটেকচার** ব্যবহার করে।
+  - LBS দ্বারা পঠিত b/w ডেটা এবং প্রাথমিক ডাটাবেস দ্বারা লেখা ডেটার মধ্যে কিছু পার্থক্য থাকতে পারে।
+  - এই অসংগতি একটি সমস্যা নয় কারণ ব্যবসার তথ্য রিয়েল-টাইমে আপডেট করা হয় না।
 
 
 ---
 
-## ধাপ 3: Algorithms for Fetching Nearby Businesses
+## ধাপ 3: কাছাকাছি ব্যবসা আনার জন্য অ্যালগরিদম
 
-### **Option 1: Two-Dimensional Search (Naive Approach)**
+### **বিকল্প 1: দ্বি-মাত্রিক অনুসন্ধান (নিষ্পাপ দৃষ্টিভঙ্গি)**
 
 <div style="margin-left:3rem">
     <img src="./images/2d-search.png" alt="2D" width="250" />
 </div>
 
-The most intuitive way is to draw a circle with pre-defined radius and find all the businesses within the circle.
+সবচেয়ে স্বজ্ঞাত উপায় হল পূর্ব-নির্ধারিত ব্যাসার্ধের সাথে একটি বৃত্ত আঁকা এবং বৃত্তের মধ্যে সমস্ত ব্যবসা খুঁজে বের করা।
 
-**SQL Query:**
+**এসকিউএল প্রশ্ন:**
 ```
 SELECT business_id, latitude, longitude
 FROM business
 WHERE (latitude BETWEEN :lat - radius AND :lat + radius)
 AND (longitude BETWEEN :long - radius AND :long + radius);
 ```
-**Problems:**
-- **Inefficient**: Requires scanning the entire database.
-- **Limited by one-dimensional indexes** (latitude/longitude).
+**সমস্যা:**
+- **অদক্ষ**: সমগ্র ডাটাবেস স্ক্যান করা প্রয়োজন।
+- **এক-মাত্রিক সূচক দ্বারা সীমাবদ্ধ** (অক্ষাংশ/দ্রাঘিমাংশ)।
 
-A potiential improvement is to build index on logitude and latitude columns, alhtough this is slighlty better but still vry slow.
+একটি সম্ভাব্য উন্নতি হল লজিটিউড এবং অক্ষাংশ কলামগুলিতে সূচক তৈরি করা, যদিও এটি কিছুটা ভাল তবে এখনও খুব ধীর।
 
-### Better Approach
-- The problem with last approach is that the database index can only increase search speed in one dimension.
-- An optimal apporach is to reprsent the two-dimensional data into one dimension using geospatial indexing.
-  - Hash: Even grid, Geo Hash
-  - Tree: Quadtree, Google S2, RTree
+### আরও ভালো পদ্ধতি
+- শেষ পদ্ধতির সমস্যা হল যে ডাটাবেস সূচক শুধুমাত্র একটি মাত্রায় অনুসন্ধানের গতি বাড়াতে পারে।
+- একটি সর্বোত্তম অ্যাপোরাচ হল ভূ-স্থানীয় সূচীকরণ ব্যবহার করে দ্বি-মাত্রিক ডেটাকে এক মাত্রায় উপস্থাপন করা।
+  - হ্যাশ: এমনকি গ্রিড, জিও হ্যাশ
+  - গাছ: Quadtree, Google S2, RTree
 
   <div style="margin-left:3rem">
     <img src="./images/geospatial-index-types.png" alt="2D" width="500" />
   </div>
 
 
-### **Option 2: Evenly Divided Grid**
+### **বিকল্প 2: সমানভাবে বিভক্ত গ্রিড**
 
   <div style="margin-left:3rem">
     <img src="./images/even-grid.png" alt="Even Grid" width="400" />
   </div>
 
-- **Divides the world into fixed-size grids**.
-- **Issue**: Uneven business distribution (high density in cities, sparse in rural areas).
+- **বিশ্বকে স্থির আকারের গ্রিডে ভাগ করে**।
+- **ইস্যু**: অসম ব্যবসায়িক বন্টন (শহরে উচ্চ ঘনত্ব, গ্রামীণ এলাকায় বিরল)।
 
-### **Option 3: Geohash**
-- Divide the planet into four quadrants along with the prime meridian and equator. And then divide each grid into four smaller grids. 
-- Each grids can be represented by altering b/w longitude and latitude bit.
-- Repeat this subdivision
+### **বিকল্প 3: জিওহ্যাশ**
+- প্রাইম মেরিডিয়ান এবং নিরক্ষরেখা সহ গ্রহটিকে চারটি চতুর্ভুজে বিভক্ত করুন। এবং তারপরে প্রতিটি গ্রিডকে চারটি ছোট গ্রিডে ভাগ করুন। 
+- প্রতিটি গ্রিড b/w দ্রাঘিমাংশ এবং অক্ষাংশ বিট পরিবর্তন করে প্রতিনিধিত্ব করা যেতে পারে।
+- এই উপবিভাগের পুনরাবৃত্তি করুন
 
   <div style="margin-left:3rem">
     <img src="./images/geohash.png" alt="Geohash" width="300" />
@@ -131,56 +131,56 @@ A potiential improvement is to build index on logitude and latitude columns, alh
   </div>
 
 
-- **Encodes latitude and longitude into a single alphanumeric string**. It has 12 precisions (levels)
-- **Hierarchical grid structure** allows for efficient searching.
-- The right precision is chosen by using the minimal geohash length according to the table.
+- **অক্ষাংশ এবং দ্রাঘিমাংশকে একটি একক আলফানিউমেরিক স্ট্রিংয়ে এনকোড করে**। এটির 12টি নির্ভুলতা (স্তর)
+- **অনুক্রমিক গ্রিড গঠন** দক্ষ অনুসন্ধানের জন্য অনুমতি দেয়।
+- টেবিল অনুযায়ী ন্যূনতম জিওহ্যাশ দৈর্ঘ্য ব্যবহার করে সঠিক নির্ভুলতা বেছে নেওয়া হয়।
   <div style="margin-left:3rem">
     <img src="./images/geohash-radius-mapping.png" alt="Geohash Radius" width="400" />
   </div>
-- Geohash guarantees that the longer a shared prefix is between two geohashes, the closer they are.
+- জিওহ্যাশ গ্যারান্টি দেয় যে দুটি জিওহ্যাশের মধ্যে একটি ভাগ করা উপসর্গ যত দীর্ঘ হবে, ততই কাছাকাছি হবে৷
 
-- **Challenges**:
+- **চ্যালেঞ্জ**:
   <div style="margin-left:3rem">
     <img src="./images/boundary-issue.png" alt="Boundary Issue" width="300" />
   </div>
 
-  - **Boundary issues** (businesses close to grid edges may get excluded).
-    - Two locations can be very close but have no shared prefix at all (can be on other side of equator)
-    - Two locations can have a long shared prefix but belong to different geohashes.
-  - Solution: Need to search neighboring grids.
+- **সীমানা সমস্যা** (গ্রিড প্রান্তের কাছাকাছি ব্যবসা বাদ দেওয়া হতে পারে)।
+    - দুটি অবস্থান খুব কাছাকাছি হতে পারে কিন্তু কোনো ভাগ করা উপসর্গ নেই (নিরক্ষরেখার অন্য দিকে হতে পারে)
+    - দুটি অবস্থানে একটি দীর্ঘ ভাগ করা উপসর্গ থাকতে পারে কিন্তু ভিন্ন জিওহ্যাশের অন্তর্গত।
+  - সমাধান: প্রতিবেশী গ্রিড অনুসন্ধান করতে হবে।
 
 
-### **Option 4: Quadtree**
+### **বিকল্প ৪: কোয়াডট্রি**
 
-  A quadtree is a tree data structure that recursively divides a two-dimensional space into four quadrants, with each internal node having exactly four children, representing the four sub-regions of the space.
-  - The quadtree is an in-memory data structure and it runs on each LBS server and built on server startup time.
+একটি quadtree হল একটি ট্রি ডেটা স্ট্রাকচার যা একটি দ্বি-মাত্রিক স্থানকে চারটি চতুর্ভুজে বিভক্ত করে, প্রতিটি অভ্যন্তরীণ নোডের ঠিক চারটি সন্তান থাকে, যা স্থানের চারটি উপ-অঞ্চলের প্রতিনিধিত্ব করে।
+  - কোয়াডট্রি একটি ইন-মেমরি ডেটা স্ট্রাকচার এবং এটি প্রতিটি এলবিএস সার্ভারে চলে এবং সার্ভার স্টার্টআপ টাইমে তৈরি হয়।
 
   <div style="margin-left:3rem">
     <img src="./images/quadtree.png" alt="Quadtree" width="500" />
   </div>
 
-  - The root node is recursively broken down into 4 quadrants until no nodes are left with more than x number of businesses (100 in this case).
+- রুট নোডকে পুনরাবৃত্তভাবে 4টি চতুর্ভুজে বিভক্ত করা হয় যতক্ষণ না কোনো নোড x সংখ্যার বেশি ব্যবসার সাথে অবশিষ্ট না থাকে (এই ক্ষেত্রে 100)।
 
   <div style="margin-left:3rem">
     <img src="./images/building-quadtree.png" alt="Building Quadtree" width="500" />
   </div>
 
-- The quadtree index doen't take too much memory (typically in GBs) and can easily fit in one server.
-- Since tge time complexity to build the tree is nlogn, it might take a few minutes to build the tree.
-- **Efficient for k-nearest search queries** (e.g., find the closest gas station).
+- কোয়াডট্রি ইনডেক্স খুব বেশি মেমরি নেয় না (সাধারণত জিবিতে) এবং সহজেই একটি সার্ভারে ফিট হতে পারে।
+- যেহেতু গাছটি তৈরি করতে সময় জটিলতা nlogn, তাই গাছটি তৈরি করতে কয়েক মিনিট সময় লাগতে পারে।
+- **কে-নিকটবর্তী অনুসন্ধান প্রশ্নের জন্য কার্যকর** (যেমন, নিকটতম গ্যাস স্টেশন খুঁজুন)।
 
   <div style="margin-left:3rem">
     <img src="./images/realworld-quadtree.png" alt="Real World Quadtree" width="400" />
   </div>
 
-#### Operational considerations
- - For around 200 million businesses, it might take few minutes to build a quadtree at the server start time.
- - While the quadtree is built it cannot serve traffic, therefore a new release should be rolled out incrementally to a subset of servers.
- - When updating a business or adding a new the easiest approach is to incrementally rebuild the quadtree. (Leading to a lot of cache invalidation)
- - Also possible to update the quadtree on the fly but more complex to implement. (Needs locking mechanism)
+#### অপারেশনাল বিবেচনা
+- প্রায় 200 মিলিয়ন ব্যবসার জন্য, সার্ভার শুরুর সময়ে একটি কোয়াডট্রি তৈরি করতে কয়েক মিনিট সময় লাগতে পারে।
+ - যখন কোয়াডট্রি তৈরি করা হয় তখন এটি ট্রাফিক পরিবেশন করতে পারে না, তাই একটি নতুন রিলিজ সার্ভারের একটি উপসেটে ক্রমবর্ধমানভাবে রোল আউট করা উচিত।
+ - একটি ব্যবসা আপডেট করার সময় বা একটি নতুন যোগ করার সময় সবচেয়ে সহজ পদ্ধতি হল ক্রমবর্ধমানভাবে কোয়াডট্রি পুনর্নির্মাণ করা। (অনেক ক্যাশে অবৈধকরণের দিকে পরিচালিত করে)
+ - এছাড়াও ফ্লাইতে কোয়াডট্রি আপডেট করা সম্ভব কিন্তু বাস্তবায়ন করা আরও জটিল। (লকিং মেকানিজম প্রয়োজন)
 
-### **Option 5: Google S2**
-It maps a sphere to a !D index based on Hilbert curve.Two points that are close to each other on the Hilbert curve are close in 1D space.
+### **বিকল্প 5: Google S2**
+এটি হিলবার্ট বক্ররেখার উপর ভিত্তি করে একটি !D সূচকে একটি গোলক ম্যাপ করে৷ হিলবার্ট বক্ররেখায় একে অপরের কাছাকাছি দুটি বিন্দু 1D স্থানের কাছাকাছি৷
 
 
   <div style="margin-left:3rem">
@@ -188,70 +188,70 @@ It maps a sphere to a !D index based on Hilbert curve.Two points that are close 
     <img src="./images/geofence.png" alt="Geofence" width="355" />
   </div>
 
-- **Divides the earth into small cells using a Hilbert curve**.
-- Great for geofencing becuase it can cover arbitrary areas with varying levels.
-- Geofencing also allows to define parameters that surround the area of interest.
-- Aother advantage if instead of having a fixed level of precision, we can specify min,max level and max cells in S2.
+- **হিলবার্ট বক্ররেখা ব্যবহার করে পৃথিবীকে ছোট কোষে বিভক্ত করে**।
+- জিওফেন্সিংয়ের জন্য দুর্দান্ত কারণ এটি বিভিন্ন স্তরের সাথে নির্বিচারে এলাকাগুলিকে কভার করতে পারে।
+- জিওফেন্সিং এমন প্যারামিটারগুলিকে সংজ্ঞায়িত করার অনুমতি দেয় যা আগ্রহের এলাকাকে ঘিরে থাকে।
+- আরেকটি সুবিধা যদি একটি নির্দিষ্ট স্তরের নির্ভুলতার পরিবর্তে, আমরা S2-এ ন্যূনতম, সর্বোচ্চ স্তর এবং সর্বাধিক সেলগুলি নির্দিষ্ট করতে পারি।
 
 
-## Tradeoff Comparison
+## ট্রেডঅফ তুলনা
 
-#### Geohash
-- Easy to use and implement- No need to build/rebuild a tree
-- Supports fixed radius results
-- Updating the index is easy.
-- Cannot dynamically adjust the grid size based on population density.
+#### জিওহ্যাশ
+- ব্যবহার করা এবং প্রয়োগ করা সহজ- একটি গাছ নির্মাণ/পুনঃনির্মাণের প্রয়োজন নেই
+- স্থির ব্যাসার্ধের ফলাফল সমর্থন করে
+- সূচক আপডেট করা সহজ।
+- জনসংখ্যার ঘনত্বের উপর ভিত্তি করে গতিশীলভাবে গ্রিডের আকার সামঞ্জস্য করা যাবে না৷
 
-#### Quadtree
-- Slightly harder to implement.
-- Supports fetching k-nearest businesses.
-- Can dynamically adjust the grid size based on population desnsity.
-- Updating the index is more complicated as might need to rebuild the whole tree.
+#### কোয়াডট্রি
+- বাস্তবায়ন করা কিছুটা কঠিন।
+- কে-নিকটস্থ ব্যবসাগুলি আনয়ন সমর্থন করে।
+- জনসংখ্যার ঘনত্বের উপর ভিত্তি করে গতিশীলভাবে গ্রিডের আকার সামঞ্জস্য করতে পারে।
+- সূচক আপডেট করা আরও জটিল কারণ পুরো গাছটিকে পুনর্নির্মাণের প্রয়োজন হতে পারে।
 
 ---
 
-## ধাপ 4: Scaling the Database and Caching Strategy
+## ধাপ 4: ডাটাবেস স্কেলিং এবং ক্যাশিং কৌশল
 
-### **Scaling the Business Table**
-- **Sharding by business ID** ensures even data distribution.
-- We have separate rows for each business in the table.
+### **ব্যবসার সারণী স্কেল করা**
+- **বিজনেস আইডি দ্বারা ভাগ করা** এমনকি ডেটা বিতরণ নিশ্চিত করে।
+- আমাদের টেবিলে প্রতিটি ব্যবসার জন্য আলাদা সারি আছে।
 
-| Geohash | Business ID |
+| জিওহাশ | বিজনেস আইডি |
 |---------|------------|
-| 9q9hvu  | 343        |
-| 9q9hvu  | 347        |
-| 9q9hvu  | 112        |
+| 9q9hvu | 343 |
+| 9q9hvu | 347 |
+| 9q9hvu | 112 |
 
-### **Scaling the Geospatial Index**
-- Might not be a good fit for the geohash table. In this case everything can fit in a single server so there's no tehcnical reason for sharding.
-- A better approach is to have read-replicas to help with read loads.
+### **জিওস্পেশিয়াল ইনডেক্স স্কেল করা**
+- জিওহ্যাশ টেবিলের জন্য উপযুক্ত নাও হতে পারে। এই ক্ষেত্রে সবকিছু একটি একক সার্ভারে ফিট করতে পারে তাই শার্ডিংয়ের জন্য কোনও প্রযুক্তিগত কারণ নেই।
+- একটি ভাল পদ্ধতি হল রিড-লোডের সাথে সাহায্য করার জন্য পঠন-প্রতিলিপি থাকা।
 
 
 
 ---
 
-### **Cache Strategy**
-The most obvious cache key choice is the location coordinate, however it has a few issues:
- - Location coordinates from gps are not accurate.
- - A user can move casuing the location coordinate to change.
- - A better key is the geohash.
+### **ক্যাশ কৌশল**
+সবচেয়ে সুস্পষ্ট ক্যাশে কী পছন্দ হল অবস্থান সমন্বয়, তবে এতে কয়েকটি সমস্যা রয়েছে:
+ - জিপিএস থেকে অবস্থান স্থানাঙ্ক সঠিক নয়।
+ - একজন ব্যবহারকারী স্থান পরিবর্তনের জন্য স্থানাঙ্ক পরিবর্তন করতে পারে।
+ - একটি ভাল কী হল জিওহ্যাশ।
 
-| Cache Key  | Cache Value |
+| ক্যাশে কী | ক্যাশে মান |
 |------------|------------|
-| `geohash`  | List of business IDs in that grid |
-| `business_id` | Business details (name, address, reviews, etc.) |
+| `জিওহ্যাশ` | সেই গ্রিডে ব্যবসা আইডির তালিকা |
+| `ব্যবসা_আইডি` | ব্যবসার বিবরণ (নাম, ঠিকানা, পর্যালোচনা, ইত্যাদি) |
 
 ---
 
-## ধাপ 5: Deployment Strategy and Final Architecture
+## ধাপ 5: স্থাপনার কৌশল এবং চূড়ান্ত আর্কিটেকচার
 
-### **Region and Availability Zones**
-- Deploy LBS and Business Service **across multiple regions**.
+### **অঞ্চল এবং প্রাপ্যতা অঞ্চল**
+- LBS এবং ব্যবসায়িক পরিষেবা **একাধিক অঞ্চল জুড়ে** স্থাপন করুন।
 
-### **Handling Real-Time Updates**
-- **Business updates are batch processed daily**.
+### **রিয়েল-টাইম আপডেট পরিচালনা করা**
+- **ব্যবসায়িক আপডেট প্রতিদিন ব্যাচ প্রক্রিয়া করা হয়**।
 
-### **Final System Architecture**
+### **ফাইনাল সিস্টেম আর্কিটেকচার**
 
 
   <div style="margin-left:3rem">
@@ -259,57 +259,57 @@ The most obvious cache key choice is the location coordinate, however it has a f
   </div>
 
 
-This final algorithm looks like this:
+এই চূড়ান্ত অ্যালগরিদম এই মত দেখায়:
 
-## Steps to Retrieve Nearby Businesses
-1. **User Request:**  
-   - A user searches for restaurants within **500 meters**.  
-   - The client sends **latitude (37.776720), longitude (-122.416730), and radius (500m)** to the **load balancer**.
+## কাছাকাছি ব্যবসা পুনরুদ্ধার করার পদক্ষেপ
+1. **ব্যবহারকারীর অনুরোধ:**  
+   - একজন ব্যবহারকারী **500 মিটার** এর মধ্যে রেস্তোরাঁ খোঁজেন।  
+   - ক্লায়েন্ট **লোড ব্যালেন্সার**-এ **অক্ষাংশ (37.776720), দ্রাঘিমাংশ (-122.416730), এবং ব্যাসার্ধ (500m)** পাঠায়।
 
-2. **Request Forwarding:**  
-   - The **load balancer (LB)** forwards the request to the **Location-Based Service (LBS)**.
+2. **অনুরোধ ফরোয়ার্ড:**  
+   - **লোড ব্যালেন্সার (LB)** অনুরোধটি **অবস্থান-ভিত্তিক পরিষেবা (LBS)**-এ ফরোয়ার্ড করে।
 
-3. **Geohash Calculation:**  
-   - LBS determines the **geohash length** matching the radius.  
-   - Using a reference table, **500m corresponds to geohash length = 6**.
+3. **জিওহাশ গণনা:**  
+   - LBS ব্যাসার্ধের সাথে মিলে যাওয়া **জিওহ্যাশ দৈর্ঘ্য** নির্ধারণ করে।  
+   - একটি রেফারেন্স টেবিল ব্যবহার করে, **500m জিওহ্যাশ দৈর্ঘ্য = 6** এর সাথে মিলে যায়।
 
-4. **Fetching Neighboring Geohashes:**  
-   - LBS calculates **neighboring geohashes** to include nearby areas.  
-   - The result is a list:  
+4. **প্রতিবেশী জিওহ্যাশগুলি আনা:**  
+   - এলবিএস আশেপাশের এলাকাগুলিকে অন্তর্ভুক্ত করতে **প্রতিবেশী জিওহ্যাশ** গণনা করে।  
+   - ফলাফল একটি তালিকা:
      ```
      [my_geohash, neighbor1_geohash, neighbor2_geohash, ..., neighbor8_geohash]
      ```
 
-5. **Fetching Business IDs from Redis:**  
-   - For each geohash in the list, LBS queries the **Geohash Redis server** to fetch **business IDs**.  
-   - Parallel queries are used to minimize latency.
+5. **রেডিস থেকে বিজনেস আইডি আনা হচ্ছে:**  
+   - তালিকার প্রতিটি জিওহ্যাশের জন্য, LBS **ব্যবসায়িক আইডি** আনার জন্য **জিওহ্যাশ রেডিস সার্ভার**কে জিজ্ঞাসা করে।  
+   - সমান্তরাল প্রশ্নগুলি লেটেন্সি কমাতে ব্যবহার করা হয়।
 
-6. **Retrieving & Ranking Businesses:**  
-   - LBS fetches **full business details** from the **Business Info Redis server**.  
-   - Businesses are **sorted by distance** from the user’s location.  
-   - The **ranked results** are sent back to the client.
+৬. **ব্যবসা পুনরুদ্ধার ও র‌্যাঙ্কিং:**  
+   - LBS **বিজনেস ইনফো রেডিস সার্ভার** থেকে **ব্যবসার সম্পূর্ণ বিবরণ** নিয়ে আসে।  
+   -ব্যবসা ব্যবহারকারীর অবস্থান থেকে **দূরত্ব অনুসারে** বাছাই করা হয়।  
+   - **র্যাঙ্ক করা ফলাফল** ক্লায়েন্টকে ফেরত পাঠানো হয়।
 
-## Key Optimizations
-- **Parallel Redis Calls**: Reduces response time.  
-- **Geohash Indexing**: Ensures efficient spatial queries.  
-- **Caching**: Speeds up lookup and retrieval of business data.  
+## কী অপ্টিমাইজেশান
+- **সমান্তরাল রেডিস কল**: প্রতিক্রিয়ার সময় হ্রাস করে।  
+- **জিওহ্যাশ ইনডেক্সিং**: দক্ষ স্থানিক প্রশ্নগুলি নিশ্চিত করে৷  
+- **ক্যাশিং**: ব্যবসার ডেটা অনুসন্ধান এবং পুনরুদ্ধারের গতি বাড়ায়।
 
-This method ensures **low-latency, scalable** retrieval of businesses near a user’s location.
+এই পদ্ধতিটি ব্যবহারকারীর অবস্থানের কাছাকাছি ব্যবসার **কম-বিলম্বিত, মাপযোগ্য** পুনরুদ্ধার নিশ্চিত করে।
 
 ---
 
-### **Choosing the Best Indexing Method**
-| Indexing Method | Pros | Cons |
+### **সেরা সূচীকরণ পদ্ধতি নির্বাচন করা**
+| ইন্ডেক্সিং পদ্ধতি | পেশাদার | কনস |
 |----------------|------|------|
-| **Geohash** | Easy to implement, efficient for proximity search | Boundary issues, fixed grid size |
-| **Quadtree** | Dynamically adjusts to density, supports k-nearest queries | More complex, requires tree rebalancing |
-| **Google S2** | Advanced geofencing, used in Google Maps | Harder to implement |
+| **জিওহ্যাশ** | প্রয়োগ করা সহজ, প্রক্সিমিটি সার্চের জন্য দক্ষ | সীমানা সমস্যা, নির্দিষ্ট গ্রিড আকার |
+| **চতুর গাছ** | গতিশীলভাবে ঘনত্বের সাথে সামঞ্জস্য করে, k- নিকটতম প্রশ্ন সমর্থন করে | আরও জটিল, গাছের ভারসাম্য প্রয়োজন
+| **Google S2** | অ্যাডভান্সড জিওফেন্সিং, গুগল ম্যাপে ব্যবহৃত | বাস্তবায়ন করা কঠিন |
 
 ---
 
-## References
-1. [Geohash Algorithm](https://www.movable-type.co.uk/scripts/geohash.html)
-2. [Quadtree Indexing](https://en.wikipedia.org/wiki/Quadtree)
-3. [Google S2 Geometry](https://s2geometry.io/)
+## তথ্যসূত্র
+1. [জিওহাশ অ্যালগরিদম](https://www.movable-type.co.uk/scripts/geohash.html)
+2. [কোয়াডট্রি ইনডেক্সিং](https://en.wikipedia.org/wiki/Quadtree)
+3. [Google S2 জ্যামিতি](https://s2geometry.io/)
 
 

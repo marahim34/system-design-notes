@@ -1,68 +1,68 @@
-# অধ্যায় 7: ডিস্ট্রিবিউটেড ইউনিক আইডি জেনারেটর
+# অধ্যায় 7: ডিস্ট্রিবিউটেড সিস্টেমে একটি অনন্য আইডি জেনারেটর ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-This chapter addresses the challenge of designing a **unique ID generator** for distributed systems. Traditional auto-increment keys are unsuitable in distributed environments due to scalability and synchronization challenges. The focus is on creating unique, sortable, 64-bit numerical IDs that meet the following requirements:
-- IDs must be **unique** and **ordered by date**.
-- IDs must fit within **64 bits**.
-- The system should generate **over 10,000 IDs per second**.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-### Basic Requirements
-- IDs must be unique and numerical and should fit in 64 bits.
-- IDs increment with time but not strictly by `+1`.
-- IDs should be sortable by date.
-- System must handle high throughput (10,000 IDs/sec).
+## ভূমিকা
+এই অধ্যায়টি বিতরণ করা সিস্টেমের জন্য একটি **অনন্য আইডি জেনারেটর** ডিজাইন করার চ্যালেঞ্জকে সম্বোধন করে। প্রথাগত স্বয়ংক্রিয় বৃদ্ধি কীগুলি মাপযোগ্যতা এবং সিঙ্ক্রোনাইজেশন চ্যালেঞ্জের কারণে বিতরণ করা পরিবেশে অনুপযুক্ত। নিম্নোক্ত প্রয়োজনীয়তাগুলি পূরণ করে এমন অনন্য, বাছাইযোগ্য, 64-বিট সংখ্যাসূচক আইডি তৈরিতে ফোকাস করা হয়:
+- আইডি অবশ্যই **অদ্বিতীয়** এবং **তারিখ অনুসারে অর্ডার করা** হতে হবে।
+- আইডিগুলি অবশ্যই **64 বিটের মধ্যে ফিট হবে।
+- সিস্টেমটি **প্রতি সেকেন্ডে 10,000 এর বেশি আইডি তৈরি করতে হবে**।
 
 ---
 
-## ধাপ 2: High-Level Design Options
-### 1. Multi-Master Replication
-- **Approach:** Use database `auto_increment` with step increments (e.g., `+k` for k servers).
+## ধাপ 1: সমস্যা বোঝা
+### মৌলিক প্রয়োজনীয়তা
+- আইডিগুলি অবশ্যই অনন্য এবং সংখ্যাসূচক হতে হবে এবং 64 বিটে ফিট হওয়া উচিত।
+- আইডি সময়ের সাথে বৃদ্ধি পায় কিন্তু কঠোরভাবে `+1` দ্বারা নয়।
+- আইডি তারিখ অনুসারে বাছাই করা উচিত।
+- সিস্টেমকে অবশ্যই উচ্চ থ্রুপুট পরিচালনা করতে হবে (10,000 আইডি/সেকেন্ড)।
 
-    <p align="left">
+---
+
+## ধাপ 2: উচ্চ-স্তরের নকশা বিকল্প
+### 1. মাল্টি-মাস্টার প্রতিলিপি
+- **পন্থা:** ধাপ বৃদ্ধি সহ ডাটাবেস `অটো_ইনক্রিমেন্ট` ব্যবহার করুন (যেমন, k সার্ভারের জন্য `+k`)।
+
+<p align="left">
     <img src="./images/multi-master.png"  alt="Multi Master" width="400">
-    </p>
+</p>
 
-- **Drawbacks:**
-  - Hard to scale across data centers.
-  - IDs do not always increase with time.
-  - Scaling issues when servers are added/removed.
+- **অপূর্ণতা:**
+  - ডেটা সেন্টার জুড়ে স্কেল করা কঠিন।
+  - আইডি সবসময় সময়ের সাথে বাড়ে না।
+  - সার্ভার যোগ/সরানো হলে স্কেলিং সমস্যা।
 
-### 2. UUID (Universally Unique Identifier)
-- **Approach:** 
-    - Generate 128-bit unique identifiers independently on each server using UUID.
-    - UUIDs can be generated independently without coordination between servers
+### 2. UUID (সর্বজনীনভাবে অনন্য শনাক্তকারী)
+- **পন্থা:** 
+    - UUID ব্যবহার করে প্রতিটি সার্ভারে স্বাধীনভাবে 128-বিট অনন্য শনাক্তকারী তৈরি করুন।
+    - সার্ভারের মধ্যে সমন্বয় ছাড়াই UUIDs স্বাধীনভাবে তৈরি করা যেতে পারে
 
-        <p align="left">
+<p align="left">
         <img src="./images/uuid.png"  alt="UUID generator" width="600">
-        </p>
+</p>
 
-- **Advantages:**
-  - No coordination needed between servers.
-  - Scales easily with web servers.
-- **Drawbacks:**
-  - Exceeds 64-bit requirement.
-  - IDs are not sortable by time and may be non-numeric.
+- **সুবিধা:**
+  - সার্ভারের মধ্যে কোন সমন্বয়ের প্রয়োজন নেই।
+  - ওয়েব সার্ভারের সাথে সহজেই স্কেল করুন।
+- **অপূর্ণতা:**
+  - 64-বিট প্রয়োজনীয়তা অতিক্রম করে।
+  - আইডি সময় অনুসারে বাছাই করা যায় না এবং অ-সংখ্যিক হতে পারে।
 
 
-### 3. Ticket Server
-- **Approach:** Use a centralized database server to increment and assign IDs.
+### 3. টিকিট সার্ভার
+- **পন্থা:** আইডি বৃদ্ধি এবং বরাদ্দ করতে একটি কেন্দ্রীভূত ডাটাবেস সার্ভার ব্যবহার করুন।
 
-    <p align="left">
+<p align="left">
     <img src="./images/ticket-server.png"  alt="UUID generator" width="500">
-    </p>
+</p>
 
-- **Advantages:**
-  - Simple to implement for small-scale systems.
-  - Generates numeric IDs.
-- **Drawbacks:**
-  - Single point of failure.
-  - Synchronization challenges in multi-server setups.
+- **সুবিধা:**
+  - ছোট-স্কেল সিস্টেমের জন্য বাস্তবায়ন করা সহজ।
+  - সংখ্যাসূচক আইডি তৈরি করে।
+- **অপূর্ণতা:**
+  - ব্যর্থতার একক পয়েন্ট।
+  - মাল্টি-সার্ভার সেটআপে সিঙ্ক্রোনাইজেশন চ্যালেঞ্জ।
 
-### 4. Twitter Snowflake Approach
-- **Approach:** 
+### 4. টুইটার স্নোফ্লেক অ্যাপ্রোচ
+- **পন্থা:**
 
     <div style="margin-left:3rem">
       <img src="./images/twitter-snowflake.png"  alt="Snowflake approach" width="500">
@@ -71,30 +71,30 @@ This chapter addresses the challenge of designing a **unique ID generator** for 
       <img src="./images/snowflake-id-breakdown.png"  alt="Snowflake ID breakdow" width="500">
     </div>
 
-    - Divide IDs into sections to ensure uniqueness and scalability.
-    - **Sign Bit (1 bit):** Always `0`, potentially distinguishing signed and unsigned numbers.
-    - **Timestamp (41 bits):** Milliseconds since a custom epoch (Twitter's default is `1288834974657`, equivalent to Nov 04, 2010, 01:42:54 UTC). Ensures IDs are time-ordered.
-    - **Datacenter ID (5 bits):** Identifies up to `2^5 = 32` datacenters.
-    - **Machine ID (5 bits):** Identifies up to `2^5 = 32` machines within each datacenter.
-    - **Sequence Number (12 bits):** Tracks IDs generated on a machine within the same millisecond, supporting up to `2^12 = 4096` IDs per millisecond. The sequence resets to `0` every millisecond.
+- স্বতন্ত্রতা এবং মাপযোগ্যতা নিশ্চিত করতে আইডিগুলিকে বিভাগে ভাগ করুন।
+    - **সাইন বিট (1 বিট):** সর্বদা `0`, সম্ভাব্যভাবে স্বাক্ষরিত এবং স্বাক্ষরবিহীন সংখ্যাকে আলাদা করে।
+    - **টাইমস্ট্যাম্প (41 বিট):** একটি কাস্টম যুগ থেকে মিলিসেকেন্ড (টুইটারের ডিফল্ট হল `1288834974657`, নভেম্বর 04, 2010, 01:42:54 UTC এর সমতুল্য)। নিশ্চিত করে যে আইডিগুলি সময়-অনুযায়ী।
+    - **ডেটাসেন্টার আইডি (5 বিট):** `2^5 = 32` ডেটাসেন্টার পর্যন্ত শনাক্ত করে।
+    - **মেশিন আইডি (5 বিট):** প্রতিটি ডেটাসেন্টারের মধ্যে `2^5 = 32` পর্যন্ত মেশিন সনাক্ত করে।
+    - **সিকোয়েন্স নম্বর (12 বিট):** একই মিলিসেকেন্ডের মধ্যে একটি মেশিনে তৈরি আইডি ট্র্যাক করে, প্রতি মিলিসেকেন্ডে `2^12 = 4096` আইডি সমর্থন করে। ক্রমটি প্রতি মিলিসেকেন্ডে `0` এ পুনরায় সেট হয়।
 
 
 
-- **Advantages:**
-    - **Scalability:** Handles 10,000+ IDs per second across multiple servers.
-    - **Time-Order:** Ensures IDs are sortable by time.
-    - **Decentralization:** No single point of failure.
+- **সুবিধা:**
+    - **স্কেলযোগ্যতা:** একাধিক সার্ভার জুড়ে প্রতি সেকেন্ডে 10,000+ আইডি পরিচালনা করে।
+    - **টাইম-অর্ডার:** নিশ্চিত করে যে আইডিগুলি সময় অনুসারে বাছাই করা যায়।
+    - **বিকেন্দ্রীকরণ:** ব্যর্থতার কোন একক পয়েন্ট নেই।
 
 
-## ধাপ 4: Additional Considerations
-### 1. Clock Synchronization
-- **Challenge:** ID generation assumes synchronized clocks across servers.
-- **Solution:** Use **Network Time Protocol (NTP)** to minimize drift.
+## ধাপ 4: অতিরিক্ত বিবেচনা
+### 1. ঘড়ি সিঙ্ক্রোনাইজেশন
+- **চ্যালেঞ্জ:** আইডি জেনারেশন সার্ভার জুড়ে সিঙ্ক্রোনাইজড ঘড়ি ধরে নেয়।
+- **সমাধান:** ড্রিফ্ট কমাতে **নেটওয়ার্ক টাইম প্রোটোকল (এনটিপি)** ব্যবহার করুন।
 
-### 2. Section Length Tuning
-- Adjust section sizes (e.g., fewer sequence bits, more timestamp bits) based on use case.
+### 2. বিভাগ দৈর্ঘ্য টিউনিং
+- ব্যবহারের ক্ষেত্রের উপর ভিত্তি করে বিভাগের আকারগুলি (যেমন, কম সিকোয়েন্স বিট, আরও টাইমস্ট্যাম্প বিট) সামঞ্জস্য করুন।
 
-### 3. High Availability
-- ID generators are mission-critical and must be fault-tolerant.
-- Consider redundancy and failover mechanisms.
+### 3. উচ্চ প্রাপ্যতা
+- আইডি জেনারেটরগুলি মিশন-সমালোচনামূলক এবং অবশ্যই ত্রুটি-সহনশীল হতে হবে।
+- রিডানডেন্সি এবং ফেইলওভার মেকানিজম বিবেচনা করুন।
 

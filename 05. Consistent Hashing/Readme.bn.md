@@ -1,99 +1,99 @@
-# অধ্যায় 5: কনসিস্টেন্ট হ্যাশিং ডিজাইন
+# অধ্যায় 5: ডিজাইন সামঞ্জস্যপূর্ণ হ্যাশিং
 
-## ভূমিকা (Introduction)
-This chapter explores consistent hashing, a technique essential for achieving horizontal scaling by efficiently distributing requests and data across servers. It minimizes data redistribution when servers are added or removed and ensures an even distribution of data to mitigate issues like server hotspots.
+## ভূমিকা
+এই অধ্যায়টি সামঞ্জস্যপূর্ণ হ্যাশিং অন্বেষণ করে, সার্ভার জুড়ে দক্ষতার সাথে অনুরোধ এবং ডেটা বিতরণ করে অনুভূমিক স্কেলিং অর্জনের জন্য প্রয়োজনীয় একটি কৌশল। সার্ভার যোগ করা বা সরানো হলে এটি ডেটা পুনঃবন্টন কমিয়ে দেয় এবং সার্ভার হটস্পটের মতো সমস্যাগুলি কমাতে ডেটার সমান বিতরণ নিশ্চিত করে।
 
-## রি-হ্যাশিংয়ের সমস্যা (The Rehashing Problem)
-### Explanation
-In traditional hashing methods, such as `serverIndex = hash(key) % N`, data redistribution becomes problematic when the number of servers changes. For example:
-- Removing a server causes most keys to be reassigned, leading to cache misses.
-- Adding a server results in unnecessary key redistributions.
+## রিহ্যাশিং সমস্যা
+### ব্যাখ্যা
+ঐতিহ্যগত হ্যাশিং পদ্ধতিতে, যেমন `serverIndex = হ্যাশ(কী) % N`, সার্ভারের সংখ্যা পরিবর্তিত হলে ডেটা পুনঃবন্টন সমস্যাযুক্ত হয়ে পড়ে। যেমন:
+- একটি সার্ভার সরানোর ফলে বেশিরভাগ কী পুনরায় বরাদ্দ করা হয়, যার ফলে ক্যাশে মিস হয়।
+- একটি সার্ভার যোগ করার ফলে অপ্রয়োজনীয় কী পুনরায় বিতরণ করা হয়।
 
   <img src="./images/server-hashing.png"  alt="Server hashing" width="450">
 
-- This approach works well when the size of the server pool is fixed. However, problems arise when new servers are added, or existing servers are removed.
+- সার্ভার পুলের আকার ঠিক করা হলে এই পদ্ধতিটি ভাল কাজ করে। যাইহোক, সমস্যা দেখা দেয় যখন নতুন সার্ভার যোগ করা হয়, বা বিদ্যমান সার্ভারগুলি সরানো হয়।
 
   <img src="./images/server-hashing-miss.png"  alt="Server hashing Miss" width="450">
 
-### Key Issue
-Redistribution of most keys when server count changes causes inefficiency and overload.
+### মূল ইস্যু
+সার্ভারের গণনা পরিবর্তনের ফলে বেশিরভাগ কীগুলির পুনরায় বিতরণ অদক্ষতা এবং ওভারলোডের কারণ হয়।
 
-## কনসিস্টেন্ট হ্যাশিং (Consistent Hashing)
-### Definition
-কনসিস্টেন্ট হ্যাশিং (Consistent Hashing) ensures that only a fraction of keys are remapped when servers are added or removed. This minimizes disruptions and enhances scalability.
+## ধারাবাহিক হ্যাশিং
+### সংজ্ঞা
+সামঞ্জস্যপূর্ণ হ্যাশিং নিশ্চিত করে যে সার্ভারগুলি যোগ করা বা সরানো হলে কীগুলির একটি ভগ্নাংশ পুনরায় ম্যাপ করা হয়। এটি বাধা কমিয়ে দেয় এবং মাপযোগ্যতা বাড়ায়।
 
-### Key Concepts
-1. **Hash Space and Ring:** The hash space forms a continuous ring, with hash values distributed from `0` to `2^160-1` (e.g., using hash function like SHA-1). By connecting both ends we get a ring.
+### মূল ধারণা
+1. **হ্যাশ স্পেস এবং রিং:** হ্যাশ স্পেস একটি অবিচ্ছিন্ন রিং গঠন করে, যার হ্যাশ মান `0` থেকে `2^160-1` পর্যন্ত বিতরণ করা হয় (যেমন, SHA-1 এর মতো হ্যাশ ফাংশন ব্যবহার করে)। উভয় প্রান্ত সংযোগ করে আমরা একটি রিং পেতে.
     <p align="center">
     <img src="./images/hash-ring.png"  alt="Hash Ring" width="450">
-    </p>
+</p>
 
-- Using the same hash function f, we map servers based on server IP or name onto the ring.  
+- একই হ্যাশ ফাংশন f ব্যবহার করে, আমরা সার্ভার আইপি বা নামের উপর ভিত্তি করে রিং এর উপর সার্ভার ম্যাপ করি।
 
-    <p align="center">
+<p align="center">
     <img src="./images/server-ring.png"  alt="Server Ring" width="450">
-    </p>
+</p>
 
-1. **Server Lookup**
-- A key's server is determined by traversing clockwise on the ring until a server is found.
+1. **সার্ভার লুকআপ**
+- একটি সার্ভার খুঁজে না পাওয়া পর্যন্ত রিং-এ ঘড়ির কাঁটার দিকে ট্রাভার্স করে একটি কী এর সার্ভার নির্ধারণ করা হয়।
 
-  <p align="center">
+<p align="center">
   <img src="./images/server-lookup.png"  alt="Server Lookup" width="450">
-  </p>
+</p>
 
-2. **Adding and Removing Servers**
-- Adding a server redistributes only nearby keys. Only a fraction of keys are redistributed to the new server.
+2. **সার্ভার যোগ করা এবং অপসারণ করা**
+- একটি সার্ভার যোগ করা শুধুমাত্র কাছাকাছি কীগুলি পুনরায় বিতরণ করে৷ কীগুলির একটি ভগ্নাংশ নতুন সার্ভারে পুনরায় বিতরণ করা হয়।
   
-  <p align="center">
+<p align="center">
   <img src="./images/adding-server.png"  alt="Adding Server" width="450">
-  </p>
+</p>
 
-- Removing a server affects only the keys in its range. Only keys from the removed server are reassigned to the next server clockwise.
+- একটি সার্ভার অপসারণ শুধুমাত্র তার রেঞ্জের কীগুলিকে প্রভাবিত করে৷ শুধুমাত্র সরানো সার্ভার থেকে কীগুলি ঘড়ির কাঁটার দিকে পরবর্তী সার্ভারে পুনরায় বরাদ্দ করা হয়।
 
-  <p align="center">
+<p align="center">
   <img src="./images/removing-server.png"  alt="Removing Server" width="450">
-  </p>
+</p>
 
-## Challenges and Solutions
-### Two Issues in Basic Approach
-1. **Uneven Partition Sizes:** Servers may have unequal data partitions.
-2. **Non-uniform Key Distribution:** Some servers may receive significantly more keys than others.
+## চ্যালেঞ্জ এবং সমাধান
+### মৌলিক পদ্ধতিতে দুটি বিষয়
+1. **অসম পার্টিশনের আকার:** সার্ভারে অসম ডেটা পার্টিশন থাকতে পারে।
+2. **নন-ইউনিফর্ম কী ডিস্ট্রিবিউশন:** কিছু সার্ভার অন্যদের তুলনায় উল্লেখযোগ্যভাবে বেশি কী পেতে পারে।
 
-### Solution: Virtual Nodes
-- Each server is represented by multiple virtual nodes on the ring uniformly distrubuted on the ring.
-- Virtual nodes improve key distribution and balance load. As the number of virtual nodes increases, the distribution of keys       becomes more balanced. This is because the standard deviation gets smaller with more virtual nodes, leading to balanced data distribution.
+### সমাধান: ভার্চুয়াল নোড
+- প্রতিটি সার্ভারকে একাধিক ভার্চুয়াল নোড দ্বারা উপস্থাপিত করা হয় যা রিংটিতে সমানভাবে বিতরণ করা হয়।
+- ভার্চুয়াল নোডগুলি কী বন্টন এবং ব্যালেন্স লোড উন্নত করে। ভার্চুয়াল নোডের সংখ্যা বাড়ার সাথে সাথে কীগুলির বিতরণ আরও ভারসাম্যপূর্ণ হয়ে ওঠে। এর কারণ হল স্ট্যান্ডার্ড বিচ্যুতি আরও ভার্চুয়াল নোডের সাথে ছোট হয়ে যায়, যা সুষম ডেটা বিতরণের দিকে পরিচালিত করে।
    
-  <p align="center">
+<p align="center">
   <img src="./images/virtual-nodes.png"   alt="Virtual Nodes" width="450">
-  </p>
+</p>
 
-## Affected Keys
-When servers are added or removed:
-- **Added Server:** Affected keys are those between the new server and its predecessor.
-  In the following example server 4 is added onto the ring. The affected range starts from s4 (newly
-  added node) and moves anticlockwise around the ring until a server is found (s3). Thus, keys
-  located between s3 and s4 need to be redistributed to s4.
+## প্রভাবিত কী
+যখন সার্ভার যোগ করা বা সরানো হয়:
+- **অ্যাডেড সার্ভার:** নতুন সার্ভার এবং এর পূর্বসূরীর মধ্যে প্রভাবিত কীগুলি।
+  নিম্নলিখিত উদাহরণে সার্ভার 4 রিং সম্মুখের যোগ করা হয়. প্রভাবিত পরিসীমা s4 থেকে শুরু হয় (নতুন
+  যোগ করা নোড) এবং একটি সার্ভার (s3) পাওয়া না যাওয়া পর্যন্ত রিংয়ের চারপাশে কাঁটার বিপরীত দিকে চলে। এইভাবে, কী
+  s3 এবং s4 এর মধ্যে অবস্থিত s4 তে পুনরায় বিতরণ করা প্রয়োজন।
 
-  <p align="center">
+<p align="center">
   <img src="./images/server-addition.png"   alt="Server Addition" width="450">
-  </p>
+</p>
 
-- **Removed Server:** Affected keys are those between the removed server and its predecessor. In the following example when a server (s1) is removed, the affected range starts from s1
-(removed node) and moves anticlockwise around the ring until a server is found (s0). Thus, keys located between s0 and s1 must be redistributed to s2.
+- **সরানো সার্ভার:** প্রভাবিত কীগুলি সরানো সার্ভার এবং এর পূর্বসূরীর মধ্যে থাকা কীগুলি৷ নিম্নলিখিত উদাহরণে যখন একটি সার্ভার (s1) সরানো হয়, প্রভাবিত পরিসরটি s1 থেকে শুরু হয়
+(নোড সরানো হয়েছে) এবং একটি সার্ভার (s0) পাওয়া না যাওয়া পর্যন্ত রিংয়ের চারপাশে কাঁটার বিপরীত দিকে চলে। এইভাবে, s0 এবং s1 এর মধ্যে অবস্থিত কীগুলিকে s2 তে পুনরায় বিতরণ করতে হবে।
    
-  <p align="center">
+<p align="center">
   <img src="./images/server-removed.png"   alt="Server Removed" width="450">
-  </p>
+</p>
 
-## Benefits of Consistent Hashing
-- **Minimized Redistribution:** Only a fraction of keys are reassigned.
-- **Scalability:** Enables horizontal scaling.
-- **Mitigates Hotspots:** Balances data distribution to avoid server overload.
+## সামঞ্জস্যপূর্ণ হ্যাশিং এর সুবিধা
+- **মিনিমাইজড রিডিস্ট্রিবিউশন:** শুধুমাত্র কীগুলির একটি ভগ্নাংশ পুনরায় বরাদ্দ করা হয়েছে।
+- **স্কেলযোগ্যতা:** অনুভূমিক স্কেলিং সক্ষম করে।
+- **হটস্পট প্রশমিত করে:** সার্ভার ওভারলোড এড়াতে ডেটা বিতরণের ভারসাম্য বজায় রাখে।
 
-## Real-World Applications
-- Amazon Dynamo DB
-- Apache Cassandra
-- Discord
-- Akamai CDN
-- Maglev Load Balancer
+## রিয়েল-ওয়ার্ল্ড অ্যাপ্লিকেশন
+- আমাজন ডায়নামো ডিবি
+- অ্যাপাচি ক্যাসান্দ্রা
+- বিরোধ
+- আকামাই সিডিএন
+- ম্যাগলেভ লোড ব্যালেন্সার
 

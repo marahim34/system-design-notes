@@ -1,162 +1,162 @@
-# অধ্যায় 18: গুগল ম্যাপস ডিজাইন
+# অধ্যায় 18: গুগল ম্যাপ
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-We'll design a simple version of **Google Maps**.
+আমরা **Google Maps** এর একটি সাধারণ সংস্করণ ডিজাইন করব৷
 
-Some facts about google maps:
- * Started in 2005
- * Provides various services - satellite imagery, street maps, real-time traffic conditions, route planning
- * By 2021, had 1bil daily active users, 99% coverage of the world, 25mil updates daily of real-time location info
+গুগল ম্যাপ সম্পর্কে কিছু তথ্য:
+ * 2005 সালে শুরু
+ * বিভিন্ন পরিষেবা প্রদান করে - স্যাটেলাইট ছবি, রাস্তার মানচিত্র, রিয়েল-টাইম ট্র্যাফিক পরিস্থিতি, রুট পরিকল্পনা
+ * 2021 সাল নাগাদ, 1 বিলিয়ন দৈনিক সক্রিয় ব্যবহারকারী ছিল, বিশ্বের 99% কভারেজ ছিল, রিয়েল-টাইম অবস্থান তথ্যের দৈনিক 25 মিলিয়ন আপডেট
 
 ---
 
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-Sample Q&A between candidate and interviewer:
- * C: How many daily active users are we dealing with?
- * I: 1bil DAU
- * C: What features should we focus on?
- * I: Location update, navigation, ETA, map rendering
- * C: How large is road data? Do we have access to it?
- * I: We obtained road data from various sources, it's TBs of raw data
- * C: Should we take traffic conditions into consideration?
- * I: Yes, we should for accurate time estimations
- * C: How about different travel modes - by foot, biking, driving?
- * I: We should support those
- * C: How about multi-stop directions?
- * I: Let's not focus on that for scope of interview
- * C: Business places and photos?
- * I: Good question, but no need to consider those
+প্রার্থী এবং সাক্ষাতকারের মধ্যে নমুনা প্রশ্নোত্তর:
+ * C: দৈনিক কতজন সক্রিয় ব্যবহারকারীর সাথে আমরা কাজ করছি?
+ * আমি: 1 বিল DAU
+ * সি: আমাদের কোন বৈশিষ্ট্যগুলিতে ফোকাস করা উচিত?
+ * আমি: অবস্থান আপডেট, নেভিগেশন, ETA, মানচিত্র রেন্ডারিং
+ * C: রাস্তার ডেটা কত বড়? আমরা এটা অ্যাক্সেস আছে?
+ * আমি: আমরা বিভিন্ন উত্স থেকে রাস্তার ডেটা পেয়েছি, এটি কাঁচা ডেটার টিবি
+ * সি: আমাদের কি ট্রাফিক পরিস্থিতি বিবেচনায় নেওয়া উচিত?
+ * আমি: হ্যাঁ, আমাদের সঠিক সময়ের অনুমান করা উচিত
+ * সি: বিভিন্ন ভ্রমণ মোড সম্পর্কে কেমন - পায়ে, বাইক চালানো, গাড়ি চালানো?
+ * আমি: আমাদের তাদের সমর্থন করা উচিত
+ * সি: মাল্টি-স্টপ দিকনির্দেশগুলি কেমন?
+ * আমি: ইন্টারভিউয়ের সুযোগের জন্য এর উপর ফোকাস না করা যাক
+ * সি: ব্যবসার স্থান এবং ছবি?
+ * আমি: ভাল প্রশ্ন, কিন্তু সেগুলি বিবেচনা করার দরকার নেই
 
-We'll focus on three key features - user location update, navigation service including ETA, map rendering.
+আমরা তিনটি মূল বৈশিষ্ট্যের উপর ফোকাস করব - ব্যবহারকারীর অবস্থান আপডেট, ইটিএ সহ নেভিগেশন পরিষেবা, মানচিত্র রেন্ডারিং।
 
-### **Non-functional requirements**
+### **অকার্যকর প্রয়োজনীয়তা**
 
-- **Accuracy**: user shouldn't get wrong directions
-- **Smooth navigation**: Users should experience smooth map rendering
-- **Data and battery usage**: Client should use as little data and battery as possible. Important for mobile devices.
-- General availability and scalability requirements
+- **নির্ভুলতা**: ব্যবহারকারীর ভুল দিকনির্দেশ পাওয়া উচিত নয়
+- **মসৃণ নেভিগেশন**: ব্যবহারকারীদের মসৃণ মানচিত্র রেন্ডারিং অনুভব করা উচিত
+- **ডেটা এবং ব্যাটারি ব্যবহার**: ক্লায়েন্টকে যতটা সম্ভব কম ডেটা এবং ব্যাটারি ব্যবহার করা উচিত। মোবাইল ডিভাইসের জন্য গুরুত্বপূর্ণ।
+- সাধারণ প্রাপ্যতা এবং মাপযোগ্যতার প্রয়োজনীয়তা
 
-### **Map 101**
+### **মানচিত্র 101**
 
-Before jumping into the design, there are some map-related concepts we should understand.
+ডিজাইনে ঝাঁপিয়ে পড়ার আগে, কিছু মানচিত্র-সম্পর্কিত ধারণা রয়েছে যা আমাদের বোঝা উচিত।
 
-#### Positioning system
+#### পজিশনিং সিস্টেম
 
-World is a sphere, rotating on its axis. Positiions are defined by latitude (how far north/south you are) and longitude (how far east/west you are):
+পৃথিবী একটি গোলক, তার অক্ষের উপর ঘুরছে। অবস্থানগুলি অক্ষাংশ (আপনি কতটা উত্তর/দক্ষিণে) এবং দ্রাঘিমাংশ (আপনি কতদূর পূর্ব/পশ্চিমে) দ্বারা সংজ্ঞায়িত করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/partitioning-system.png" alt="partitioning-system" width="500" />
 </div>
 
-#### Going from 3D to 2D
+#### 3D থেকে 2D এ যাচ্ছে
 
-The process of translating points from 3D to 2D plane is called "map projection".
+বিন্দুকে 3D থেকে 2D সমতলে অনুবাদ করার প্রক্রিয়াকে বলা হয় "ম্যাপ প্রজেকশন"।
 
-There are different ways to do it and each comes with its pros and cons. Almost all distort the actual geometry.
+এটি করার বিভিন্ন উপায় রয়েছে এবং প্রতিটি তার সুবিধা এবং অসুবিধা নিয়ে আসে। প্রায় সবই প্রকৃত জ্যামিতিকে বিকৃত করে।
 
 <div style="margin-left:3rem">
     <img src="./images/map-projections.png" alt="map-projections" width="500" />
 </div>
 
-Google maps selected a modified version of Mercator projection called "Web Mercator".
+Google মানচিত্র "ওয়েব মার্কেটর" নামক Mercator প্রজেকশনের একটি পরিবর্তিত সংস্করণ নির্বাচন করেছে।
 
-#### Geocoding
+#### জিওকোডিং
 
-Geocoding is the process of converting addresses to geographic coordinates. 
+জিওকোডিং হল ঠিকানাগুলিকে ভৌগলিক স্থানাঙ্কে রূপান্তর করার প্রক্রিয়া।
 
-The reverse process is called "reverse geocoding".
+বিপরীত প্রক্রিয়াটিকে "বিপরীত জিওকোডিং" বলা হয়।
 
-One way to achieve this is to use interpolation - leveraging data from different sources (eg GIS-es) where street network is mapped to geo coordinate space.
+এটি অর্জনের একটি উপায় হল ইন্টারপোলেশন ব্যবহার করা - বিভিন্ন উত্স থেকে ডেটা ব্যবহার করা (যেমন GIS-es) যেখানে রাস্তার নেটওয়ার্ক জিও কোঅর্ডিনেট স্পেসে ম্যাপ করা হয়।
 
-#### Geohashing
+#### জিওহ্যাশিং
 
-Geohashing is an encoding system which encodes a geographic area into a string of letters and digits.
+জিওহ্যাশিং হল একটি এনকোডিং সিস্টেম যা একটি ভৌগলিক এলাকাকে অক্ষর এবং অঙ্কের একটি স্ট্রিংয়ে এনকোড করে।
 
-It depicts the world as a flattened surface and recursively sub-divides it into four quadrants:
+এটি বিশ্বকে একটি সমতল পৃষ্ঠ হিসাবে চিত্রিত করে এবং পুনরাবৃত্তিমূলকভাবে এটিকে চারটি চতুর্ভুজে বিভক্ত করে:
 
 <div style="margin-left:3rem">
     <img src="./images/geohashing.png" alt="geohashing" width="500" />
 </div>
 
-#### Map rendering
+#### মানচিত্র রেন্ডারিং
 
-Map rendering happens via tiling. Instead of rendering entire map as one big custom image, world is broken up into smaller tiles.
+মানচিত্র রেন্ডারিং টাইলিংয়ের মাধ্যমে ঘটে। পুরো মানচিত্রকে একটি বড় কাস্টম ইমেজ হিসাবে রেন্ডার করার পরিবর্তে, বিশ্বকে ছোট টাইলগুলিতে বিভক্ত করা হয়েছে।
 
-Client only downloads relevant tiles and renders them like stitching together a mosaic.
+ক্লায়েন্ট শুধুমাত্র প্রাসঙ্গিক টাইলস ডাউনলোড করে এবং মোজাইক একসাথে সেলাই করার মতো রেন্ডার করে।
 
-There are different tiles for different zoom levels. Client chooses appropriate tiles based on the client's zoom level.
+বিভিন্ন জুম স্তরের জন্য বিভিন্ন টাইলস আছে। ক্লায়েন্ট ক্লায়েন্টের জুম স্তরের উপর ভিত্তি করে উপযুক্ত টাইলস বেছে নেয়।
 
-Eg, zooming out the entire world would download only a single 256x256 tile, representing the whole world.
+যেমন, সমগ্র বিশ্ব জুম আউট করলে শুধুমাত্র একটি 256x256 টাইল ডাউনলোড হবে, যা সমগ্র বিশ্বের প্রতিনিধিত্ব করে।
 
-#### Road data processing for navigation algorithms
+#### নেভিগেশন অ্যালগরিদম জন্য রাস্তা তথ্য প্রক্রিয়াকরণ
 
-In most routing algorithms, intersections are represented as nodes and roads are represented as edges:
+বেশিরভাগ রাউটিং অ্যালগরিদমে, ছেদগুলিকে নোড হিসাবে উপস্থাপন করা হয় এবং রাস্তাগুলি প্রান্ত হিসাবে উপস্থাপন করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/road-representation.png" alt="road-representation" width="500" />
 </div>
 
-Most navigation algorithms use a modified version of Djikstra or A* algorithms.
+বেশিরভাগ নেভিগেশন অ্যালগরিদম Djikstra বা A* অ্যালগরিদমের একটি পরিবর্তিত সংস্করণ ব্যবহার করে।
 
-Pathfinding performance is sensitive to the size of the graph. To work at scale, we can't represent the whole world as a graph and run the algorithm on it.
+পাথফাইন্ডিং কর্মক্ষমতা গ্রাফের আকারের জন্য সংবেদনশীল। স্কেলে কাজ করার জন্য, আমরা পুরো বিশ্বকে একটি গ্রাফ হিসাবে উপস্থাপন করতে পারি না এবং এটিতে অ্যালগরিদম চালাতে পারি না।
 
-Instead, we use a technique similar to tiling - we subdivide the world into smaller and smaller graphs.
+পরিবর্তে, আমরা টাইলিংয়ের অনুরূপ একটি কৌশল ব্যবহার করি - আমরা বিশ্বকে ছোট এবং ছোট গ্রাফে বিভক্ত করি।
 
-Routing tiles hold references to neighboring tiles and algorithms can stitch together a bigger road graph as it traverses interconnected tiles:
+রাউটিং টাইলস প্রতিবেশী টাইলস এবং অ্যালগরিদমগুলির রেফারেন্স ধারণ করে একটি বড় রাস্তার গ্রাফ একসাথে সেলাই করতে পারে কারণ এটি আন্তঃসংযুক্ত টাইলগুলি অতিক্রম করে:
 
 <div style="margin-left:3rem">
     <img src="./images/routing-tiles.png" alt="routing-tiles" width="500" />
 </div>
 
-This technique enables us to significantly reduce memory bandwidth and only load the tiles we need for the given source/destination pair.
+এই কৌশলটি আমাদেরকে উল্লেখযোগ্যভাবে মেমরি ব্যান্ডউইথ কমাতে সক্ষম করে এবং শুধুমাত্র প্রদত্ত উৎস/গন্তব্য জোড়ার জন্য আমাদের প্রয়োজনীয় টাইলগুলি লোড করতে পারে।
 
-However, for larger routes, stitching together small, detailed routing tiles would still be time/memory consuming. Instead, there are routing tiles with different level of detail and the algorithm uses the appropriately-detailed tiles, based on the destination we're headed for:
+যাইহোক, বড় রুটের জন্য, ছোট, বিস্তারিত রাউটিং টাইলস একসাথে সেলাই করা এখনও সময়/স্মৃতি সাপেক্ষ হবে। পরিবর্তে, বিভিন্ন স্তরের বিশদ বিবরণ সহ রাউটিং টাইল রয়েছে এবং আমরা যে গন্তব্যের দিকে যাচ্ছি তার উপর ভিত্তি করে অ্যালগরিদম যথাযথভাবে-বিশদ টাইলগুলি ব্যবহার করে:
 
 <div style="margin-left:3rem">
     <img src="./images/map-routing-hierarchical.png" alt="map-routing-hierarchical" width="500" />
 </div>
 
-### **Back-of-the-envelope estimation**
+### **খামের পিছনের অনুমান**
 
-For storage, we need to store:
- * map of the world - estimated as ~70pb based on all the tiles we need to store, but factoring in compression of very similar tiles (eg vast desert)
- * metadata - negligible in size, so we can skip it from calculation
- * Road info - stored as routing tiles
+স্টোরেজের জন্য, আমাদের সঞ্চয় করতে হবে:
+ * বিশ্বের মানচিত্র - আমাদের সঞ্চয় করার জন্য প্রয়োজনীয় সমস্ত টাইলগুলির উপর ভিত্তি করে ~70pb হিসাবে অনুমান করা হয়েছে, তবে খুব অনুরূপ টাইলগুলির সংকোচনের ফ্যাক্টরিং (যেমন বিশাল মরুভূমি)
+ * মেটাডেটা - আকারে নগণ্য, তাই আমরা এটিকে গণনা থেকে এড়িয়ে যেতে পারি
+ * রাস্তার তথ্য - রাউটিং টাইলস হিসাবে সংরক্ষিত
 
-Estimated QPS for navigation requests - 1bil DAU at 35min of usage per week -> 5bil minutes per day. 
-Assuming gps update requests are batched, we arrive at 200k QPS and 1mil QPS at peak load
+নেভিগেশন অনুরোধের জন্য আনুমানিক QPS - প্রতি সপ্তাহে 35 মিনিট ব্যবহারে 1bil DAU -> প্রতিদিন 5bil মিনিট। 
+GPS আপডেটের অনুরোধগুলি ব্যাচ করা হয়েছে বলে ধরে নিচ্ছি, আমরা 200k QPS এবং 1mil QPS-এ পিক লোডে পৌঁছেছি
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="high-level-design" width="500" />
 </div>
 
-### **Location service**
+### **অবস্থান পরিষেবা**
 
 <div style="margin-left:3rem">
     <img src="./images/location-service.png" alt="location-service" width="500" />
 </div>
 
-It is responsible for recording a user's location updates:
- * location updates are sent every `t` seconds
- * location data streams can be used to improve the service over time, eg provide more accurate ETAs, monitor traffic data, detect closed roads, analyze user behavior, etc
+এটি একটি ব্যবহারকারীর অবস্থান আপডেট রেকর্ড করার জন্য দায়ী:
+ * অবস্থান আপডেট প্রতি `t` সেকেন্ডে পাঠানো হয়
+ * অবস্থান ডেটা স্ট্রীমগুলি সময়ের সাথে পরিষেবার উন্নতি করতে ব্যবহার করা যেতে পারে, যেমন আরও সঠিক ETA প্রদান করা, ট্র্যাফিক ডেটা নিরীক্ষণ করা, বন্ধ রাস্তা সনাক্ত করা, ব্যবহারকারীর আচরণ বিশ্লেষণ করা ইত্যাদি
 
-Instead of sending location updates to the server all the time, we can batch the updates on the client-side and send batches instead:
+সার্ভারে সর্বদা অবস্থানের আপডেট পাঠানোর পরিবর্তে, আমরা ক্লায়েন্ট-সাইডে আপডেটগুলি ব্যাচ করতে পারি এবং পরিবর্তে ব্যাচগুলি পাঠাতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/location-update-batches.png" alt="location-update-batches" width="500" />
 </div>
 
-Despite this optimization, for a system of Google Maps scale, load will still be significant. Therefore, we can leverage a database, optimized for heavy writes such as Cassandra.
+এই অপ্টিমাইজেশন সত্ত্বেও, Google মানচিত্র স্কেলের একটি সিস্টেমের জন্য, লোড এখনও উল্লেখযোগ্য হবে। অতএব, আমরা ক্যাসান্দ্রার মতো ভারী লেখার জন্য অপ্টিমাইজ করা একটি ডাটাবেস ব্যবহার করতে পারি।
 
-We can also leverage Kafka for efficient stream processing of location updates, meant for further analysis.
+আমরা আরও বিশ্লেষণের জন্য লোকেশন আপডেটের দক্ষ স্ট্রীম প্রক্রিয়াকরণের জন্য কাফকাকে সুবিধা নিতে পারি।
 
-Example location update request payload:
+উদাহরণ অবস্থান আপডেট অনুরোধ পেলোড:
 
 ```
 POST /v1/locations
@@ -164,17 +164,17 @@ Parameters
   locs: JSON encoded array of (latitude, longitude, timestamp) tuples.
 ```
 
-### **Navigation service**
+### **নেভিগেশন পরিষেবা**
 
-This component is responsible for finding fast routes between A and B in a reasonable time (a little bit of latency is okay). Route need not be the fastest, but accuracy is important.
+এই উপাদানটি যুক্তিসঙ্গত সময়ে A এবং B এর মধ্যে দ্রুত রুট খুঁজে বের করার জন্য দায়ী (একটু বিলম্বিতা ঠিক আছে)। রুট দ্রুততম হতে হবে না, কিন্তু সঠিকতা গুরুত্বপূর্ণ.
 
-Example request payload:
+পেলোডের অনুরোধের উদাহরণ:
 
 ```
 GET /v1/nav?origin=1355+market+street,SF&destination=Disneyland
 ```
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```json
 {
@@ -202,33 +202,33 @@ Example response:
 }
 ```
 
-Traffic changes and reroutes are not taken into consideration yet, those will be tackled in the deep dive section.
+ট্রাফিক পরিবর্তন এবং রুটগুলি এখনও বিবেচনায় নেওয়া হয়নি, সেগুলি গভীর ডাইভ বিভাগে মোকাবেলা করা হবে।
 
-### **Map rendering**
+### **মানচিত্র রেন্ডারিং**
 
-Holding the entire data set of mapping tiles on the client-side is not feasible as it's petabytes in size.
+ক্লায়েন্ট-সাইডে ম্যাপিং টাইলসের সম্পূর্ণ ডেটা সেট রাখা সম্ভব নয় কারণ এটি আকারে পেটাবাইট।
 
-They need to be fetched on-demand from the server, based on the client's location and zoom level.
+ক্লায়েন্টের অবস্থান এবং জুম স্তরের উপর ভিত্তি করে সার্ভার থেকে তাদের চাহিদা অনুযায়ী আনতে হবে।
 
-When should new tiles be fetched - while user is zooming in/out and during navigation, while they're going towards a new tile.
+কখন নতুন টাইল আনা উচিত - যখন ব্যবহারকারী জুম ইন/আউট করছে এবং নেভিগেশন চলাকালীন, যখন তারা একটি নতুন টাইলের দিকে যাচ্ছে।
 
-How should the map tiles be served to the client?
- * They can be built dynamically, but that puts a huge load on the server and also makes caching hard
- * Map tiles are served statically, based on their geohash, which a client can calculate. They can be statically stored & served from a CDN
+মানচিত্র টাইলস কিভাবে ক্লায়েন্ট পরিবেশন করা উচিত?
+ * এগুলি গতিশীলভাবে তৈরি করা যেতে পারে, তবে এটি সার্ভারে একটি বিশাল লোড রাখে এবং ক্যাশিংকেও কঠিন করে তোলে
+ * মানচিত্রের টাইলগুলি তাদের জিওহ্যাশের উপর ভিত্তি করে স্থিরভাবে পরিবেশন করা হয়, যা একজন ক্লায়েন্ট গণনা করতে পারে। এগুলি একটি CDN থেকে স্থিতিশীলভাবে সংরক্ষণ এবং পরিবেশন করা যেতে পারে
 
 <div style="margin-left:3rem">
     <img src="./images/static-map-tiles.png" alt="static-map-tiles" width="500" />
 </div>
 
-CDNs enable users to fetch map tiles from point-of-presence servers (POP) which are closest to users in order to minimize latency:
+CDNs ব্যবহারকারীদের পয়েন্ট-অফ-প্রেজেন্স সার্ভার (POP) থেকে ম্যাপ টাইল আনতে সক্ষম করে যা ব্যবহারকারীদের নিকটতম লেটেন্সি কমানোর জন্য:
 
 <div style="margin-left:3rem">
     <img src="./images/cdn-vs-no-cdn.png" alt="cdn-vs-no-cdn" width="500" />
 </div>
 
-Options to consider for determining map tiles:
- * geohash for map tile can be calculated on the client-side. If that's the case, we should be careful that we commit to this type of map tile calculation for the long-term as forcing clients to update is hard
- * alternatively, we can have simple API which calculates the map tile URLs on behalf of the clients at the cost of additional API call
+মানচিত্র টাইলস নির্ধারণের জন্য বিবেচনা করার বিকল্পগুলি:
+ * মানচিত্র টাইলের জন্য জিওহ্যাশ ক্লায়েন্ট-সাইডে গণনা করা যেতে পারে। যদি তা হয়, তাহলে আমাদের সতর্ক হওয়া উচিত যে আমরা দীর্ঘমেয়াদে এই ধরনের মানচিত্র টাইল গণনার প্রতিশ্রুতিবদ্ধ কারণ ক্লায়েন্টদের আপডেট করতে বাধ্য করা কঠিন।
+ * বিকল্পভাবে, আমাদের কাছে সাধারণ API থাকতে পারে যা অতিরিক্ত API কলের খরচে ক্লায়েন্টদের পক্ষে মানচিত্র টাইল URL গুলি গণনা করে
 
 <div style="margin-left:3rem">
     <img src="./images/map-tile-url-calculation.png" alt="map-tile-url-calculation" width="500" />
@@ -236,110 +236,110 @@ Options to consider for determining map tiles:
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### **Data model**
+### **ডেটা মডেল**
 
-Let's discuss how we store the different types of data we're dealing with.
+চলুন আলোচনা করা যাক কিভাবে আমরা বিভিন্ন ধরণের ডেটা সংরক্ষণ করি যার সাথে আমরা কাজ করছি।
 
-#### Routing tiles
+#### রাউটিং টাইলস
 
-Initial road data set is obtained from different sources. It is improved over time based on location updates data.
+প্রাথমিক রাস্তা ডেটা সেট বিভিন্ন উত্স থেকে প্রাপ্ত করা হয়. অবস্থান আপডেট ডেটার উপর ভিত্তি করে সময়ের সাথে সাথে এটি উন্নত হয়।
 
-The road data is unstructured. We have a periodic offline processing pipeline, which transforms this raw data into the graph-based routing tiles our app needs.
+রাস্তার তথ্য কাঠামোবিহীন। আমাদের একটি পর্যায়ক্রমিক অফলাইন প্রসেসিং পাইপলাইন আছে, যা আমাদের অ্যাপের প্রয়োজনীয় গ্রাফ-ভিত্তিক রাউটিং টাইলগুলিতে এই কাঁচা ডেটাকে রূপান্তরিত করে।
 
-Instead of storing these tiles in a database as we don't need any database features. We can store them in S3 object storage, while caching them agressively.
+এই টাইলগুলিকে একটি ডাটাবেসে সংরক্ষণ করার পরিবর্তে আমাদের কোনো ডাটাবেস বৈশিষ্ট্যের প্রয়োজন নেই। আমরা সেগুলিকে S3 অবজেক্ট স্টোরেজে সঞ্চয় করতে পারি, যখন সেগুলিকে আক্রমনাত্মকভাবে ক্যাশ করা হয়৷
 
-We can also leverage libraries to compress adjacency lists into binary files efficiently.
+আমরা দক্ষতার সাথে বাইনারি ফাইলগুলিতে সংলগ্ন তালিকাগুলিকে সংকুচিত করতে লাইব্রেরিগুলিকেও ব্যবহার করতে পারি।
 
-#### User location data
+#### ব্যবহারকারীর অবস্থান ডেটা
 
-User location data is very useful for updaring traffic conditions and doing all sorts of other analysis.
+ব্যবহারকারীর অবস্থানের ডেটা ট্রাফিক অবস্থার আপডেট করার জন্য এবং অন্যান্য সমস্ত ধরণের বিশ্লেষণ করার জন্য খুব দরকারী।
 
-We can use Cassandra for storing this kind of data as its nature is to be write-heavy.
+আমরা এই ধরনের ডেটা সংরক্ষণের জন্য ক্যাসান্দ্রা ব্যবহার করতে পারি কারণ এর প্রকৃতি লেখা-ভারী হতে হবে।
 
-Example row:
+উদাহরণ সারি:
 
 <div style="margin-left:3rem">
     <img src="./images/user-location-data-torw.png" alt="user-location-data-row" width="500" />
 </div>
 
-#### Geocoding database
+#### জিওকোডিং ডাটাবেস
 
-This database stores a key-value pair of lat/long pairs and places.
+এই ডাটাবেস অক্ষাংশ/লং জোড়া এবং স্থানগুলির একটি মূল-মূল্যের জোড়া সঞ্চয় করে।
 
-We can use Redis for its fast read access speed, as we have frequent read and infrequent writes.
+আমরা রেডিস এর দ্রুত পঠন অ্যাক্সেসের গতির জন্য ব্যবহার করতে পারি, কারণ আমাদের ঘন ঘন পড়া এবং কদাচিৎ লেখা রয়েছে।
 
-#### Precomputed images of the world map
+#### বিশ্ব মানচিত্রের পূর্বনির্ধারিত ছবি
 
-As we discussed, we will precompute map tiling images and store them in CDN.
+আমরা যেমন আলোচনা করেছি, আমরা মানচিত্র টাইলিং চিত্রগুলিকে প্রাক-কম্পিউট করব এবং সেগুলিকে CDN-এ সংরক্ষণ করব।
 
 <div style="margin-left:3rem">
     <img src="./images/precomputed-map-tile-image.png" alt="precomputed-map-tile-image" width="500" />
 </div>
 
-### **Services**
+### **পরিষেবা**
 
-#### Location service
+#### অবস্থান পরিষেবা
 
-Let's focus on the database design and how user location is stored in detail for this service.
+আসুন ডাটাবেস ডিজাইনের উপর ফোকাস করি এবং কীভাবে ব্যবহারকারীর অবস্থান এই পরিষেবার জন্য বিস্তারিতভাবে সংরক্ষণ করা হয়।
 
 <div style="margin-left:3rem">
     <img src="./images/location-service-diagram.png" alt="location-service-diagram" width="500" />
 </div>
 
-We can use a NoSQL database to facilitate the heavy write load we have on location updates. We prioritize availability over consistency as user location data often changes and becomes stale as new updates arrive.
+অবস্থান আপডেটে আমাদের যে ভারী লেখার লোড আছে তা সহজতর করার জন্য আমরা একটি NoSQL ডাটাবেস ব্যবহার করতে পারি। আমরা সামঞ্জস্যের চেয়ে প্রাপ্যতাকে অগ্রাধিকার দিই কারণ ব্যবহারকারীর অবস্থানের ডেটা প্রায়শই পরিবর্তিত হয় এবং নতুন আপডেট আসার সাথে সাথে বাসি হয়ে যায়।
 
-We'll choose Cassandra as our database choice as it nicely fits all our requirements.
+আমরা ক্যাসান্দ্রাকে আমাদের ডাটাবেসের পছন্দ হিসাবে বেছে নেব কারণ এটি আমাদের সমস্ত প্রয়োজনীয়তা সুন্দরভাবে ফিট করে।
 
-Example row we're going to store:
+উদাহরণ সারি আমরা সংরক্ষণ করতে যাচ্ছি:
 
 <div style="margin-left:3rem">
     <img src="./images/user-location-row-example.png" alt="user-location-row-example" width="500" />
 </div>
 
- * `user_id` is the partition key in order to quickly access all location updates for a particular user
- * `timestamp` is the clustering key in order to store the data sorted by the time a location update is received
+* `user_id` হল পার্টিশন কী যাতে কোনো নির্দিষ্ট ব্যবহারকারীর জন্য সমস্ত অবস্থানের আপডেট দ্রুত অ্যাক্সেস করা যায়
+ * `টাইমস্ট্যাম্প` হল ক্লাস্টারিং কী যাতে কোনো অবস্থান আপডেট পাওয়ার সময় অনুসারে সাজানো ডেটা সংরক্ষণ করা যায়
 
-We also leverage Kafka to stream location updates to various other service which need the location updates for various purposes:
+আমরা কাফকাকে অন্যান্য বিভিন্ন পরিষেবাতে অবস্থানের আপডেটগুলি স্ট্রিম করার জন্যও সুবিধা দিই যেগুলির জন্য বিভিন্ন উদ্দেশ্যে অবস্থান আপডেটের প্রয়োজন হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/location-update-streaming.png" alt="location-update-streaming" width="500" />
 </div>
 
-#### Rendering map
+#### রেন্ডারিং মানচিত্র
 
-Map tiles are stored at various zoom levels. At the lowest zoom level, the entire world is represented by a single 256x256 tile.
+মানচিত্র টাইলস বিভিন্ন জুম স্তরে সংরক্ষণ করা হয়. সর্বনিম্ন জুম স্তরে, সমগ্র বিশ্ব একটি একক 256x256 টাইল দ্বারা প্রতিনিধিত্ব করা হয়।
 
-As zoom levels increase, the number of map tiles quadruples:
+জুমের মাত্রা বাড়ার সাথে সাথে মানচিত্র টাইলের সংখ্যা চারগুণ হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/zoom-level-increases.png" alt="zoom-level-increases" width="500" />
 </div>
 
-One optimization we can use is to not send the entire image information over the network, but instead represent tiles as vectors (paths & polygons) and let the client render the tiles dynamically.
+একটি অপ্টিমাইজেশন যা আমরা ব্যবহার করতে পারি তা হল নেটওয়ার্কে সম্পূর্ণ ইমেজ তথ্য না পাঠানো, বরং টাইলসকে ভেক্টর (পাথ এবং বহুভুজ) হিসাবে উপস্থাপন করা এবং ক্লায়েন্টকে গতিশীলভাবে টাইলগুলি রেন্ডার করতে দেওয়া।
 
-This will have substantial bandwidth savings.
+এতে যথেষ্ট ব্যান্ডউইথ সাশ্রয় হবে।
 
-#### Navigation service
+#### নেভিগেশন পরিষেবা
 
-This service is responsible for finding the fastest routes:
+এই পরিষেবাটি দ্রুততম রুট খোঁজার জন্য দায়ী:
 
 <div style="margin-left:3rem">
     <img src="./images/navigation-service.png" alt="navigation-service" width="500" />
 </div>
 
-Let's go through each component in this sub-system.
+আসুন এই সাব-সিস্টেমের প্রতিটি উপাদানের মধ্য দিয়ে যাই।
 
-First, we have the geocoding service which resolves an address to a location of lat/long pair.
+প্রথমত, আমাদের কাছে জিওকোডিং পরিষেবা রয়েছে যা ল্যাট/লং পেয়ারের একটি অবস্থানের ঠিকানা সমাধান করে।
 
-Example request:
+উদাহরণ অনুরোধ:
 
 ```
 https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA
 ```
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```json
 {
@@ -375,29 +375,29 @@ Example response:
 }
 ```
 
-The route planner service computes a suggested route, optimized for travel time according to current traffic conditions.
+রুট প্ল্যানার পরিষেবা একটি প্রস্তাবিত রুট গণনা করে, যা বর্তমান ট্রাফিক পরিস্থিতি অনুযায়ী ভ্রমণের সময়ের জন্য অপ্টিমাইজ করা হয়েছে।
 
-The shortest-path service runs a variation of the A* algorithm against the routing tiles in object storage to compute an optimal path:
- * It receives the source/destination pairs, converts them to lat/long pairs and derives the geohashes from those pairs to derive the routing tiles
- * The algorithm starts from the initial routing tile and starts traversing it until a good enough path is found to the destination tile
+সংক্ষিপ্ততম-পাথ পরিষেবাটি একটি সর্বোত্তম পথ গণনা করতে অবজেক্ট স্টোরেজে রাউটিং টাইলগুলির বিপরীতে A* অ্যালগরিদমের একটি বৈচিত্র চালায়:
+ * এটি উৎস/গন্তব্য জোড়া গ্রহণ করে, তাদের ল্যাট/লং জোড়ায় রূপান্তর করে এবং রাউটিং টাইলগুলি বের করার জন্য সেই জোড়াগুলি থেকে জিওহ্যাশগুলি গ্রহণ করে
+ * অ্যালগরিদমটি প্রাথমিক রাউটিং টাইল থেকে শুরু হয় এবং গন্তব্য টাইলের জন্য যথেষ্ট ভালো পথ না পাওয়া পর্যন্ত এটি অতিক্রম করা শুরু করে
 
 <div style="margin-left:3rem">
     <img src="./images/shortest-path-service.png" alt="shortest-path-service" width="500" />
 </div>
 
-The ETA service is called by the route planner to get estimated time based on machine learning algorithms, predicting ETA based on traffic data.
+মেশিন লার্নিং অ্যালগরিদমের উপর ভিত্তি করে আনুমানিক সময় পেতে, ট্রাফিক ডেটার উপর ভিত্তি করে ETA পূর্বাভাস দেওয়ার জন্য রুট প্ল্যানার দ্বারা ETA পরিষেবাটিকে ডাকা হয়।
 
-The ranker service is responsible to rank different possible paths based on filters, passed by the user, ie flags to avoid toll roads or freeways.
+র‍্যাঙ্কার পরিষেবা ব্যবহারকারীর দ্বারা পাস করা ফিল্টারের উপর ভিত্তি করে বিভিন্ন সম্ভাব্য পথের র‍্যাঙ্ক করার জন্য দায়ী, যেমন টোল রাস্তা বা ফ্রিওয়ে এড়ানোর জন্য পতাকা।
 
-The updater service asynchronously update some of the important databases to keep them up-to-date.
+আপডেটার পরিষেবা অসিঙ্ক্রোনাসভাবে কিছু গুরুত্বপূর্ণ ডেটাবেসকে আপ-টু-ডেট রাখতে আপডেট করে।
 
-#### Improvement - adaptive ETA and rerouting
+#### উন্নতি - অভিযোজিত ETA এবং পুনরায় রাউটিং
 
-One improvement we can do is to adaptively update in-flight routes based on newly available traffic data.
+একটি উন্নতি যা আমরা করতে পারি তা হল নতুন উপলব্ধ ট্রাফিক ডেটার উপর ভিত্তি করে ইন-ফ্লাইট রুটগুলিকে অভিযোজিতভাবে আপডেট করা।
 
-One way to implement this is to store users who are currently navigating through a route in the database by storing all the tiles they're supposed to go through.
+এটি বাস্তবায়নের একটি উপায় হল ব্যবহারকারীরা যারা বর্তমানে ডাটাবেসের একটি রুটের মাধ্যমে নেভিগেট করছেন তাদের সমস্ত টাইলস সংরক্ষণ করে সংরক্ষণ করা।
 
-Data might look like this:
+ডেটা এইরকম দেখতে পারে:
 
 ```
 user_1: r_1, r_2, r_3, …, r_k
@@ -407,9 +407,9 @@ user_3: r_2, r_8, r_9, …, r_m
 user_n: r_2, r_10, r21, ..., r_l
 ```
 
-If a traffic accident happens on some tile, we can identify all users whose path goes through that tile and re-route them.
+যদি কোনও টাইলের উপর একটি ট্র্যাফিক দুর্ঘটনা ঘটে, আমরা সেই সমস্ত ব্যবহারকারীদের সনাক্ত করতে পারি যাদের পথ সেই টাইলের মধ্য দিয়ে যায় এবং তাদের পুনরায় রুট করতে পারি।
 
-To reduce the amount of tiles we store in the database, we can instead store the origin routing tile and several routing tiles in different resolution levels until the destination tile is also included:
+ডাটাবেসে আমরা যে পরিমাণ টাইল সংরক্ষণ করি তা কমাতে, গন্তব্য টাইলটি অন্তর্ভুক্ত না হওয়া পর্যন্ত আমরা মূল রাউটিং টাইল এবং বিভিন্ন রেজোলিউশন স্তরে বেশ কয়েকটি রাউটিং টাইল সংরক্ষণ করতে পারি:
 
 ```
 user_1, r_1, super(r_1), super(super(r_1)), ...
@@ -419,25 +419,25 @@ user_1, r_1, super(r_1), super(super(r_1)), ...
     <img src="./images/adaptive-eta-data-storage.png" alt="adaptive-eta-data-storage" width="500" />
 </div>
 
-Using this, we only need to check if the final tile of a user includes the traffic accident tile to see if user is impacted.
+এটি ব্যবহার করে, ব্যবহারকারী প্রভাবিত হয়েছে কিনা তা দেখার জন্য ব্যবহারকারীর চূড়ান্ত টাইলে ট্র্যাফিক দুর্ঘটনার টাইল অন্তর্ভুক্ত আছে কিনা তা পরীক্ষা করতে হবে।
 
-We can also keep track of all possible routes for a navigating user and notify them if a faster re-route is available.
+আমরা একজন নেভিগেটিং ব্যবহারকারীর জন্য সমস্ত সম্ভাব্য রুটের ট্র্যাক রাখতে পারি এবং দ্রুততর পুনঃরুট উপলব্ধ হলে তাদের অবহিত করতে পারি।
 
-#### Delivery protocols
+#### ডেলিভারি প্রোটোকল
 
-We have several options, which enable us to proactively push data to clients from the server:
- * Mobile push notifications don't work because payload is limited and it's not available for web apps
- * WebSocket is generally a better option than long-polling as it has less compute footprint on servers
- * We can also use server-sent events (SSE) but lean towards web sockets as they support bi-directional communication which can come in handy for eg a last-mile delivery feature
+আমাদের কাছে বেশ কয়েকটি বিকল্প রয়েছে, যা আমাদের সার্ভার থেকে ক্লায়েন্টদের কাছে সক্রিয়ভাবে ডেটা পুশ করতে সক্ষম করে:
+ * মোবাইল পুশ বিজ্ঞপ্তিগুলি কাজ করে না কারণ পেলোড সীমিত এবং এটি ওয়েব অ্যাপগুলির জন্য উপলব্ধ নয়৷
+ * ওয়েবসকেট সাধারণত দীর্ঘ ভোটের চেয়ে ভাল বিকল্প কারণ এটির সার্ভারে কম গণনা পদচিহ্ন রয়েছে
+ * আমরা সার্ভার-প্রেরিত ইভেন্টগুলি (SSE) ব্যবহার করতে পারি তবে ওয়েব সকেটগুলির দিকে ঝুঁকতে পারি কারণ তারা দ্বি-দিকনির্দেশক যোগাযোগ সমর্থন করে যা একটি লাস্ট-মাইল ডেলিভারি বৈশিষ্ট্যের জন্য কার্যকর হতে পারে
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-This is our final design:
+এটি আমাদের চূড়ান্ত নকশা:
 
 <div style="margin-left:3rem">
     <img src="./images/final-design.png" alt="final-design" width="500" />
 </div>
 
-One additional feature we could provide is multi-stop navigation which can be sold to enterprise customers such as Uber or Lyft in order to determine optimal path for visiting a set of locations.
+একটি অতিরিক্ত বৈশিষ্ট্য যা আমরা প্রদান করতে পারি তা হল মাল্টি-স্টপ নেভিগেশন যা অবস্থানগুলির একটি সেট দেখার জন্য সর্বোত্তম পথ নির্ধারণ করার জন্য উবার বা লিফটের মতো এন্টারপ্রাইজ গ্রাহকদের কাছে বিক্রি করা যেতে পারে।

@@ -1,142 +1,142 @@
-# অধ্যায় 15: গুগল ড্রাইভ ক্লাউড স্টোরেজ ডিজাইন
+# অধ্যায় 15: গুগল ড্রাইভ ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-Google Drive is a cloud-based file storage and synchronization service that allows users to store, access, and share files from various devices. This chapter discusses designing a scalable system with the following features:
-- **File Upload and Download**
-- **File Sync Across Devices**
-- **File Sharing**
-- **File Revision History**
-- **Notifications for Edits, Deletes, and Shares**
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-
-### Key Requirements
-#### Functional Requirements:
-- Upload and download files.
-- Sync files across multiple devices.
-- Maintain file revisions.
-- Enable file sharing with permissions.
-- Send notifications on file edits, deletions, and shares.
-
-#### Non-Functional Requirements:
-- **Reliability:** Data loss is unacceptable.
-- **Fast Sync Speed:** Avoid user impatience with delayed syncing.
-- **Bandwidth Efficiency:** Minimize unnecessary data usage.
-- **Scalability:** Handle 10 million daily active users (DAU).
-- **High Availability:** Operate seamlessly during server failures or network issues.
-
-### Constraints and Assumptions
-- Users get **10 GB free space**.
-- Maximum file size: **10 GB**.
-- Average file upload size: **500 KB**.
-- Upload frequency: **2 files per day per user**.
-- Total storage required: **500 PB**.
+## ভূমিকা
+Google ড্রাইভ হল একটি ক্লাউড-ভিত্তিক ফাইল স্টোরেজ এবং সিঙ্ক্রোনাইজেশন পরিষেবা যা ব্যবহারকারীদের বিভিন্ন ডিভাইস থেকে ফাইল সংরক্ষণ, অ্যাক্সেস এবং শেয়ার করতে দেয়। এই অধ্যায়ে নিম্নলিখিত বৈশিষ্ট্যগুলির সাথে একটি মাপযোগ্য সিস্টেম ডিজাইন করার বিষয়ে আলোচনা করা হয়েছে:
+- **ফাইল আপলোড এবং ডাউনলোড**
+- **ডিভাইস জুড়ে ফাইল সিঙ্ক**
+- **ফাইল শেয়ারিং**
+- **ফাইল রিভিশন ইতিহাস**
+- **সম্পাদনা, মুছে ফেলা এবং শেয়ার করার জন্য বিজ্ঞপ্তি**
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
-### Single-Server Setup
-A basic setup includes:
-1. **Web Server:** Handles uploads and downloads.
-2. **Metadata Database:**  to keep track of metadata like user data, login info, files info/
-3. **Storage Directory:** Holds files organized by namespaces.
+## ধাপ 1: সমস্যা বোঝা
+
+### মূল প্রয়োজনীয়তা
+#### কার্যকরী প্রয়োজনীয়তা:
+- ফাইল আপলোড এবং ডাউনলোড করুন।
+- একাধিক ডিভাইস জুড়ে ফাইল সিঙ্ক করুন।
+- ফাইল সংশোধন বজায় রাখুন।
+- অনুমতি সহ ফাইল শেয়ারিং সক্ষম করুন.
+- ফাইল সম্পাদনা, মুছে ফেলা এবং শেয়ার করার বিষয়ে বিজ্ঞপ্তি পাঠান।
+
+#### অ-কার্যকর প্রয়োজনীয়তা:
+- **বিশ্বস্ততা:** ডেটা হারানো অগ্রহণযোগ্য।
+- **দ্রুত সিঙ্ক স্পিড:** বিলম্বিত সিঙ্কের সাথে ব্যবহারকারীর অধৈর্যতা এড়িয়ে চলুন।
+- **ব্যান্ডউইথ দক্ষতা:** অপ্রয়োজনীয় ডেটা ব্যবহার কম করুন।
+- **স্কেলবিলিটি:** 10 মিলিয়ন দৈনিক সক্রিয় ব্যবহারকারী (DAU) পরিচালনা করুন।
+- **উচ্চ প্রাপ্যতা:** সার্ভার ব্যর্থতা বা নেটওয়ার্ক সমস্যার সময় নির্বিঘ্নে কাজ করুন।
+
+### সীমাবদ্ধতা এবং অনুমান
+- ব্যবহারকারীরা পাবেন **10 GB বিনামূল্যে স্থান**।
+- সর্বাধিক ফাইলের আকার: **10 GB**।
+- গড় ফাইল আপলোডের আকার: **500 KB**।
+- আপলোড ফ্রিকোয়েন্সি: **প্রতি ব্যবহারকারী প্রতি দিনে ২টি ফাইল**।
+- মোট স্টোরেজ প্রয়োজন: **500 PB**।
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের নকশা
+### একক-সার্ভার সেটআপ
+একটি মৌলিক সেটআপ অন্তর্ভুক্ত:
+1. **ওয়েব সার্ভার:** আপলোড এবং ডাউনলোড পরিচালনা করে।
+2. **মেটাডেটা ডেটাবেস:** মেটাডেটা ট্র্যাক রাখতে যেমন ব্যবহারকারীর ডেটা, লগইন তথ্য, ফাইলের তথ্য/
+3. **স্টোরেজ ডিরেক্টরি:** নেমস্পেস দ্বারা সংগঠিত ফাইল ধারণ করে।
 
 
 <div style="margin-left:3rem">
     <img src="./images/namespaces.png" alt="Namespaces" width="400" />
 </div>
 
-- A web server and a directory called drive/ is set up as the root directory to store uploaded files. 
-- Under drive/ directory, there is a list of directories called namespaces. 
-- Each namespace contains all the uploaded files for that user. 
-- Each file or folder can be uniquely identified by joining the namespace and the relative path.
+- একটি ওয়েব সার্ভার এবং ড্রাইভ/ নামক একটি ডিরেক্টরি আপলোড করা ফাইলগুলি সংরক্ষণ করার জন্য রুট ডিরেক্টরি হিসাবে সেট আপ করা হয়েছে৷ 
+- ড্রাইভ/ ডিরেক্টরির অধীনে, নেমস্পেস নামক ডিরেক্টরিগুলির একটি তালিকা রয়েছে। 
+- প্রতিটি নামস্থানে সেই ব্যবহারকারীর জন্য আপলোড করা সমস্ত ফাইল থাকে। 
+- নেমস্পেস এবং আপেক্ষিক পাথ যোগ করে প্রতিটি ফাইল বা ফোল্ডার অনন্যভাবে চিহ্নিত করা যেতে পারে।
 
 
-This design serves as a starting point but is inadequate for scaling.
+এই নকশাটি একটি সূচনা বিন্দু হিসাবে কাজ করে কিন্তু স্কেলিং করার জন্য অপর্যাপ্ত।
 
-#### APIs
-1. **Upload a file to Google Drive:** Two types of uploads are supported
-    - Simple upload: Used when file size is small.
-    - Resumable upload: 
-        - Endpoint: https://api.example.com/files/upload?uploadType=resumable
-        - Send the initial request to retrieve the resumable URL.
-        - Upload the data and monitor upload state
-        - If upload is disturbed, resume the upload.
-2. **Download a file from Google Drive:** To download a file
-    -  Endpoint: https://api.example.com/files/download
-3. **Get file revisions:**
-    - Endpoint: https://api.example.com/files/list_revisions
+#### এপিআই
+1. **Google ড্রাইভে একটি ফাইল আপলোড করুন:** দুই ধরনের আপলোড সমর্থিত
+    - সহজ আপলোড: ফাইলের আকার ছোট হলে ব্যবহার করা হয়।
+    - পুনরায় শুরুযোগ্য আপলোড: 
+        - শেষ পয়েন্ট: https://api.example.com/files/upload?uploadType=resumable
+        - পুনঃসূচনাযোগ্য URL পুনরুদ্ধার করার জন্য প্রাথমিক অনুরোধ পাঠান।
+        - ডেটা আপলোড করুন এবং আপলোডের অবস্থা মনিটর করুন
+        - আপলোড বিরক্ত হলে আপলোড পুনরায় শুরু করুন।
+2. **গুগল ড্রাইভ থেকে একটি ফাইল ডাউনলোড করুন:** একটি ফাইল ডাউনলোড করতে
+    - এন্ডপয়েন্ট: https://api.example.com/files/download
+3. **ফাইল রিভিশন পান:**
+    - এন্ডপয়েন্ট: https://api.example.com/files/list_revisions
 
-### Moving to Distributed Systems
+### ডিস্ট্রিবিউটেড সিস্টেমে চলে যাওয়া
 
-#### Improvements:
-1. **Sharding:** Split storage across servers based on `user_id`.
-2. **Amazon S3:** Use S3 for scalable and redundant file storage with cross-region replication.
+#### উন্নতি:
+1. **শার্ডিং:** `user_id` এর উপর ভিত্তি করে সার্ভার জুড়ে স্টোরেজ বিভক্ত করুন।
+2. **Amazon S3:** ক্রস-রিজিয়ন রেপ্লিকেশন সহ স্কেলযোগ্য এবং অপ্রয়োজনীয় ফাইল স্টোরেজের জন্য S3 ব্যবহার করুন।
 
     <img src="./images/replication.png" alt="Replication" width="600" />
      
-3. **Load Balancer:** Distribute traffic across multiple web servers.
-4. **Metadata Database Replication:** Ensure availability through database sharding and replication.
+3. **লোড ব্যালেন্সার:** একাধিক ওয়েব সার্ভার জুড়ে ট্রাফিক বিতরণ করুন।
+4. **মেটাডেটা ডাটাবেস রেপ্লিকেশন:** ডাটাবেস শার্ডিং এবং রেপ্লিকেশনের মাধ্যমে উপলব্ধতা নিশ্চিত করুন।
 
 
-#### Sync Conflicts:
-For a large storage system like Google Drive, sync conflicts happen from time to time.
-When two users modify the same file or folder at the same time, a conflict happens.
+#### সিঙ্ক দ্বন্দ্ব:
+Google ড্রাইভের মতো একটি বৃহৎ স্টোরেজ সিস্টেমের জন্য, সময়ে সময়ে সিঙ্ক বিরোধ ঘটে।
+যখন দুই ব্যবহারকারী একই সময়ে একই ফাইল বা ফোল্ডার পরিবর্তন করে, তখন একটি দ্বন্দ্ব ঘটে।
 
 <div style="margin-left:5rem">
 <img src="./images/sync-conflicts.png" alt="Sync Conflicts" width="600" />
 </div>
 
-- In the example user 1 and user 2 tries to update the same file at the same time, but user 1’s file is processed by our system first.
-- User 1’s update operation goes through, but, user 2 gets a sync conflict. 
-- The system presents both copies of the same file: user 2’s local copy and the latest version from the server.
-- User 2 has the option to merge both files or override one version with the other.
+- উদাহরণে ব্যবহারকারী 1 এবং ব্যবহারকারী 2 একই সময়ে একই ফাইল আপডেট করার চেষ্টা করে, কিন্তু ব্যবহারকারী 1 এর ফাইলটি প্রথমে আমাদের সিস্টেম দ্বারা প্রক্রিয়া করা হয়।
+- ব্যবহারকারী 1-এর আপডেট অপারেশন চলে, কিন্তু, ব্যবহারকারী 2 একটি সিঙ্ক বিরোধ পায়৷ 
+- সিস্টেমটি একই ফাইলের উভয় কপি উপস্থাপন করে: ব্যবহারকারী 2 এর স্থানীয় অনুলিপি এবং সার্ভার থেকে সর্বশেষ সংস্করণ।
+- ব্যবহারকারী 2 এর কাছে উভয় ফাইল একত্রিত করার বা একটি সংস্করণ অন্যটির সাথে ওভাররাইড করার বিকল্প রয়েছে৷
 
-### Improved design
+### উন্নত নকশা
 <div style="margin-left:5rem">
 <img src="./images/high-level-design.png" alt="High Level Design" width="500" />
 </div>
 
-1. **User Interaction:**: Users access the application via browser or mobile app.
+1. **ব্যবহারকারীর মিথস্ক্রিয়া:**: ব্যবহারকারীরা ব্রাউজার বা মোবাইল অ্যাপের মাধ্যমে অ্যাপ্লিকেশন অ্যাক্সেস করে।
 
-2. **Block Servers:**
-   - Files are split into **4 MB blocks** (maximum size) and assigned unique hash values.
-   - Blocks are stored independently in cloud storage (e.g., Amazon S3).
-   - File reconstruction involves joining blocks in a specific order.
+2. **ব্লক সার্ভার:**
+   - ফাইলগুলিকে **4 MB ব্লকে বিভক্ত করা হয়েছে** (সর্বোচ্চ আকার) এবং অনন্য হ্যাশ মান বরাদ্দ করা হয়েছে৷
+   - ব্লকগুলি ক্লাউড স্টোরেজে স্বাধীনভাবে সংরক্ষণ করা হয় (যেমন, Amazon S3)।
+   - ফাইল পুনর্গঠনে একটি নির্দিষ্ট ক্রমে ব্লক যোগদান জড়িত।
 
-3. **Cloud Storage:** Blocks are stored in cloud storage for scalability and redundancy.
+3. **ক্লাউড স্টোরেজ:** স্কেলেবিলিটি এবং রিডানডেন্সির জন্য ব্লকগুলি ক্লাউড স্টোরেজে সংরক্ষণ করা হয়।
 
-4. **Cold Storage:** Inactive files are moved to cold storage to reduce costs.
+4. **কোল্ড স্টোরেজ:** নিষ্ক্রিয় ফাইলগুলি খরচ কমাতে কোল্ড স্টোরেজে সরানো হয়।
 
-5. **Load Balancer:** Distributes requests evenly among API servers to ensure efficient operation.
+5. **লোড ব্যালেন্সার:** দক্ষ অপারেশন নিশ্চিত করতে API সার্ভারগুলির মধ্যে সমানভাবে অনুরোধগুলি বিতরণ করে।
 
-6. **API Servers:**
-   - Handle user authentication, profile management, and file metadata updates.
-   - Manage all non-uploading workflows.
+6. **API সার্ভার:**
+   - ব্যবহারকারীর প্রমাণীকরণ, প্রোফাইল পরিচালনা এবং ফাইল মেটাডেটা আপডেটগুলি পরিচালনা করুন।
+   - সমস্ত অ-আপলোডিং কর্মপ্রবাহ পরিচালনা করুন।
 
-7. **Metadata Database and Cache:**
-   - Stores metadata for users, files, blocks, and versions.
-   - Frequently accessed metadata is cached for faster retrieval.
+7. **মেটাডেটা ডেটাবেস এবং ক্যাশে:**
+   - ব্যবহারকারী, ফাইল, ব্লক এবং সংস্করণগুলির জন্য মেটাডেটা সংরক্ষণ করে।
+   - দ্রুত পুনরুদ্ধারের জন্য ঘন ঘন অ্যাক্সেস করা মেটাডেটা ক্যাশে করা হয়।
 
-8. **Notification Service:**
-   - A **publisher/subscriber system** that notifies clients about file changes (add, edit, delete).
-   - Ensures clients can pull the latest updates.
+8. **বিজ্ঞপ্তি পরিষেবা:**
+   - একটি **প্রকাশক/সাবস্ক্রাইবার সিস্টেম** যা ক্লায়েন্টদের ফাইল পরিবর্তনের বিষয়ে অবহিত করে (যোগ, সম্পাদনা, মুছে)।
+   - নিশ্চিত করে যে ক্লায়েন্টরা সর্বশেষ আপডেট পেতে পারে।
 
-9. **Offline Backup Queue:** Temporarily stores file change information for offline clients to sync when back online.
+9. **অফলাইন ব্যাকআপ সারি:** অস্থায়ীভাবে অফলাইন ক্লায়েন্টদের জন্য ফাইল পরিবর্তনের তথ্য সঞ্চয় করে যাতে তারা অনলাইনে ফিরে আসে।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Metadata Database
-A highly simplified is shown below version as it only includes the most important tables and fields.
-#### Schema Design:
-- **User Table:** Stores user profiles and preferences.
-- **File Table:** Maintains file metadata (e.g., size, name, path).
-- **Block Table:** Tracks file blocks for reconstructing files.
-- **File Version Table:** Stores file revision history.
+### মেটাডেটা ডাটাবেস
+একটি অত্যন্ত সরলীকৃত সংস্করণ নীচে দেখানো হয়েছে কারণ এটি শুধুমাত্র সবচেয়ে গুরুত্বপূর্ণ টেবিল এবং ক্ষেত্রগুলি অন্তর্ভুক্ত করে৷
+#### স্কিমা ডিজাইন:
+- **ব্যবহারকারী টেবিল:** ব্যবহারকারীর প্রোফাইল এবং পছন্দ সঞ্চয় করে।
+- **ফাইল টেবিল:** ফাইল মেটাডেটা বজায় রাখে (যেমন, আকার, নাম, পথ)।
+- **ব্লক টেবিল:** ফাইল পুনর্গঠনের জন্য ফাইল ব্লক ট্র্যাক করে।
+- **ফাইল সংস্করণ সারণী:** ফাইল পুনর্বিবেচনার ইতিহাস সংরক্ষণ করে।
 
 <div style="margin-left:5rem">
 <img src="./images/metadata-database.png" alt="Metadata Database " width="500" />
@@ -144,17 +144,17 @@ A highly simplified is shown below version as it only includes the most importan
 
 ---
 
-### File Upload Flow
+### ফাইল আপলোড ফ্লো
 
-1. **File Upload:**
-   - File is split into blocks, compressed, and encrypted by the block server.
-   - Blocks are uploaded to block servers and stored in S3.
-2. **Metadata Upload:**
-   - Client sends metadata to the API server.
-   - Metadata is stored in the database with status `pending`.
-3. **Completion:**
-   - S3 triggers a callback to update the file status to `uploaded`.
-   - Notification service informs relevant users.
+1. **ফাইল আপলোড:**
+   - ফাইলটি ব্লকে বিভক্ত, সংকুচিত এবং ব্লক সার্ভার দ্বারা এনক্রিপ্ট করা হয়েছে।
+   - ব্লকগুলি ব্লক সার্ভারে আপলোড করা হয় এবং S3 এ সংরক্ষণ করা হয়।
+2. **মেটাডেটা আপলোড:**
+   - ক্লায়েন্ট API সার্ভারে মেটাডেটা পাঠায়।
+   - মেটাডেটা স্ট্যাটাস `মুলতুবি` সহ ডাটাবেসে সংরক্ষণ করা হয়।
+3. **সমাপ্তি:**
+   - S3 ফাইলের স্থিতি `আপলোড করা` তে আপডেট করতে একটি কলব্যাক ট্রিগার করে।
+   - বিজ্ঞপ্তি পরিষেবা প্রাসঙ্গিক ব্যবহারকারীদের অবহিত করে।
 
 
 <div style="margin-left:5rem">
@@ -164,17 +164,17 @@ A highly simplified is shown below version as it only includes the most importan
 
 ---
 
-### File Sync
-1. **Delta Sync:** Transfer only modified blocks instead of the entire file.
+### ফাইল সিঙ্ক
+1. **ডেল্টা সিঙ্ক:** সম্পূর্ণ ফাইলের পরিবর্তে শুধুমাত্র পরিবর্তিত ব্লক স্থানান্তর করুন।
 
     <div style="margin-left:2rem">
     <img src="./images/delta-sync.png" alt="Delta Sync" width="400" />
     </div>
 
-2. **Compression:** Blocks are compressed using compression algorithms depending on file types. 
-3. **Conflict Resolution:**
-   - First processed version wins.
-   - Conflicting versions are saved separately for user resolution.
+2. **কম্প্রেশন:** ফাইলের প্রকারের উপর নির্ভর করে কম্প্রেশন অ্যালগরিদম ব্যবহার করে ব্লকগুলি সংকুচিত করা হয়। 
+3. **সংঘাতের সমাধান:**
+   - প্রথম প্রক্রিয়াকৃত সংস্করণ জিতেছে।
+   - ব্যবহারকারীর রেজোলিউশনের জন্য বিরোধপূর্ণ সংস্করণগুলি আলাদাভাবে সংরক্ষণ করা হয়।
 
 <div style="margin-left:5rem">
 <img src="./images/file-sync.png" alt="File Synce " width="400" />
@@ -182,17 +182,17 @@ A highly simplified is shown below version as it only includes the most importan
 
 ---
 
-### File Download Flow
-Download flow is triggered when a file is added or edited elsewhere. There are two ways a client can know:
-- If client A is online while a file is changed by another client, notification service will inform client A.
-- If client A is offline while a file is changed by another client, data will be saved to the cache. When the offline client is online again, it pulls the latest changes.
+### ফাইল ডাউনলোড ফ্লো
+ডাউনলোড ফ্লো ট্রিগার হয় যখন একটি ফাইল অন্য কোথাও যোগ বা সম্পাদনা করা হয়। একটি ক্লায়েন্ট জানতে পারে দুটি উপায় আছে:
+- যদি ক্লায়েন্ট A অনলাইনে থাকে যখন একটি ফাইল অন্য ক্লায়েন্ট দ্বারা পরিবর্তন করা হয়, বিজ্ঞপ্তি পরিষেবা ক্লায়েন্ট A-কে জানাবে।
+- যদি ক্লায়েন্ট A অফলাইনে থাকে যখন একটি ফাইল অন্য ক্লায়েন্ট দ্বারা পরিবর্তন করা হয়, ডেটা ক্যাশে সংরক্ষণ করা হবে। অফলাইন ক্লায়েন্ট আবার অনলাইন হলে, এটি সর্বশেষ পরিবর্তনগুলি টানে।
 
-Once a client knows a file is changed, it first requests metadata via API servers, then
-downloads blocks to construct the file.
+একবার একজন ক্লায়েন্ট জানতে পারে যে একটি ফাইল পরিবর্তন করা হয়েছে, এটি প্রথমে API সার্ভারের মাধ্যমে মেটাডেটা অনুরোধ করে
+ফাইল তৈরি করতে ব্লক ডাউনলোড করে।
 
-1. **Trigger:** Notification service informs the client of file updates.
-2. **Metadata Fetch:** Client retrieves updated metadata via API.
-3. **Block Download:** Client downloads updated blocks from block servers and reconstructs the file.
+1. **ট্রিগার:** বিজ্ঞপ্তি পরিষেবা ক্লায়েন্টকে ফাইল আপডেট সম্পর্কে অবহিত করে।
+2. **মেটাডেটা ফেচ:** ক্লায়েন্ট API এর মাধ্যমে আপডেট করা মেটাডেটা পুনরুদ্ধার করে।
+3. **ব্লক ডাউনলোড:** ক্লায়েন্ট ব্লক সার্ভার থেকে আপডেট করা ব্লক ডাউনলোড করে এবং ফাইলটিকে পুনর্গঠন করে।
 
 
 <div style="margin-left:3rem">
@@ -202,29 +202,29 @@ downloads blocks to construct the file.
 
 ---
 
-### Notification Service
-1. **Purpose:** Keeps clients updated about file changes.
-2. **Mechanism:** Implements **long polling** for asynchronous notifications.
-3. **Example:** When a file is added, edited, or deleted, notifications are pushed to all relevant clients.
+### বিজ্ঞপ্তি পরিষেবা
+1. **উদ্দেশ্য:** ফাইল পরিবর্তন সম্পর্কে ক্লায়েন্টদের আপডেট রাখে।
+2. **মেকানিজম:** অ্যাসিঙ্ক্রোনাস বিজ্ঞপ্তির জন্য **দীর্ঘ ভোটদান** প্রয়োগ করে।
+3. **উদাহরণ:** যখন একটি ফাইল যোগ, সম্পাদনা বা মুছে ফেলা হয়, তখন সমস্ত প্রাসঙ্গিক ক্লায়েন্টের কাছে বিজ্ঞপ্তি পাঠানো হয়।
 
 
 ---
 
-### Storage Optimization
-1. **De-duplication:** Remove duplicate blocks at the account level using hash-based comparisons.
-2. **Versioning Strategy:**
-   - Limit the number of saved revisions.
-   - Prioritize recent versions for frequently edited files.
-3. **Cold Storage:** Move rarely accessed files to cheaper storage solutions (e.g., Amazon S3 Glacier).
+### স্টোরেজ অপ্টিমাইজেশান
+1. **ডি-ডুপ্লিকেশন:** হ্যাশ-ভিত্তিক তুলনা ব্যবহার করে অ্যাকাউন্ট স্তরে ডুপ্লিকেট ব্লকগুলি সরান।
+2. **সংস্করণ কৌশল:**
+   - সংরক্ষিত সংশোধন সংখ্যা সীমিত.
+   - ঘন ঘন সম্পাদিত ফাইলগুলির জন্য সাম্প্রতিক সংস্করণগুলিকে অগ্রাধিকার দিন৷
+3. **কোল্ড স্টোরেজ:** খুব কমই অ্যাক্সেস করা ফাইলগুলিকে সস্তা স্টোরেজ সমাধানে (যেমন, Amazon S3 Glacier) নিয়ে যান।
 
 ---
 
-### Failure Handling
-1. **Load Balancer Failure:** Secondary load balancer becomes active.
-2. **Block Server Failure:** Pending tasks are reassigned to other servers.
-3. **Metadata Database Failure:**
-   - Promote a slave node to master.
-   - Redirect traffic to remaining replicas.
-4. **Cloud Storage Failure:** Use cross-region replication to fetch unavailable files.
-5. **Notification Service Failure:** Clients reconnect to alternative servers.
+### ব্যর্থ হ্যান্ডলিং
+1. **লোড ব্যালেন্সার ব্যর্থতা:** সেকেন্ডারি লোড ব্যালেন্সার সক্রিয় হয়ে যায়।
+2. **ব্লক সার্ভার ব্যর্থতা:** মুলতুবি থাকা কাজগুলি অন্য সার্ভারগুলিতে পুনরায় নিয়োগ করা হয়েছে৷
+3. **মেটাডেটা ডেটাবেস ব্যর্থতা:**
+   - একটি স্লেভ নোডকে মাস্টার করার জন্য উন্নীত করুন।
+   - অবশিষ্ট প্রতিলিপিগুলিতে ট্র্যাফিক পুনঃনির্দেশ করুন৷
+4. **ক্লাউড স্টোরেজ ব্যর্থতা:** অনুপলব্ধ ফাইলগুলি আনতে ক্রস-অঞ্চল প্রতিলিপি ব্যবহার করুন।
+5. **বিজ্ঞপ্তি পরিষেবা ব্যর্থতা:** ক্লায়েন্টরা বিকল্প সার্ভারের সাথে পুনরায় সংযোগ করে৷
 

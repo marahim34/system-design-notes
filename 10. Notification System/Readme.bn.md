@@ -1,142 +1,142 @@
-# অধ্যায় 10: নোটিফিকেশন সিস্টেম ডিজাইন
+# অধ্যায় 10: একটি বিজ্ঞপ্তি সিস্টেম ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-A **notification system** is essential for modern applications, providing timely updates like product notifications, events, offers, and alerts. Notifications can be sent through:
-1. **Push notifications** (mobile or desktop),
-2. **SMS messages**, and
-3. **Emails**.
+## ভূমিকা
+একটি **নোটিফিকেশন সিস্টেম** আধুনিক অ্যাপ্লিকেশনের জন্য অপরিহার্য, পণ্যের বিজ্ঞপ্তি, ইভেন্ট, অফার এবং সতর্কতার মতো সময়মত আপডেট প্রদান করে। বিজ্ঞপ্তিগুলি এর মাধ্যমে পাঠানো যেতে পারে:
+1. **পুশ বিজ্ঞপ্তি** (মোবাইল বা ডেস্কটপ),
+2. **এসএমএস বার্তা**, এবং
+3. **ইমেল**।
 
-The chapter focuses on designing a scalable system capable of sending millions of notifications daily.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-### রিকোয়ারমেন্টস (Requirements)
-- **Notification Types:** Push notifications, SMS, and Emails.
-- **Delivery:** Soft real-time system with minimal delays.
-- **Platforms:** iOS, Android, and desktop.
-- **Triggers:** Notifications can be triggered by client applications or scheduled on servers.
-- **Scale:**
-  - **Push Notifications:** 10 million/day,
-  - **SMS:** 1 million/day,
-  - **Emails:** 5 million/day.
-- **Opt-out Support:** Users can disable specific notification types.
+অধ্যায়টি প্রতিদিন লক্ষ লক্ষ বিজ্ঞপ্তি পাঠাতে সক্ষম একটি মাপযোগ্য সিস্টেম ডিজাইন করার উপর দৃষ্টি নিবদ্ধ করে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: সমস্যা বোঝা
+### প্রয়োজনীয়তা
+- **বিজ্ঞপ্তির প্রকার:** পুশ নোটিফিকেশন, এসএমএস এবং ইমেল।
+- **ডেলিভারি:** ন্যূনতম বিলম্ব সহ নরম রিয়েল-টাইম সিস্টেম।
+- **প্ল্যাটফর্ম:** iOS, Android এবং ডেস্কটপ।
+- **ট্রিগার:** বিজ্ঞপ্তিগুলি ক্লায়েন্ট অ্যাপ্লিকেশন দ্বারা ট্রিগার করা যেতে পারে বা সার্ভারে নির্ধারিত হতে পারে।
+- **স্কেল:**
+  - **পুশ বিজ্ঞপ্তি:** 10 মিলিয়ন/দিন,
+  - **SMS:** 1 মিলিয়ন/দিন,
+  - **ইমেল:** ৫ মিলিয়ন/দিন।
+- **অপ্ট-আউট সমর্থন:** ব্যবহারকারীরা নির্দিষ্ট বিজ্ঞপ্তি প্রকার অক্ষম করতে পারেন।
 
-### Components
+---
 
-1. **Notification Types:**
-   - **iOS Push Notifications:** Use **Apple Push Notification Service (APNS)**.
-   - **Android Push Notifications:** Use **Firebase Cloud Messaging (FCM)**.
-   - **SMS Messages:** Third-party services like Twilio or Nexmo.
-   - **Emails:** Commercial email services like SendGrid or Mailchimp.
+## ধাপ 2: উচ্চ-স্তরের নকশা
 
-2. **Contact Info Gathering:**
+### উপাদান
+
+1. **বিজ্ঞপ্তি প্রকার:**
+   - **iOS পুশ বিজ্ঞপ্তি:** ব্যবহার করুন **Apple Push Notification Service (APNS)**।
+   - **Android Push Notifications:** **Firebase Cloud Messaging (FCM)** ব্যবহার করুন।
+   - **এসএমএস বার্তা:** তৃতীয় পক্ষের পরিষেবা যেমন Twilio বা Nexmo৷
+   - **ইমেল:** সেন্ডগ্রিড বা মেইলচিম্পের মতো বাণিজ্যিক ইমেল পরিষেবা।
+
+2. **যোগাযোগ তথ্য সংগ্রহ:**
    <div style="margin-left:3rem">
       <img src="./images/contact-info-gathering.png" alt="Contact Info Gathering" width="500">
    </div>
 
-   - Collect device tokens, phone numbers, or email addresses during app installation or signup.
-   - Store contact info in the database:
-     - **Device Tokens Table:** For push notifications.
-     - **User Table:** For emails and phone numbers.
+- অ্যাপ ইনস্টলেশন বা সাইনআপের সময় ডিভাইস টোকেন, ফোন নম্বর বা ইমেল ঠিকানা সংগ্রহ করুন।
+   - ডাটাবেসে যোগাযোগের তথ্য সংরক্ষণ করুন:
+     - **ডিভাইস টোকেন টেবিল:** পুশ বিজ্ঞপ্তির জন্য।
+     - **ব্যবহারকারীর টেবিল:** ইমেল এবং ফোন নম্বরের জন্য।
 
 
-3. **Notification Sending Flow:**
+3. **বিজ্ঞপ্তি পাঠানোর প্রবাহ:**
 
    <div style="margin-left:3rem">
       <img src="./images/high-level-design.png" alt="High Level Design" width="500">
    </div>
 
-   - **Trigger Services:**
-      - Generate events to initiate notifications (e.g., billing reminders, shipping updates).
-      - A service can be a micro-service, a cron job, or a distributed system that triggers notification sending events.
-   - **Notification Server:** 
-      - Provide APIs for services to send notifications. 
-      - Carry out basic validations to verify emails, phone numbers.
-      - Query the database or cache to fetch data needed to render a notification.
-   - **Third-Party Services:** Deliver notifications to users.
+- **ট্রিগার পরিষেবা:**
+      - বিজ্ঞপ্তিগুলি শুরু করতে ইভেন্টগুলি তৈরি করুন (যেমন, বিলিং অনুস্মারক, শিপিং আপডেট)।
+      - একটি পরিষেবা একটি মাইক্রো-সার্ভিস, একটি ক্রোন কাজ, বা একটি বিতরণ করা সিস্টেম হতে পারে যা বিজ্ঞপ্তি পাঠানোর ঘটনাগুলিকে ট্রিগার করে৷
+   - **বিজ্ঞপ্তি সার্ভার:** 
+      - বিজ্ঞপ্তি পাঠানোর জন্য পরিষেবাগুলির জন্য API প্রদান করুন। 
+      - ইমেল, ফোন নম্বর যাচাই করার জন্য মৌলিক বৈধতা বহন করুন।
+      - একটি বিজ্ঞপ্তি রেন্ডার করার জন্য প্রয়োজনীয় ডেটা আনতে ডাটাবেস বা ক্যাশে জিজ্ঞাসা করুন।
+   - **তৃতীয়-পক্ষের পরিষেবা:** ব্যবহারকারীদের বিজ্ঞপ্তিগুলি সরবরাহ করুন৷
 
      
 
-### Challenges in Initial Design
-- **Single Point of Failure (SPOF):** One notification server can crash the entire system.
-- **Scalability Issues:** Hard to scale databases, caches, and processing components independently.
-- **Performance Bottlenecks:** High resource demands for sending notifications.
+### প্রাথমিক ডিজাইনে চ্যালেঞ্জ
+- **ব্যর্থতার একক পয়েন্ট (SPOF):** একটি বিজ্ঞপ্তি সার্ভার পুরো সিস্টেমকে ক্র্যাশ করতে পারে।
+- **স্ক্যালেবিলিটি ইস্যু:** ডাটাবেস, ক্যাশে এবং প্রসেসিং উপাদানগুলি স্বাধীনভাবে স্কেল করা কঠিন।
+- **কর্মক্ষমতা বাধা:** বিজ্ঞপ্তি পাঠানোর জন্য উচ্চ সম্পদের চাহিদা।
 
-### Improved Design
+### উন্নত ডিজাইন
 
    <div style="margin-left:3rem">
       <img src="./images/improved-design.png" alt="Improved Design" width="500">
    </div>
 
-- Move databases and caches out of the notification server.
-- Introduce **horizontal scaling** with multiple notification servers.
-- Use **message queues** to decouple system components.
-   -  Message queues serve as buffers when high volumes of notifications are to be sent out.
-- Add workers that pull notification events from message queues and send them to corresponding third party services.
+- বিজ্ঞপ্তি সার্ভার থেকে ডাটাবেস এবং ক্যাশে সরান।
+- একাধিক বিজ্ঞপ্তি সার্ভারের সাথে **অনুভূমিক স্কেলিং** প্রবর্তন করুন।
+- সিস্টেমের উপাদানগুলিকে ডিকপল করতে **বার্তা সারি** ব্যবহার করুন।
+   - যখন উচ্চ পরিমাণে বিজ্ঞপ্তি পাঠানো হয় তখন বার্তা সারি বাফার হিসাবে কাজ করে।
+- এমন কর্মীদের যোগ করুন যারা বার্তা সারি থেকে বিজ্ঞপ্তি ইভেন্টগুলি টেনে আনে এবং তাদের সংশ্লিষ্ট তৃতীয় পক্ষের পরিষেবাগুলিতে পাঠান।
 
    
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Reliability
-1. **Prevent Data Loss:** 
+### নির্ভরযোগ্যতা
+1. **ডেটা হারানো রোধ করুন:**
    <div style="margin-left:3rem">
    <img src="./images/data-loss.png" alt="Data Loss" width="400">
    </div>
 
-   - Persist notification data in a database and implement a retry mechanism. 
-   - The Notification log database is included for data persistence.
+- একটি ডাটাবেসে নোটিফিকেশন ডেটা বজায় রাখুন এবং একটি পুনঃপ্রচেষ্টা প্রক্রিয়া প্রয়োগ করুন। 
+   - তথ্য স্থিরতার জন্য বিজ্ঞপ্তি লগ ডাটাবেস অন্তর্ভুক্ত করা হয়েছে।
 
 
-2. **Deduplication:** 
-   - Check event IDs to avoid sending duplicate notifications.
-   - When a notification event first arrives, check if it is seen before by checking the event ID.
-If seen before discard it, otherwise send out the notification. 
+2. **প্রতিলিপি:** 
+   - ডুপ্লিকেট বিজ্ঞপ্তি পাঠানো এড়াতে ইভেন্ট আইডি চেক করুন।
+   - যখন একটি বিজ্ঞপ্তি ইভেন্ট প্রথম আসে, ইভেন্ট আইডি চেক করে এটি আগে দেখা গেছে কিনা তা পরীক্ষা করুন।
+আগে দেখা গেলে বাতিল করুন, অন্যথায় বিজ্ঞপ্তি পাঠান।
 
 
-### Additional Components
+### অতিরিক্ত উপাদান
    <div style="margin-left:3rem">
    <img src="./images/events-tracking.png" alt="Events Tracking" width="400">
    </div>
 
-1. **Notification Templates:** Preformatted templates for consistent and efficient notifications.
-2. **Notification Settings:**
-   - Users can opt-in or opt-out for specific channels (push, SMS, or email).
-   - Stored in a dedicated notification settings table.
-3. **Rate Limiting:** Cap the frequency of notifications sent to users.
-4. **Retry Mechanism:** Retry sending notifications if third-party services fail.
-5. **Monitoring Queues:** Track queued notifications to scale workers dynamically.
-6. **Event Tracking:** Collect metrics like open rate, click rate, and engagement.
+1. **বিজ্ঞপ্তি টেমপ্লেট:** সামঞ্জস্যপূর্ণ এবং দক্ষ বিজ্ঞপ্তিগুলির জন্য পূর্ব বিন্যাসিত টেমপ্লেট।
+2. **বিজ্ঞপ্তি সেটিংস:**
+   - ব্যবহারকারীরা নির্দিষ্ট চ্যানেলের জন্য অপ্ট-ইন বা অপ্ট-আউট করতে পারেন (পুশ, এসএমএস, বা ইমেল)।
+   - একটি ডেডিকেটেড বিজ্ঞপ্তি সেটিংস টেবিলে সংরক্ষিত।
+3. **রেট লিমিটিং:** ব্যবহারকারীদের পাঠানো বিজ্ঞপ্তির ফ্রিকোয়েন্সি ক্যাপ করুন।
+4. **পুনরায় চেষ্টা করার পদ্ধতি:** তৃতীয় পক্ষের পরিষেবাগুলি ব্যর্থ হলে বিজ্ঞপ্তি পাঠানোর পুনরায় চেষ্টা করুন৷
+5. **মনিটরিং সারি:** গতিশীলভাবে কর্মীদের স্কেল করার জন্য সারিবদ্ধ বিজ্ঞপ্তিগুলি ট্র্যাক করুন৷
+6. **ইভেন্ট ট্র্যাকিং:** ওপেন রেট, ক্লিক রেট এবং ব্যস্ততার মতো মেট্রিক্স সংগ্রহ করুন।
 
 
-### Security
-- Use **AppKey** and **AppSecret** to authenticate and secure APIs for push notifications.
+### নিরাপত্তা
+- পুশ বিজ্ঞপ্তিগুলির জন্য APIগুলিকে প্রমাণীকরণ এবং সুরক্ষিত করতে **AppKey** এবং **AppSecret** ব্যবহার করুন৷
 
-### Notification Flow
+### বিজ্ঞপ্তি প্রবাহ
 
    <div style="margin-left:3rem">
    <img src="./images/updated-design.png" alt="Updated Design" width="500">
    </div>
 
-1. Trigger services call APIs to send notifications.
-2. Notification servers validate requests and fetch metadata from caches or databases.
-3. Notification events are sent to message queues.
-4. Workers process events and interact with third-party services.
-5. Third-party services deliver notifications to users.
+1. বিজ্ঞপ্তি পাঠাতে ট্রিগার পরিষেবা কল APIs.
+2. বিজ্ঞপ্তি সার্ভারগুলি অনুরোধগুলি যাচাই করে এবং ক্যাশে বা ডেটাবেস থেকে মেটাডেটা আনয়ন করে৷
+3. বিজ্ঞপ্তি ইভেন্ট বার্তা সারিতে পাঠানো হয়.
+4. কর্মীরা ইভেন্টগুলি প্রক্রিয়া করে এবং তৃতীয় পক্ষের পরিষেবাগুলির সাথে যোগাযোগ করে৷
+5. তৃতীয় পক্ষের পরিষেবাগুলি ব্যবহারকারীদের কাছে বিজ্ঞপ্তি সরবরাহ করে৷
 
 
 ---
 
-## Key Optimizations
-1. **Horizontal Scaling:** Add more notification servers for load distribution.
-2. **Message Queues:** Decouple processing to handle high volumes.
-3. **Caching:** Reduce latency by caching frequently accessed data.
-4. **Distributed Crawling:** Optimize message delivery geographically for better performance.
+## কী অপ্টিমাইজেশান
+1. **অনুভূমিক স্কেলিং:** লোড বিতরণের জন্য আরও বিজ্ঞপ্তি সার্ভার যোগ করুন।
+2. **বার্তা সারি:** উচ্চ ভলিউম পরিচালনা করতে দ্বিগুণ প্রক্রিয়াকরণ।
+3. **ক্যাশিং:** ঘন ঘন অ্যাক্সেস করা ডেটা ক্যাশে করে লেটেন্সি হ্রাস করুন।
+4. **ডিস্ট্রিবিউটেড ক্রলিং:** ভাল পারফরম্যান্সের জন্য ভৌগোলিকভাবে মেসেজ ডেলিভারি অপ্টিমাইজ করুন।
 

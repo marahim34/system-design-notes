@@ -1,93 +1,93 @@
-# অধ্যায় 23: ডিস্ট্রিবিউটেড ইমেইল সার্ভিস
+# অধ্যায় 23: বিতরণ করা ইমেল পরিষেবা
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-We'll design a **distributed email service**, similar to **Gmail** in this chapter.
+আমরা এই অধ্যায়ে **Gmail** এর মতো একটি **ডিস্ট্রিবিউটেড ইমেল পরিষেবা** ডিজাইন করব।
 
-In 2020, **Gmail** had 1.8bil active users, while **Outlook** had 400mil users worldwide.
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-
-- C: How many users use the system?
-- I: 1bil users
-- C: I think following features are important - auth, send/receive email, fetch email, filter emails, search email, anti-spam protection.
-- I: Good list. Don't worry about auth for now.
-- C: How do users connect \w email servers?
-- I: Typically, email clients connect via SMTP, POP, IMAP, but we'll use HTTP for this problem.
-- C: Can emails have attachments?
-- I: Yes
-
-### **Non-functional requirements**
-
-- **Reliability** - we shouldn't lose data
-- **Availability** - We should use replication to prevent single points of failure. We should also tolerate partial system failures.
-- **Scalability** - As userbase grows, our system should be able to handle them.
-- **Flexibility and extensibility** - system should be flexible and easy to extend with new features. One of the reasons we chose HTTP over SMTP/other mail protocols.
-
-### **Back-of-the-envelope estimation**
-
-- **1bil users**
-- Assuming one person sends 10 emails per day -> **100k emails per second**.
-- Assuming one person receives 40 emails per day and each email on average has 50kb metadata -> **730pb storage per year**.
-- Assuming 20% of emails have storage attachments and average size is 500kb -> **1,460pb per year**.
+2020 সালে, **Gmail** এর 1.8 বিলিয়ন সক্রিয় ব্যবহারকারী ছিল, যেখানে **Outlook** এর বিশ্বব্যাপী 400 মিলিয়ন ব্যবহারকারী ছিল।
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-### **Email knowledge 101**
+- C: কতজন ব্যবহারকারী সিস্টেম ব্যবহার করেন?
+- আমি: 1 বিলিয়ন ব্যবহারকারী
+- সি: আমি মনে করি নিম্নলিখিত বৈশিষ্ট্যগুলি গুরুত্বপূর্ণ - প্রমাণীকরণ, ইমেল প্রেরণ/গ্রহণ, ইমেল আনয়ন, ফিল্টার ইমেল, ইমেল অনুসন্ধান, স্প্যাম-বিরোধী সুরক্ষা।
+- আমি: ভালো লিস্ট। আপাতত auth নিয়ে চিন্তা করবেন না।
+- সি: কিভাবে ব্যবহারকারীরা \w ইমেল সার্ভারগুলিকে সংযুক্ত করে?
+- আমি: সাধারণত, ইমেল ক্লায়েন্টরা SMTP, POP, IMAP এর মাধ্যমে সংযোগ করে, কিন্তু আমরা এই সমস্যার জন্য HTTP ব্যবহার করব।
+- সি: ইমেল সংযুক্তি থাকতে পারে?
+- আমি: হ্যাঁ
 
-There are various protocols used for sending and receiving emails:
-- **SMTP** - standard protocol for sending emails from one server to another.
-- **POP** - standard protocol for receiving and downloading emails from a remote mail server to a local client. Once retrieved, emails are deleted from remote server.
-- **IMAP** - similar to POP, it is used for receiving and downloading emails from a remote server, but it keeps the emails on the server-side.
-- **HTTPS** - not technically an email protocol, but it can be used for web-based email clients.
+### **অকার্যকর প্রয়োজনীয়তা**
 
-Apart from the mailing protocol, there are some DNS records we need to configure for our email server - the MX records:
+- **বিশ্বস্ততা** - আমাদের ডেটা হারানো উচিত নয়
+- **উপলভ্যতা** - ব্যর্থতার একক পয়েন্ট প্রতিরোধ করতে আমাদের প্রতিলিপি ব্যবহার করা উচিত। আমাদের আংশিক সিস্টেমের ব্যর্থতাও সহ্য করা উচিত।
+- **স্কেলেবিলিটি** - ইউজারবেস বাড়ার সাথে সাথে আমাদের সিস্টেম তাদের পরিচালনা করতে সক্ষম হওয়া উচিত।
+- **নমনীয়তা এবং প্রসারণযোগ্যতা** - সিস্টেমটি নমনীয় হওয়া উচিত এবং নতুন বৈশিষ্ট্যগুলির সাথে প্রসারিত করা সহজ। আমরা SMTP/অন্যান্য মেল প্রোটোকলের তুলনায় HTTP বেছে নেওয়ার একটি কারণ।
+
+### **খামের পিছনের অনুমান**
+
+- **1 বিলিয়ন ব্যবহারকারী**
+- ধরে নিচ্ছি একজন ব্যক্তি প্রতিদিন 10টি ইমেল পাঠায় -> **প্রতি সেকেন্ডে 100k ইমেল**।
+- ধরে নিচ্ছি একজন ব্যক্তি প্রতিদিন 40টি ইমেল পান এবং প্রতিটি ইমেলে গড়ে 50kb মেটাডেটা থাকে -> **প্রতি বছর 730pb স্টোরেজ**।
+- ধরে নিচ্ছি 20% ইমেলে স্টোরেজ সংযুক্তি রয়েছে এবং গড় আকার 500kb -> **1,460pb প্রতি বছর**।
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+
+### **ইমেল জ্ঞান 101**
+
+ইমেল পাঠানো এবং গ্রহণ করার জন্য ব্যবহৃত বিভিন্ন প্রোটোকল রয়েছে:
+- **SMTP** - এক সার্ভার থেকে অন্য সার্ভারে ইমেল পাঠানোর জন্য আদর্শ প্রোটোকল।
+- **POP** - দূরবর্তী মেল সার্ভার থেকে স্থানীয় ক্লায়েন্টে ইমেল গ্রহণ এবং ডাউনলোড করার জন্য আদর্শ প্রোটোকল। একবার পুনরুদ্ধার করা হলে, দূরবর্তী সার্ভার থেকে ইমেলগুলি মুছে ফেলা হয়।
+- **IMAP** - POP এর মতো, এটি একটি দূরবর্তী সার্ভার থেকে ইমেলগুলি গ্রহণ এবং ডাউনলোড করার জন্য ব্যবহৃত হয়, তবে এটি সার্ভার-সাইডে ইমেলগুলি রাখে৷
+- **HTTPS** - প্রযুক্তিগতভাবে একটি ইমেল প্রোটোকল নয়, তবে এটি ওয়েব-ভিত্তিক ইমেল ক্লায়েন্টদের জন্য ব্যবহার করা যেতে পারে।
+
+মেইলিং প্রোটোকল ছাড়াও, কিছু DNS রেকর্ড আছে যা আমাদের ইমেল সার্ভারের জন্য কনফিগার করতে হবে - MX রেকর্ডগুলি:
 
 <div style="margin-left:3rem">
     <img src="./images/dns-lookup.png" alt="dns-lookup" width="500" />
 </div>
 
-Email attachments are sent base64-encoded and there is usually a size limit of 25mb on most mail services.
-This is configurable and varies from individual to corporate accounts.
+ইমেল সংযুক্তিগুলি বেস64-এনকোডেড পাঠানো হয় এবং বেশিরভাগ মেল পরিষেবাগুলিতে সাধারণত 25mb আকারের সীমা থাকে৷
+এটি কনফিগারযোগ্য এবং ব্যক্তি থেকে কর্পোরেট অ্যাকাউন্টে পরিবর্তিত হয়।
 
-### **Traditional mail servers**
+### **প্রথাগত মেইল ​​সার্ভার**
 
-Traditional mail servers work well when there are a limited number of users, connected to a single server.
+প্রথাগত মেল সার্ভার ভাল কাজ করে যখন সীমিত সংখ্যক ব্যবহারকারী থাকে, একটি একক সার্ভারের সাথে সংযুক্ত থাকে।
 
 <div style="margin-left:3rem">
     <img src="./images/traditional-mail-server.png" alt="traditional-mail-server" width="500" />
 </div>
 
-- Alice logs into her Outlook email and presses "send". Email is sent to Outlook mail server. Communication is via SMTP.
-- Outlook server queries DNS to find MX record for gmail.com and transfers the email to their servers. Communication is via SMTP.
-- Bob fetches emails from his gmail server via IMAP/POP.
+- অ্যালিস তার আউটলুক ইমেলে লগ ইন করে এবং "পাঠান" টিপুন। আউটলুক মেল সার্ভারে ইমেল পাঠানো হয়। যোগাযোগ SMTP মাধ্যমে হয়.
+- আউটলুক সার্ভার gmail.com-এর জন্য MX রেকর্ড খুঁজতে DNS-কে জিজ্ঞাসা করে এবং তাদের সার্ভারে ইমেল স্থানান্তর করে। যোগাযোগ SMTP মাধ্যমে হয়.
+- বব তার জিমেইল সার্ভার থেকে IMAP/POP এর মাধ্যমে ইমেল আনে।
 
-In traditional mail servers, emails were stored on the local file system. Every email was a separate file.
+ঐতিহ্যগত মেইল ​​সার্ভারে, স্থানীয় ফাইল সিস্টেমে ইমেলগুলি সংরক্ষণ করা হয়। প্রতিটি ইমেল একটি পৃথক ফাইল ছিল.
 
 <div style="margin-left:3rem">
     <img src="./images/local-dir-storage.png" alt="local-dir-storage" width="500" />
 </div>
 
-As the scale grew, disk I/O became a bottleneck. Also, it doesn't satisfy our high availability and reliability requirements.
-Disks can be damaged and server can go down.
+স্কেল বাড়ার সাথে সাথে ডিস্ক I/O একটি বাধা হয়ে দাঁড়ায়। এছাড়াও, এটি আমাদের উচ্চ প্রাপ্যতা এবং নির্ভরযোগ্যতার প্রয়োজনীয়তা পূরণ করে না।
+ডিস্ক ক্ষতিগ্রস্ত হতে পারে এবং সার্ভার ডাউন হতে পারে।
 
-### **Distributed mail servers**
+### **ডিস্ট্রিবিউটেড মেল সার্ভার**
 
-Distributed mail servers are designed to support modern use-cases and solve modern scalability issues.
+বিতরণ করা মেল সার্ভারগুলি আধুনিক ব্যবহারের ক্ষেত্রে সমর্থন করার জন্য এবং আধুনিক স্কেলেবিলিটি সমস্যাগুলি সমাধান করার জন্য ডিজাইন করা হয়েছে।
 
-These servers can still support IMAP/POP for native email clients and SMTP for mail exchange across servers.
+এই সার্ভারগুলি এখনও নেটিভ ইমেল ক্লায়েন্টদের জন্য IMAP/POP এবং সার্ভার জুড়ে মেল বিনিময়ের জন্য SMTP সমর্থন করতে পারে।
 
-But for rich web-based mail clients, a RESTful API over HTTP is typically used.
+কিন্তু সমৃদ্ধ ওয়েব-ভিত্তিক মেল ক্লায়েন্টদের জন্য, HTTP এর উপর একটি RESTful API সাধারণত ব্যবহার করা হয়।
 
-Example APIs:
-- `POST /v1/messages` - sends a message to recipients in To, Cc, Bcc headers.
-- `GET /v1/folders` - returns all folders of an email account
+উদাহরণ APIs:
+- `POST /v1/messages` - To, Cc, Bcc হেডারে প্রাপকদের একটি বার্তা পাঠায়।
+- `GET /v1/folders` - একটি ইমেল অ্যাকাউন্টের সমস্ত ফোল্ডার ফেরত দেয়
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```
 [{id: string        Unique folder identifier.
@@ -99,10 +99,10 @@ Example response:
 }]
 ```
 
-- `GET /v1/folders/{:folder_id}/messages` - returns all messages under a folder \w pagination
-- `GET /v1/messages/{:message_id}` - get all information about a particular message
+- `GET /v1/folders/{:folder_id}/messages` - একটি ফোল্ডার \w পেজিনেশনের অধীনে সমস্ত বার্তা ফেরত দেয়
+- `GET /v1/messages/{:message_id}` - একটি নির্দিষ্ট বার্তা সম্পর্কে সমস্ত তথ্য পান
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```
 {
@@ -115,122 +115,122 @@ Example response:
 }
 ```
 
-Here's the high-level design of the distributed mail server:
+এখানে বিতরণ করা মেল সার্ভারের উচ্চ-স্তরের নকশা:
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-architecture.png" alt="high-level-architecture" width="500" />
 </div>
 
-- **Webmail** - users use web browsers to send/receive emails
-- **Web servers** - public-facing request/response services used to manage login, signup, user profile, etc.
-- **Real-time servers** - Used for pushing new email updates to clients in real-time. We use websockets for real-time communication but fallback to long-polling for older browsers that don't support them.
-- **Metadata db** - stores email metadata such as subject, body, from, to, etc.
-- **Attachment store** - Object store (eg Amazon S3), suitable for storing large files.
-- **Distributed cache** - We can cache recent emails in Redis to improve UX.
-- **Search store** - distributed document store, used for supporting full-text searches.
+- **ওয়েবমেইল** - ব্যবহারকারীরা ইমেল পাঠাতে/গ্রহণ করতে ওয়েব ব্রাউজার ব্যবহার করে
+- **ওয়েব সার্ভার** - লগইন, সাইনআপ, ব্যবহারকারীর প্রোফাইল ইত্যাদি পরিচালনা করতে ব্যবহৃত জনসাধারণের মুখোমুখি অনুরোধ/প্রতিক্রিয়া পরিষেবাগুলি৷
+- **রিয়েল-টাইম সার্ভার** - রিয়েল-টাইমে ক্লায়েন্টদের কাছে নতুন ইমেল আপডেট পুশ করার জন্য ব্যবহৃত হয়। আমরা রিয়েল-টাইম যোগাযোগের জন্য ওয়েবসকেট ব্যবহার করি কিন্তু পুরানো ব্রাউজারগুলিকে সমর্থন করে না এমন পুরানো ব্রাউজারগুলির জন্য দীর্ঘ ভোটদানে ফিরে যাই।
+- **মেটাডেটা db** - ইমেল মেটাডেটা সঞ্চয় করে যেমন বিষয়, বডি, থেকে, থেকে, ইত্যাদি।
+- **অ্যাটাচমেন্ট স্টোর** - অবজেক্ট স্টোর (যেমন Amazon S3), বড় ফাইল স্টোর করার জন্য উপযুক্ত।
+- **ডিস্ট্রিবিউটেড ক্যাশে** - আমরা UX উন্নত করতে Redis-এ সাম্প্রতিক ইমেলগুলি ক্যাশে করতে পারি।
+- **অনুসন্ধানের দোকান** - বিতরণকৃত নথির দোকান, পূর্ণ-পাঠ্য অনুসন্ধান সমর্থন করার জন্য ব্যবহৃত।
 
-Here's what the email sending flow looks like:
+ইমেল পাঠানোর প্রবাহ দেখতে কেমন তা এখানে:
 
 <div style="margin-left:3rem">
     <img src="./images/email-sending-flow.png" alt="email-sending-flow" width="500" />
 </div>
 
-- User writes an email and presses "send". Email is sent to load balancer.
-- Load balancer rate limits excessive mail sends and routes to one of the web servers.
-- Web servers do basic email validation (eg email size) and short-circuits outbound flow if domain is same as sender. But does spam check first.
-- If basic validation passes, email is sent to message queue (attachment is referenced from object store)
-- If basic validation fails, email is sent to error queue
-- SMTP outgoing workers pull messages from outgoing queue, do spam/virus checks and route to destination mail server.
-- Email is stored in the "Sent Emails" folder
+- ব্যবহারকারী একটি ইমেল লিখে "পাঠান" টিপুন। ব্যালেন্সার লোড করতে ইমেল পাঠানো হয়।
+- লোড ব্যালেন্সার রেট অত্যধিক মেল প্রেরণ এবং ওয়েব সার্ভারগুলির একটিতে রুটকে সীমাবদ্ধ করে।
+- ওয়েব সার্ভারগুলি প্রাথমিক ইমেল বৈধতা (যেমন ইমেলের আকার) এবং শর্ট-সার্কিট আউটবাউন্ড ফ্লো করে যদি ডোমেন প্রেরকের মতো হয়। কিন্তু প্রথমে স্প্যাম চেক করে।
+- যদি মৌলিক বৈধতা পাস হয়, ইমেল বার্তা সারিতে পাঠানো হয় (অ্যাটাচমেন্ট অবজেক্ট স্টোর থেকে উল্লেখ করা হয়)
+- মৌলিক বৈধতা ব্যর্থ হলে, ইমেল ত্রুটি সারিতে পাঠানো হয়
+- SMTP বহির্গামী কর্মীরা বহির্গামী সারি থেকে বার্তা টেনে নেয়, স্প্যাম/ভাইরাস চেক করে এবং গন্তব্য মেল সার্ভারে রুট করে।
+- ইমেল "প্রেরিত ইমেল" ফোল্ডারে সংরক্ষণ করা হয়
 
-We need to also monitor size of outgoing message queue. Growing too large might indicate a problem:
-- Recipient's mail server is unavailable. We can retry sending the email at a later time using exponential backoff.
-- Not enough consumers to handle the load, we might have to scale the consumers.
+আমাদের বহির্গামী বার্তা সারির আকারও নিরীক্ষণ করতে হবে। খুব বড় হওয়া একটি সমস্যা নির্দেশ করতে পারে:
+- প্রাপকের মেল সার্ভার অনুপলব্ধ৷ আমরা সূচকীয় ব্যাকঅফ ব্যবহার করে পরবর্তী সময়ে ইমেল পাঠানোর জন্য পুনরায় চেষ্টা করতে পারি।
+- লোড পরিচালনা করার জন্য পর্যাপ্ত ভোক্তা নেই, আমাদের ভোক্তাদের স্কেল করতে হতে পারে।
 
-Here's the email receiving flow:
+এখানে ইমেল গ্রহণের প্রবাহ রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/email-receiving-flkow.png" alt="email-receiving-flow" width="500" />
 </div>
 
-- Incoming emails arrive at the SMTP load balancer. Mails are distributed to SMTP servers, where mail acceptance policy is done (eg invalid emails are directly discarded).
-- If attachment of email is too large, we can put it in object store (s3).
-- Mail processing workers do preliminary checks, after which mails are forwarded to storage, cache, object store and real-time servers.
-- Offline users get their new emails once they come back online via HTTP API.
+- ইনকামিং ইমেলগুলি SMTP লোড ব্যালেন্সারে আসে৷ মেলগুলি SMTP সার্ভারগুলিতে বিতরণ করা হয়, যেখানে মেল গ্রহণ নীতি সম্পন্ন করা হয় (যেমন অবৈধ ইমেলগুলি সরাসরি বাতিল করা হয়)।
+- যদি ইমেলের সংযুক্তি খুব বড় হয়, আমরা এটিকে অবজেক্ট স্টোরে (s3) রাখতে পারি।
+- মেল প্রসেসিং কর্মীরা প্রাথমিক চেক করেন, যার পরে মেলগুলি স্টোরেজ, ক্যাশে, অবজেক্ট স্টোর এবং রিয়েল-টাইম সার্ভারে ফরোয়ার্ড করা হয়।
+- অফলাইন ব্যবহারকারীরা HTTP API এর মাধ্যমে অনলাইনে ফিরে আসার পরে তাদের নতুন ইমেলগুলি পান৷
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-Let's now go deeper into some of the components.
+এখন কিছু উপাদানের গভীরে যাওয়া যাক।
 
-### **Metadata database**
+### **মেটাডেটা ডাটাবেস**
 
-Here are some of the characteristics of email metadata:
-- headers are usually small and frequently accessed
-- Body size ranges from small to big, but is typically read once
-- Most mail operations are isolated to a single user - eg fetching email, marking as read, searching.
-- Data recency impacts data usage. Users typically read only recent emails
-- Data has high-reliability requirements. Data loss is unacceptable.
+এখানে ইমেল মেটাডেটার কিছু বৈশিষ্ট্য রয়েছে:
+- শিরোনামগুলি সাধারণত ছোট এবং ঘন ঘন অ্যাক্সেস করা হয়
+- শরীরের আকার ছোট থেকে বড়, কিন্তু সাধারণত একবার পড়া হয়
+- বেশিরভাগ মেল অপারেশন একক ব্যবহারকারীর জন্য বিচ্ছিন্ন - যেমন ইমেল আনা, পড়া হিসাবে চিহ্নিত করা, অনুসন্ধান করা।
+- ডেটা রিসেন্সি ডেটা ব্যবহারকে প্রভাবিত করে৷ ব্যবহারকারীরা সাধারণত শুধুমাত্র সাম্প্রতিক ইমেল পড়ে
+- ডেটার উচ্চ-নির্ভরযোগ্যতার প্রয়োজনীয়তা রয়েছে। ডেটা ক্ষতি অগ্রহণযোগ্য।
 
-At gmail/outlook scale, the database is typically custom made to reduce input/output operations per second (IOPS).
+জিমেইল/আউটলুক স্কেলে, ডাটাবেসটি সাধারণত প্রতি সেকেন্ডে ইনপুট/আউটপুট অপারেশন কমাতে কাস্টম তৈরি করা হয় (IOPS)।
 
-Let's consider what database options we have:
-- **Relational database** - we can build indexes for headers and body, but these DBs are typically optimized for small chunks of data.
-- **Distributed object store** - this can be a good option for backup storage, but can't efficiently support searching/marking as read/etc.
-- **NoSQL** - Google BigTable is used by gmail, but it's not open-sourced.
+আমাদের কি ডাটাবেস বিকল্প আছে তা বিবেচনা করা যাক:
+- **রিলেশনাল ডাটাবেস** - আমরা হেডার এবং বডির জন্য সূচী তৈরি করতে পারি, কিন্তু এই ডিবিগুলি সাধারণত ডেটার ছোট অংশের জন্য অপ্টিমাইজ করা হয়।
+- **ডিস্ট্রিবিউটেড অবজেক্ট স্টোর** - এটি ব্যাকআপ স্টোরেজের জন্য একটি ভাল বিকল্প হতে পারে, কিন্তু পঠিত/ইত্যাদি হিসাবে অনুসন্ধান/মার্কিংকে দক্ষতার সাথে সমর্থন করতে পারে না।
+- **NoSQL** - Google BigTable জিমেইল ব্যবহার করে, কিন্তু এটি ওপেন সোর্স নয়।
 
-Based on above analysis, very few existing solutions seems to fit our needs perfectly.
-In an interview setting, it's infeasible to design a new distributed database solution, but important to mention characteristics:
-- Single column can be a single-digit MB
-- Strong data consistency
-- Designed to reduce disk I/O
-- Highly available and fault tolerant
-- Should be easy to create incremental backups
+উপরের বিশ্লেষণের উপর ভিত্তি করে, খুব কম বিদ্যমান সমাধানগুলি আমাদের চাহিদার সাথে পুরোপুরি ফিট করে বলে মনে হয়।
+একটি ইন্টারভিউ সেটিংয়ে, একটি নতুন বিতরণ করা ডাটাবেস সমাধান ডিজাইন করা অসম্ভব, তবে বৈশিষ্ট্যগুলি উল্লেখ করা গুরুত্বপূর্ণ:
+- একক কলাম একক-অঙ্কের MB হতে পারে
+- শক্তিশালী ডেটা ধারাবাহিকতা
+- ডিস্ক I/O কমাতে ডিজাইন করা হয়েছে
+- অত্যন্ত উপলব্ধ এবং দোষ সহনশীল
+- ক্রমবর্ধমান ব্যাকআপ তৈরি করা সহজ হওয়া উচিত
 
-In order to partition the data, we can use the `user_id` as a partition key, so that one user's data is stored on a single shard.
-This prohibits us from sharing an email with multiple users, but this is not a requirement for this interview.
+ডেটা ভাগ করার জন্য, আমরা একটি পার্টিশন কী হিসাবে `user_id` ব্যবহার করতে পারি, যাতে একজন ব্যবহারকারীর ডেটা একটি একক শর্ডে সংরক্ষণ করা হয়।
+এটি একাধিক ব্যবহারকারীর সাথে একটি ইমেল শেয়ার করা থেকে আমাদের নিষিদ্ধ করে, কিন্তু এই সাক্ষাত্কারের জন্য এটি একটি প্রয়োজনীয়তা নয়৷
 
-Let's define the tables:
-- Primary key consists of partition key (data distribution) and clustering key (sorting data)
-- Queries we need to support - get all folders for a user, display all emails for a folder, create/get/delete an email, fetch read/unread email, get conversation threads (bonus)
+টেবিল সংজ্ঞায়িত করা যাক:
+- প্রাথমিক কী পার্টিশন কী (ডেটা ডিস্ট্রিবিউশন) এবং ক্লাস্টারিং কী (ডেটা সাজানো) নিয়ে গঠিত।
+- আমাদের সমর্থন করার জন্য প্রয়োজনীয় প্রশ্নগুলি - একজন ব্যবহারকারীর জন্য সমস্ত ফোল্ডার পান, একটি ফোল্ডারের জন্য সমস্ত ইমেল প্রদর্শন করুন, একটি ইমেল তৈরি করুন/পান/মুছুন, পঠিত/অপঠিত ইমেল আনুন, কথোপকথনের থ্রেড পান (বোনাস)
 
-Legend for tables to follow:
+টেবিল অনুসরণ করার জন্য কিংবদন্তি:
 
 <div style="margin-left:3rem">
     <img src="./images/legend.png" alt="legend" width="500" />
 </div>
 
-Here is the folders table:
+এখানে ফোল্ডার টেবিল আছে:
 
 <div style="margin-left:3rem">
     <img src="./images/folders-table.png" alt="folders-table" width="500" />
 </div>
 
-emails table:
+ইমেইল টেবিল:
 
 <div style="margin-left:3rem">
     <img src="./images/emails-table.png" alt="emails-table" width="500" />
 </div>
 
-- email_id is timeuuid which allows sorting based on timestamp when email was created
+- email_id হল timeuuid যা ইমেল তৈরি করার সময় টাইমস্ট্যাম্পের উপর ভিত্তি করে সাজানোর অনুমতি দেয়
 
-Attachments are stored in a separate table, identified by filename:
+সংযুক্তিগুলি ফাইলের নাম দ্বারা চিহ্নিত একটি পৃথক টেবিলে সংরক্ষণ করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/attachments.png" alt="attachments" width="500" />
 </div>
 
-Supporting fetchin read/unread emails is easy in a traditional relational database, but not in Cassandra, since filtering on non-partition/clustering key is prohibited.
-One workaround to fetch all emails in a folder and filter in-memory, but that doesn't work well for a big-enough application.
+একটি প্রথাগত রিলেশনাল ডাটাবেসে পঠিত/অপঠিত ইমেল আনতে সহায়তা করা সহজ, কিন্তু ক্যাসান্দ্রায় নয়, যেহেতু নন-পার্টিশন/ক্লাস্টারিং কী-তে ফিল্টার করা নিষিদ্ধ।
+একটি ফোল্ডারে সমস্ত ইমেল আনার জন্য একটি সমাধান এবং ইন-মেমরি ফিল্টার করার জন্য, কিন্তু এটি একটি বড়-পর্যাপ্ত অ্যাপ্লিকেশনের জন্য ভাল কাজ করে না।
 
-What we can do is denormalize the emails table into read/unread emails tables:
+আমরা যা করতে পারি তা হল ইমেল টেবিলকে পঠিত/অপঠিত ইমেল টেবিলে অসাধারন করা:
 
 <div style="margin-left:3rem">
     <img src="./images/read-unread-emails.png" alt="read-unread-emails" width="500" />
 </div>
 
-In order to support conversation threads, we can include some headers, which mail clients interpret and use to reconstruct a conversation thread:
+কথোপকথনের থ্রেড সমর্থন করার জন্য, আমরা কিছু শিরোনাম অন্তর্ভুক্ত করতে পারি, যা মেল ক্লায়েন্টরা ব্যাখ্যা করে এবং একটি কথোপকথনের থ্রেড পুনর্গঠন করতে ব্যবহার করে:
 
 ```
 {
@@ -242,73 +242,73 @@ In order to support conversation threads, we can include some headers, which mai
 }
 ```
 
-Finally, we'll trade availability for consistency for our distributed database, since it is a hard requirement for this problem.
+অবশেষে, আমরা আমাদের বিতরণ করা ডাটাবেসের জন্য ধারাবাহিকতার জন্য প্রাপ্যতা বাণিজ্য করব, যেহেতু এই সমস্যার জন্য এটি একটি কঠিন প্রয়োজন।
 
-Hence, in the event of a failover or network parititon, sync/update actions will be briefly unavailable to impacted users.
+সুতরাং, একটি ব্যর্থতা বা নেটওয়ার্ক প্যারিটিটনের ক্ষেত্রে, সিঙ্ক/আপডেট অ্যাকশনগুলি প্রভাবিত ব্যবহারকারীদের জন্য সংক্ষিপ্তভাবে অনুপলব্ধ হবে।
 
-### **Email deliverability**
+### **ইমেল বিতরণযোগ্যতা**
 
-It is easy to setup a server to send emails, but getting the email to a receiver's inbox is hard, due to spam-protection algorithms.
+ইমেল পাঠানোর জন্য একটি সার্ভার সেটআপ করা সহজ, কিন্তু স্প্যাম-সুরক্ষা অ্যালগরিদমের কারণে একটি রিসিভারের ইনবক্সে ইমেল পাওয়া কঠিন৷
 
-If we just setup a new mail server and start sending mails through it, our emails will probably end up in the spam folder.
+আমরা যদি একটি নতুন মেল সার্ভার সেটআপ করি এবং এর মাধ্যমে মেল পাঠানো শুরু করি, তাহলে আমাদের ইমেলগুলি সম্ভবত স্প্যাম ফোল্ডারে শেষ হবে৷
 
-Here's what we can do to prevent that:
-- **Dedicated IPs** - use dedicated IPs for sending emails, otherwise, recipient servers will not trust you.
-- **Classify emails** - avoid sending marketing emails from the same servers to prevent more important email to be classified as spam
-- **Warm up your IP address** slowly to build a good reputation with big email providers. It takes 2 to 6 weeks to warm up a new IP
-- **Ban spammers** quickly to not deteriorate your reputation
-- **Feedback processing** - setup a feedback loop with ISPs to keep track of complaint rate and ban spam accounts quickly.
-- **Email authentication** - use common techniques to combat phishing such as Sender Policy Framework, DomainKeys Identified Mail, etc.
+এটি প্রতিরোধ করতে আমরা যা করতে পারি তা এখানে:
+- **ডেডিকেটেড আইপি** - ইমেল পাঠানোর জন্য ডেডিকেটেড আইপি ব্যবহার করুন, অন্যথায়, প্রাপক সার্ভার আপনাকে বিশ্বাস করবে না।
+- **ইমেলগুলিকে শ্রেণীবদ্ধ করুন** - আরও গুরুত্বপূর্ণ ইমেলগুলিকে স্প্যাম হিসাবে শ্রেণীবদ্ধ করা রোধ করতে একই সার্ভার থেকে বিপণন ইমেলগুলি পাঠানো এড়িয়ে চলুন
+- **বড় ইমেল সরবরাহকারীদের সাথে একটি ভাল খ্যাতি তৈরি করতে ধীরে ধীরে আপনার আইপি ঠিকানাকে উষ্ণ করুন। একটি নতুন আইপি তৈরি করতে 2 থেকে 6 সপ্তাহ সময় লাগে৷
+- **স্প্যামারদের ** ব্যান করুন যাতে আপনার খ্যাতি নষ্ট না হয়
+- **ফিডব্যাক প্রসেসিং** - অভিযোগের হার ট্র্যাক রাখতে এবং দ্রুত স্প্যাম অ্যাকাউন্ট নিষিদ্ধ করতে ISP-এর সাথে একটি ফিডব্যাক লুপ সেটআপ করুন।
+- **ইমেল প্রমাণীকরণ** - ফিশিং প্রতিরোধ করার জন্য সাধারণ কৌশলগুলি ব্যবহার করুন যেমন প্রেরক নীতি ফ্রেমওয়ার্ক, ডোমেনকি আইডেন্টিফাইড মেল ইত্যাদি।
 
-You don't need to remember all of this. Just know that building a good mail server requires a lot of domain knowledge.
+এই সব মনে রাখার দরকার নেই। শুধু জেনে রাখুন যে একটি ভালো মেইল ​​সার্ভার তৈরি করতে অনেক ডোমেইন জ্ঞানের প্রয়োজন হয়।
 
-### **Search**
+### **অনুসন্ধান**
 
-Searching includes doing a full-text search based on email contents or more advanced queries based on from, to, subject, unread, etc filters.
+অনুসন্ধানের মধ্যে ইমেল বিষয়বস্তুর উপর ভিত্তি করে একটি পূর্ণ-পাঠ্য অনুসন্ধান করা বা থেকে, থেকে, বিষয়, অপঠিত, ইত্যাদি ফিল্টারের উপর ভিত্তি করে আরও উন্নত প্রশ্ন করা অন্তর্ভুক্ত।
 
-One characteristic of email search is that it is local to the user and it has more writes than reads, because we need to re-index it on each operation, but users rarely use the search tab.
+ইমেল অনুসন্ধানের একটি বৈশিষ্ট্য হল এটি ব্যবহারকারীর কাছে স্থানীয় এবং এতে পড়ার চেয়ে বেশি লেখা রয়েছে, কারণ আমাদের প্রতিটি অপারেশনে এটিকে পুনরায় সূচীকরণ করতে হবে, তবে ব্যবহারকারীরা খুব কমই অনুসন্ধান ট্যাব ব্যবহার করেন।
 
-Let's compare google search with email search:
+আসুন ইমেল অনুসন্ধানের সাথে গুগল অনুসন্ধানের তুলনা করি:
 
-|               | Scope                | Sorting                               | Accuracy                                          |
-|---------------|----------------------|---------------------------------------|---------------------------------------------------|
-| Google search | The whole internet   | Sort by relevance                     | Indexing takes some time, so not instant results. |
-| Email search  | User's own email box | Sort by attributes eg time, date, etc | Indexing should be quick and results accurate.    |
+|               | সুযোগ | বাছাই | নির্ভুলতা |
+|------------------|-------------------------|---------------------------------------------------------------------------------------------------------
+| গুগল সার্চ | পুরো ইন্টারনেট | প্রাসঙ্গিকতা অনুসারে সাজান | সূচীকরণে কিছু সময় লাগে, তাই তাৎক্ষণিক ফলাফল পাওয়া যায় না। |
+| ইমেল অনুসন্ধান | ব্যবহারকারীর নিজস্ব ইমেইল বক্স | গুণাবলী দ্বারা সাজান যেমন সময়, তারিখ, ইত্যাদি | ইনডেক্সিং দ্রুত এবং সঠিক ফলাফল হওয়া উচিত।    |
 
-To achieve this search functionality, one option is to use an Elasticsearch cluster. We can use `user_id` as the partition key to group data under the same node:
+এই অনুসন্ধান কার্যকারিতা অর্জন করতে, একটি বিকল্প হল একটি ইলাস্টিক সার্চ ক্লাস্টার ব্যবহার করা। আমরা একই নোডের অধীনে ডেটা গ্রুপ করার পার্টিশন কী হিসাবে `user_id` ব্যবহার করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/elasticsearch.png" alt="elasticsearch" width="500" />
 </div>
 
-Mutating operations are async via Kafka in order to decouple services from the reindexing flow.
-Actually searching for data happens synchronously.
+মিউটেটিং ক্রিয়াকলাপগুলি কাফকার মাধ্যমে অ্যাসিঙ্ক করা হয় যাতে রিইন্ডেক্সিং প্রবাহ থেকে পরিষেবাগুলিকে আলাদা করা যায়৷
+প্রকৃতপক্ষে ডেটা অনুসন্ধান করা সিঙ্ক্রোনাসভাবে ঘটে।
 
-Elasticsearch is one of the most popular search-engine databases and supports full-text search for emails very well.
+ইলাস্টিকসার্চ হল সবচেয়ে জনপ্রিয় সার্চ-ইঞ্জিন ডাটাবেসগুলির মধ্যে একটি এবং ইমেলের জন্য সম্পূর্ণ-টেক্সট অনুসন্ধানকে খুব ভালভাবে সমর্থন করে।
 
-Alternatively, we can attempt to develop our own custom search solution to meet our specific requirements.
+বিকল্পভাবে, আমরা আমাদের নির্দিষ্ট প্রয়োজনীয়তা পূরণের জন্য আমাদের নিজস্ব কাস্টম অনুসন্ধান সমাধান বিকাশ করার চেষ্টা করতে পারি।
 
-Designing such a system is out of scope. One of the core challenges when building it is to optimize it for write-heavy workloads.
+এই ধরনের সিস্টেম ডিজাইন করা সুযোগের বাইরে। এটি তৈরি করার সময় মূল চ্যালেঞ্জগুলির মধ্যে একটি হল লেখা-ভারী কাজের চাপের জন্য এটিকে অপ্টিমাইজ করা।
 
-To achieve that, we can use Log-Structured Merge-Trees (LSM) to structure the index data on disk. Write path is optimized for sequential writes only.
-This technique is used in Cassandra, BigTable and RocksDB.
+এটি অর্জন করতে, আমরা ডিস্কের সূচক ডেটা গঠন করতে লগ-স্ট্রাকচার্ড মার্জ-ট্রিস (LSM) ব্যবহার করতে পারি। লেখার পথটি শুধুমাত্র অনুক্রমিক লেখার জন্য অপ্টিমাইজ করা হয়েছে।
+এই কৌশলটি ক্যাসান্দ্রা, বিগটেবল এবং রকসডিবিতে ব্যবহৃত হয়।
 
-Its core idea is to store data in-memory until a predefined threshold is reached, after which it is merged in the next layer (disk):
+এটির মূল ধারণাটি একটি পূর্বনির্ধারিত থ্রেশহোল্ডে না পৌঁছানো পর্যন্ত মেমরিতে ডেটা সংরক্ষণ করা, যার পরে এটি পরবর্তী স্তরে (ডিস্ক) একত্রিত করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/lsm-tree.png" alt="lsm-tree" width="500" />
 </div>
 
-Main trade-offs between the two approaches:
-- Elasticsearch scales to some extent, whereas a custom search engine can be fine-tuned for the email use-case, allowing it to scale further.
-- Elasticsearch is a separate service we need to maintain, alongside the metadata store. A custom solution can be the datastore itself.
-- Elasticsearch is an off-the-shelf solution, whereas the custom search engine would require significant engineering effort to build.
+দুটি পদ্ধতির মধ্যে প্রধান ট্রেড-অফ:
+- ইলাস্টিকসার্চ কিছু পরিমাণে স্কেল করে, যেখানে একটি কাস্টম সার্চ ইঞ্জিনকে ইমেল ব্যবহারের ক্ষেত্রে সূক্ষ্ম-টিউন করা যেতে পারে, এটিকে আরও স্কেল করার অনুমতি দেয়।
+- ইলাস্টিকসার্চ হল একটি পৃথক পরিষেবা যা আমাদের মেটাডেটা স্টোরের পাশাপাশি বজায় রাখতে হবে। একটি কাস্টম সমাধান ডাটাস্টোর নিজেই হতে পারে।
+- ইলাস্টিকসার্চ হল একটি অফ-দ্য-শেল্ফ সমাধান, যেখানে কাস্টম সার্চ ইঞ্জিন নির্মাণের জন্য উল্লেখযোগ্য প্রকৌশল প্রচেষ্টার প্রয়োজন হবে।
 
-### **Scalability and availability**
+### **স্কেলযোগ্যতা এবং প্রাপ্যতা**
 
-Since individual user operations don't collide with other users, most components can be independently scaled.
+যেহেতু স্বতন্ত্র ব্যবহারকারীর ক্রিয়াকলাপগুলি অন্যান্য ব্যবহারকারীদের সাথে সংঘর্ষ হয় না, তাই বেশিরভাগ উপাদানগুলি স্বাধীনভাবে স্কেল করা যেতে পারে।
 
-To ensure high availability, we can also use a multi-DC setup with leader-folower failover in case of failures:
+উচ্চ প্রাপ্যতা নিশ্চিত করার জন্য, আমরা ব্যর্থতার ক্ষেত্রে লিডার-ফলোয়ার ফেইলওভার সহ একটি মাল্টি-ডিসি সেটআপ ব্যবহার করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/multi-dc-example.png" alt="multi-dc-example" width="500" />
@@ -316,10 +316,10 @@ To ensure high availability, we can also use a multi-DC setup with leader-folowe
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-Additional talking points:
-- **Fault tolerance** - Many parts of the system could fail. It is worthwhile how we'd handle node failures.
-- **Compliance** - PII needs to be stored in a reasonable way, given Europe's GDPR laws.
-- **Security** - email encryption, phishing protection, safe browsing, etc.
-- **Optimizations** - eg preventing duplication of the same attachments, sent multiple times by different users.
+অতিরিক্ত কথা বলার পয়েন্ট:
+- **ফল্ট সহনশীলতা** - সিস্টেমের অনেক অংশ ব্যর্থ হতে পারে। এটা সার্থক কিভাবে আমরা নোড ব্যর্থতা পরিচালনা করব.
+- **সম্মতি** - PII একটি যুক্তিসঙ্গত উপায়ে সংরক্ষণ করা প্রয়োজন, ইউরোপের GDPR আইন অনুযায়ী।
+- **নিরাপত্তা** - ইমেল এনক্রিপশন, ফিশিং সুরক্ষা, নিরাপদ ব্রাউজিং ইত্যাদি।
+- **অপ্টিমাইজেশান** - যেমন একই সংযুক্তিগুলির নকল প্রতিরোধ করা, বিভিন্ন ব্যবহারকারীদের দ্বারা একাধিকবার পাঠানো৷

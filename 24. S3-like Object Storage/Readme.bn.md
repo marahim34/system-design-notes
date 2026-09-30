@@ -1,138 +1,138 @@
-# অধ্যায় 24: এস-৩ অবজেক্ট স্টোরেজ ডিজাইন
+# অধ্যায় 24: S3-এর মতো অবজেক্ট স্টোরেজ
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-In this chapter, we'll be designing an **object storage** service, similar to **Amazon S3**.
+এই অধ্যায়ে, আমরা একটি **অবজেক্ট স্টোরেজ** পরিষেবা ডিজাইন করব, যা **Amazon S3** এর মতো।
 
-Storage systems fall into three broad categories:
-- **Block storage**
-- **File storage**
-- **Object storage**
+স্টোরেজ সিস্টেম তিনটি বিস্তৃত বিভাগে পড়ে:
+- **ব্লক স্টোরেজ**
+- **ফাইল স্টোরেজ**
+- **অবজেক্ট স্টোরেজ**
 
-**Block storage** are devices, which came out in 1960s. HDDs and SSDs are such examples.
-These devices are typically physically attached to a server, although they can also be network-attached via high-speed network protocols.
-Servers can format the raw blocks and use them as a file system or it can hand control of them to servers directly.
+**ব্লক স্টোরেজ** হল ডিভাইস, যেটি 1960-এর দশকে প্রকাশিত হয়েছিল। HDD এবং SSD যেমন উদাহরণ.
+এই ডিভাইসগুলি সাধারণত একটি সার্ভারের সাথে শারীরিকভাবে সংযুক্ত থাকে, যদিও তারা উচ্চ-গতির নেটওয়ার্ক প্রোটোকলের মাধ্যমে নেটওয়ার্ক-সংযুক্ত হতে পারে।
+সার্ভারগুলি কাঁচা ব্লকগুলি ফর্ম্যাট করতে পারে এবং সেগুলিকে একটি ফাইল সিস্টেম হিসাবে ব্যবহার করতে পারে বা এটি সরাসরি সার্ভারগুলিতে তাদের নিয়ন্ত্রণ করতে পারে।
 
-**File storage** is built on top of block storage. It provides a higher level of abstraction, making it easier to manage folders and files.
+**ফাইল স্টোরেজ** ব্লক স্টোরেজের উপরে তৈরি করা হয়েছে। এটি একটি উচ্চ স্তরের বিমূর্ততা প্রদান করে, এটি ফোল্ডার এবং ফাইলগুলি পরিচালনা করা সহজ করে তোলে।
 
-**Object storage** sacrifices performance for high durability, vast scale and low cost.
-It targets "cold" data and is mainly used for archival and backup.
-There is no hierarchical directory structure, all data is stored as objects in a flat structure.
-It is relatively slow compared to other storage types. Most cloud providers have an object storage offering - Amazon S3, Google GCS, etc.
+**অবজেক্ট স্টোরেজ** উচ্চ স্থায়িত্ব, বিশাল স্কেল এবং কম খরচের জন্য কর্মক্ষমতা ত্যাগ করে।
+এটি "ঠান্ডা" ডেটা লক্ষ্য করে এবং প্রধানত সংরক্ষণাগার এবং ব্যাকআপের জন্য ব্যবহৃত হয়।
+কোন শ্রেণীবদ্ধ ডিরেক্টরি কাঠামো নেই, সমস্ত ডেটা একটি সমতল কাঠামোতে বস্তু হিসাবে সংরক্ষণ করা হয়।
+অন্যান্য স্টোরেজ ধরনের তুলনায় এটি তুলনামূলকভাবে ধীর। বেশিরভাগ ক্লাউড প্রদানকারীর একটি অবজেক্ট স্টোরেজ অফার রয়েছে - Amazon S3, Google GCS, ইত্যাদি।
 
 <div style="margin-left:3rem">
     <img src="./images/storage-comparison.png" alt="storage-comparison" width="500" />
 </div>
 
-|                 | Block Storage                    | File Storage                            | Object Storage                 |
-|-----------------|----------------------------------|-----------------------------------------|--------------------------------|
-| Mutable Content | Y                                | Y                                       | N (has object versioning）     |
-| Cost            | High                             | Medium to high                          | Low                            |
-| Performance     | Medium to high, very high        | Medium to high                          | Low to medium                  |
-| Consistency     | Strong consistency               | Strong consistency                      | Strong consistency [5]         |
-| Data access     | SAS/iSCSI/FC                     | Standard file access, CIFS/SMB, and NFS | RESTful API                    |
-| Scalability     | Medium scalability               | High scalability                        | Vast scalability               |
-| Good for        | Virtual machines (VM), databases | General-purpose file system access      | Binary data, unstructured data |
+|                 | ব্লক স্টোরেজ | ফাইল স্টোরেজ | বস্তু সঞ্চয়স্থান |
+|------|------------------------------------------------------------------------------------------------------------
+| পরিবর্তনযোগ্য বিষয়বস্তু | Y | Y | N (অবজেক্ট সংস্করণ আছে) |
+| খরচ | উচ্চ | মাঝারি থেকে উচ্চ | কম |
+| কর্মক্ষমতা | মাঝারি থেকে উচ্চ, খুব উচ্চ | মাঝারি থেকে উচ্চ | নিম্ন থেকে মাঝারি |
+| ধারাবাহিকতা | দৃঢ় ধারাবাহিকতা | দৃঢ় ধারাবাহিকতা | শক্তিশালী ধারাবাহিকতা [5] |
+| ডেটা অ্যাক্সেস | SAS/iSCSI/FC | স্ট্যান্ডার্ড ফাইল অ্যাক্সেস, CIFS/SMB, এবং NFS | RESTful API |
+| পরিমাপযোগ্যতা | মাঝারি মাপযোগ্যতা | উচ্চ মাপযোগ্যতা | বিশাল মাপযোগ্যতা |
+| জন্য ভালো | ভার্চুয়াল মেশিন (VM), ডাটাবেস | সাধারণ-উদ্দেশ্য ফাইল সিস্টেম অ্যাক্সেস | বাইনারি ডেটা, অসংগঠিত ডেটা |
 
-Some terminology, related to object storage:
-- **Bucket** - logical container for objects. Name is globally unique.
-- **Object** - An individual piece of data, stored in a bucket. Contains object data and metadata.
-- **Versioning** - A feature keeping multiple variants of an object in the same bucket.
-- **Uniform Resource Identifier (URI)** - each resource is uniquely identified by a URI.
-- **Service-level Agreement (SLA)** - contract between service provider and client.
+অবজেক্ট স্টোরেজ সম্পর্কিত কিছু পরিভাষা:
+- **বালতি** - বস্তুর জন্য যৌক্তিক ধারক। নাম বিশ্বব্যাপী অনন্য।
+- **অবজেক্ট** - ডেটার একটি পৃথক টুকরো, একটি বালতিতে সংরক্ষিত। অবজেক্ট ডেটা এবং মেটাডেটা ধারণ করে।
+- **সংস্করণ** - একই বালতিতে একটি বস্তুর একাধিক রূপ রাখার বৈশিষ্ট্য।
+- **ইউনিফর্ম রিসোর্স আইডেন্টিফায়ার (ইউআরআই)** - প্রতিটি সংস্থান একটি ইউআরআই দ্বারা স্বতন্ত্রভাবে চিহ্নিত করা হয়।
+- **পরিষেবা-স্তরের চুক্তি (SLA)** - পরিষেবা প্রদানকারী এবং ক্লায়েন্টের মধ্যে চুক্তি।
 
-Amazon S3 Standard-Infrequent Access storage class SLAs:
-- Durability of 99.999999999% across multiple Availability Zones
-- Data is resilient in the event of entire Availability Zone being destroyed
-- Designed for 99.9% availability
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-
-- C: Which features should be included?
-- I: Bucket creation, Object upload/download, versioning, Listing objects in a bucket
-- C: What is the typical data size?
-- I: We need to store both massive objects and small objects efficiently
-- C: How much data do we store in a year?
-- I: 100 petabytes
-- C: Can we assume 6 nines of data durbility (99.9999%) and service availability of 4 nines (99.99%)?
-- I: Yes, sounds reasonable
-
-### **Non-functional requirements**
-
-- **100 PB of data**
-- **6 nines of data durability**
-- **4 nines of service availability**
-- Storage efficiency. Reduce storage cost while maintaining high reliability and performance
-
-### **Back-of-the-envelope estimation**
-
-Object storage is likely to have bottlenecks in disk capacity or IO per second (IOPS).
-
-Assumptions:
-- we have 20% small (less than 1mb), 60% mid-size (1-64mb) and 20% large objects (greater than 64mb),
-- One hard disk (SATA, 7200rpm) is capable of doing 100-150 random seeks per second (100-150 IOPS)
-
-Given the assumptions, we can estimate the total number of objects the system can persist.
-- Let's use median size per object type to simplify calculation - 0.5mb for small, 32mb for medium, 200mb for large.
-- Given 100PB of storage (10^11 MB) and 40% of storage usage results in 0.68bil objects
-- If we assume metadata is 1kb, then we need 0.68tb space to store metadata info
+Amazon S3 স্ট্যান্ডার্ড-কমিত অ্যাক্সেস স্টোরেজ ক্লাস SLAs:
+- একাধিক প্রাপ্যতা অঞ্চল জুড়ে 99.999999999% এর স্থায়িত্ব
+- সমগ্র প্রাপ্যতা অঞ্চল ধ্বংস হয়ে গেলে ডেটা স্থিতিস্থাপক
+- 99.9% প্রাপ্যতার জন্য ডিজাইন করা হয়েছে
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-Let's explore some interesting properties of object storage before diving into the design:
-- **Object immutability** - objects in object storage are immutable (not the case in other storage systems). We may delete them or replace them, but no update.
-- **Key-value store** - an object URI is its key and we can get its contents by making an HTTP call
-- **Write once, read many times** - data access pattern is writing once and reading many times. According to some Linkedin research, 95% of operations are reads
-- Support both small and large objects
+- সি: কোন বৈশিষ্ট্য অন্তর্ভুক্ত করা উচিত?
+- আমি: বালতি তৈরি, অবজেক্ট আপলোড/ডাউনলোড, সংস্করণ করা, একটি বালতিতে বস্তুর তালিকা করা
+- সি: সাধারণ ডেটার আকার কী?
+- আমি: আমাদের বিশাল বস্তু এবং ছোট বস্তু উভয়ই দক্ষতার সাথে সংরক্ষণ করতে হবে
+- সি: আমরা এক বছরে কত ডেটা সঞ্চয় করি?
+- আমি: 100 পেটাবাইট
+- সি: আমরা কি 6 নাইনের ডেটা স্থায়িত্ব (99.9999%) এবং 4 নাইন (99.99%) পরিষেবা উপলব্ধতা ধরে নিতে পারি?
+- আমি: হ্যাঁ, যুক্তিসঙ্গত শোনাচ্ছে
 
-Design philosophy of object storage is similar to UNIX - when we save a file, it creates the filename in a data structure, called inode and file data is stored in different disk locations.
-The inode contains a list of file block pointers, which point to different locations on disk.
+### **অকার্যকর প্রয়োজনীয়তা**
 
-When accessing a file, we first fetch its metadata from the inode, prior to fetching the file contents.
+- **100 পিবি ডেটা**
+- **ডাটা স্থায়িত্বের ৬ নাইন**
+- **প্রাপ্য পরিষেবার 4 নাইনস**
+- স্টোরেজ দক্ষতা। উচ্চ নির্ভরযোগ্যতা এবং কর্মক্ষমতা বজায় রাখার সময় স্টোরেজ খরচ হ্রাস করুন
 
-Object storage works similarly - metadata store is used for file information, but contents are stored on disk:
+### **খামের পিছনের অনুমান**
+
+অবজেক্ট স্টোরেজের ডিস্কের ক্ষমতা বা IO পার সেকেন্ডে (IOPS) বাধা থাকতে পারে।
+
+অনুমান:
+- আমাদের কাছে 20% ছোট (1mb-এর কম), 60% মধ্য-আকার (1-64mb) এবং 20% বড় বস্তু (64mb-এর বেশি),
+- একটি হার্ড ডিস্ক (SATA, 7200rpm) প্রতি সেকেন্ডে 100-150 র্যান্ডম সিক করতে সক্ষম (100-150 IOPS)
+
+অনুমান প্রদত্ত, আমরা সিস্টেমটি টিকে থাকতে পারে এমন বস্তুর মোট সংখ্যা অনুমান করতে পারি।
+- আসুন গণনা সহজ করার জন্য বস্তুর ধরন প্রতি মধ্যমা আকার ব্যবহার করি - ছোট জন্য 0.5mb, মাঝারি জন্য 32mb, বড় জন্য 200mb।
+- 100PB স্টোরেজ (10^11 MB) এবং 40% স্টোরেজ ব্যবহারের ফলে 0.68 বিলিয়ন বস্তু
+- যদি আমরা ধরে নিই মেটাডেটা 1kb, তাহলে আমাদের মেটাডেটা তথ্য সঞ্চয় করার জন্য 0.68tb স্থান প্রয়োজন
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+
+ডিজাইনে ডুব দেওয়ার আগে অবজেক্ট স্টোরেজের কিছু আকর্ষণীয় বৈশিষ্ট্য অন্বেষণ করা যাক:
+- **বস্তুর অপরিবর্তনীয়তা** - অবজেক্ট স্টোরেজে থাকা বস্তুগুলি অপরিবর্তনীয় (অন্যান্য স্টোরেজ সিস্টেমের ক্ষেত্রে নয়)। আমরা তাদের মুছে ফেলতে পারি বা প্রতিস্থাপন করতে পারি, কিন্তু কোন আপডেট নেই।
+- **কী-মান স্টোর** - একটি অবজেক্ট URI হল এর কী এবং আমরা একটি HTTP কল করে এর বিষয়বস্তু পেতে পারি
+- **একবার লিখুন, অনেকবার পড়ুন** - ডেটা অ্যাক্সেস প্যাটার্ন হল একবার লেখা এবং অনেকবার পড়া। কিছু লিঙ্কডিন গবেষণা অনুসারে, 95% অপারেশন পড়া হয়
+- ছোট এবং বড় উভয় বস্তুকে সমর্থন করে
+
+অবজেক্ট স্টোরেজের ডিজাইন ফিলোসফি ইউনিক্সের অনুরূপ - যখন আমরা একটি ফাইল সংরক্ষণ করি, তখন এটি একটি ডেটা স্ট্রাকচারে ফাইলের নাম তৈরি করে, যাকে ইনোড বলা হয় এবং ফাইলের ডেটা বিভিন্ন ডিস্ক অবস্থানে সংরক্ষণ করা হয়।
+ইনোডে ফাইল ব্লক পয়েন্টারগুলির একটি তালিকা রয়েছে, যা ডিস্কের বিভিন্ন অবস্থানে নির্দেশ করে।
+
+একটি ফাইল অ্যাক্সেস করার সময়, ফাইলের বিষয়বস্তু আনার আগে আমরা প্রথমে ইনোড থেকে এর মেটাডেটা নিয়ে আসি।
+
+অবজেক্ট স্টোরেজ একইভাবে কাজ করে - মেটাডেটা স্টোর ফাইল তথ্যের জন্য ব্যবহার করা হয়, কিন্তু বিষয়বস্তু ডিস্কে সংরক্ষণ করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/object-store-vs-unix.png" alt="object-store-vs-unix" width="500" />
 </div>
 
-By separating metadata from file contents, we can scale the different stores independently:
+ফাইল বিষয়বস্তু থেকে মেটাডেটা আলাদা করে, আমরা স্বাধীনভাবে বিভিন্ন স্টোর স্কেল করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/bucket-and-object.png" alt="bucket-and-object" width="500" />
 </div>
 
-### **High-level design**
+### **উচ্চ-স্তরের নকশা**
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="high-level-design" width="500" />
 </div>
 
-- **Load balancer** - distributes API requests across service replicas
-- **API service** - Stateless server, orchestrating calls to metadata and object store, as well as IAM service.
-- **Identity and access management (IAM)** - central place for auth, authz, access control.
-- **Data store** - stores and retrieves actual data. Operations are based on object ID (UUID).
-- **Metadata store** - stores object metadata
+- **লোড ব্যালেন্সার** - পরিষেবার প্রতিলিপি জুড়ে API অনুরোধগুলি বিতরণ করে
+- **API পরিষেবা** - স্টেটলেস সার্ভার, মেটাডেটা এবং অবজেক্ট স্টোরে কল অর্কেস্ট্রেটিং, সেইসাথে IAM পরিষেবা।
+- **পরিচয় এবং অ্যাক্সেস ম্যানেজমেন্ট (IAM)** - auth, authz, অ্যাক্সেস নিয়ন্ত্রণের কেন্দ্রীয় স্থান।
+- **ডেটা স্টোর** - প্রকৃত ডেটা সঞ্চয় করে এবং পুনরুদ্ধার করে। অপারেশন অবজেক্ট আইডি (UUID) এর উপর ভিত্তি করে করা হয়।
+- **মেটাডেটা স্টোর** - বস্তুর মেটাডেটা সঞ্চয় করে
 
-### **Uploading an object**
+### **একটি বস্তু আপলোড করা হচ্ছে**
 
 <div style="margin-left:3rem">
     <img src="./images/uploading-object.png" alt="uploading-object" width="500" />
 </div>
 
-- Create a bucket named "bucket-to-share" via HTTP PUT request
-- API service calls IAM to ensure user is authorized and has write permissions
-- API service calls metadata store to create a bucket entry. Once created, success response is returned.
-- After bucket is created, HTTP PUT is sent to create an object named "script.txt"
-- API service verifies user identity and ensures user has write permissions
-- Once validation passes, object payload is sent via HTTP PUT to the data store. Data store persists it and returns a UUID.
-- API service calls metadata store to create a new entry with object_id, bucket_id and bucket_name, among other metadata.
+- HTTP PUT অনুরোধের মাধ্যমে "বাকেট-টু-শেয়ার" নামে একটি বালতি তৈরি করুন
+- ব্যবহারকারী অনুমোদিত এবং লেখার অনুমতি রয়েছে তা নিশ্চিত করতে API পরিষেবা আইএএমকে কল করে৷
+- API পরিষেবা একটি বালতি এন্ট্রি তৈরি করতে মেটাডেটা স্টোর কল করে। একবার তৈরি হয়ে গেলে, সাফল্যের প্রতিক্রিয়া ফিরে আসে।
+- বালতি তৈরি হওয়ার পরে, "script.txt" নামে একটি বস্তু তৈরি করতে HTTP PUT পাঠানো হয়
+- API পরিষেবা ব্যবহারকারীর পরিচয় যাচাই করে এবং ব্যবহারকারীর লেখার অনুমতি আছে তা নিশ্চিত করে
+- একবার বৈধতা পাস হয়ে গেলে, অবজেক্ট পেলোড HTTP PUT এর মাধ্যমে ডেটা স্টোরে পাঠানো হয়। ডেটা স্টোর এটি বজায় রাখে এবং একটি UUID প্রদান করে।
+- API পরিষেবা মেটাডেটা স্টোর কল করে অবজেক্ট_আইডি, bucket_id এবং bucket_name সহ অন্যান্য মেটাডেটা সহ একটি নতুন এন্ট্রি তৈরি করতে।
 
-Example object upload request:
+উদাহরণ বস্তু আপলোড অনুরোধ:
 
 ```
 PUT /bucket-to-share/script.txt HTTP/1.1
@@ -146,11 +146,11 @@ x-amz-meta-author: Alex
 [4567 bytes of object data]
 ```
 
-### **Downloading an object**
+### **একটি বস্তু ডাউনলোড করা হচ্ছে**
 
-Buckets have no directory hierarchy, buy we can create a logical hierarchy by concatenating bucket name and object name to simulate a folder structure.
+বালতিতে কোনো ডিরেক্টরি অনুক্রম নেই, আমরা একটি ফোল্ডার গঠন অনুকরণ করতে বালতির নাম এবং বস্তুর নাম সংযুক্ত করে একটি যৌক্তিক শ্রেণিবিন্যাস তৈরি করতে পারি।
 
-Example GET request for fetching an object:
+একটি বস্তু আনার জন্য GET অনুরোধের উদাহরণ:
 
 ```
 GET /bucket-to-share/script.txt HTTP/1.1
@@ -163,274 +163,274 @@ Authorization: authorization string
     <img src="./images/download-object.png" alt="download-object" width="500" />
 </div>
 
-- Client sends an HTTP GET request to the load balancer, ie `GET /bucket-to-share/script.txt`
-- API service queries IAM to verify the user has correct permissions to read the bucket
-- Once validated, UUID of object is retrieved from metadata store
-- Object payload is retrieved from data store based on UUID and returned to the client
+- ক্লায়েন্ট লোড ব্যালেন্সারের কাছে একটি HTTP GET অনুরোধ পাঠায়, যেমন `GET/bucket-to-share/script.txt`
+- ব্যবহারকারীর কাছে বালতি পড়ার সঠিক অনুমতি আছে কিনা তা যাচাই করতে API পরিষেবা আইএএম জিজ্ঞাসা করে
+- একবার যাচাই করা হলে, বস্তুর UUID মেটাডেটা স্টোর থেকে পুনরুদ্ধার করা হয়
+- অবজেক্ট পেলোড UUID এর উপর ভিত্তি করে ডেটা স্টোর থেকে পুনরুদ্ধার করা হয় এবং ক্লায়েন্টকে ফেরত দেওয়া হয়
 
 ---
 
-// sprint 1
+// স্প্রিন্ট 1
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### **Data store**
+### **ডেটা স্টোর**
 
-Here's how the API service interacts with the data store:
+API পরিষেবা কীভাবে ডেটা স্টোরের সাথে ইন্টারঅ্যাক্ট করে তা এখানে:
 
 <div style="margin-left:3rem">
     <img src="./images/data-store-interactions.png" alt="data-store-interactions" width="500" />
 </div>
 
-The data store's main components:
+ডেটা স্টোরের প্রধান উপাদান:
 
 <div style="margin-left:3rem">
     <img src="./images/data-store-main-components.png" alt="data-store-main-components" width="500" />
 </div>
 
-The data routing service provides a RESTful or gRPC API to access the data node cluster.
-It is a stateless service, which scales by adding more servers.
+ডেটা নোড ক্লাস্টার অ্যাক্সেস করার জন্য ডেটা রাউটিং পরিষেবা একটি RESTful বা gRPC API প্রদান করে।
+এটি একটি রাষ্ট্রহীন পরিষেবা, যা আরও সার্ভার যোগ করে স্কেল করে।
 
-It's main responsibilities are:
-- querying the placement service to get the best data node to store data
-- reading data from data nodes and returning it to the API service
-- Writing data to data nodes
+এর প্রধান দায়িত্বগুলি হল:
+- ডেটা সঞ্চয় করার জন্য সর্বোত্তম ডেটা নোড পেতে প্লেসমেন্ট পরিষেবা জিজ্ঞাসা করা
+- ডেটা নোড থেকে ডেটা পড়া এবং API পরিষেবাতে ফেরত দেওয়া
+- ডেটা নোডগুলিতে ডেটা লেখা
 
-The placement service determines which data nodes should store an object.
-It maintains a virtual cluster map, which determines the physical topology of a cluster.
+প্লেসমেন্ট পরিষেবা নির্ধারণ করে যে কোন ডেটা নোডগুলি একটি বস্তুকে সংরক্ষণ করবে।
+এটি একটি ভার্চুয়াল ক্লাস্টার মানচিত্র বজায় রাখে, যা একটি ক্লাস্টারের শারীরিক টপোলজি নির্ধারণ করে।
 
 <div style="margin-left:3rem">
     <img src="./images/virtual-cluster-map.png" alt="virtual-cluster-map" width="500" />
 </div>
 
-The service also sends heartbeats to all data nodes to determine if they should be removed from the virtual cluster.
+ভার্চুয়াল ক্লাস্টার থেকে তাদের সরানো উচিত কিনা তা নির্ধারণ করতে পরিষেবাটি সমস্ত ডেটা নোডে হার্টবিট পাঠায়।
 
-Since this is a critical service, it is recommended to maintain a cluster of 5 or 7 replicas, synchronized via Paxos or Raft consensus algorithms.
-Eg a 7 node cluster can tolerate 3 nodes failing.
+যেহেতু এটি একটি গুরুত্বপূর্ণ পরিষেবা, তাই প্যাক্সোস বা রাফ্ট কনসেনসাস অ্যালগরিদমগুলির মাধ্যমে সিঙ্ক্রোনাইজ করা 5 বা 7টি প্রতিলিপিগুলির একটি ক্লাস্টার বজায় রাখার সুপারিশ করা হয়৷
+যেমন একটি 7 নোড ক্লাস্টার 3টি নোড ব্যর্থ হওয়া সহ্য করতে পারে।
 
-Data nodes store the actual object data.
-Reliability and durability is ensured by replicating data to multiple data nodes.
+ডেটা নোডগুলি প্রকৃত বস্তুর ডেটা সংরক্ষণ করে।
+একাধিক ডেটা নোডে ডেটা প্রতিলিপি করে নির্ভরযোগ্যতা এবং স্থায়িত্ব নিশ্চিত করা হয়।
 
-Each data node has a daemon running, which sends heartbeats to the placement service.
+প্রতিটি ডেটা নোডে একটি ডেমন চলছে, যা প্লেসমেন্ট পরিষেবাতে হার্টবিট পাঠায়।
 
-The heartbeat includes:
-- How many disk drives (HDD or SSD) does the data node manage?
-- How much data is stored on each drive?
+হার্টবিট অন্তর্ভুক্ত:
+- কতগুলি ডিস্ক ড্রাইভ (HDD বা SSD) ডেটা নোড পরিচালনা করে?
+- প্রতিটি ড্রাইভে কত ডেটা সংরক্ষণ করা হয়?
 
-#### Data persistence flow
+#### ডেটা স্থিরতা প্রবাহ
 
 <div style="margin-left:3rem">
     <img src="./images/data-persistence-flow.png" alt="data-persistence-flow" width="500" />
 </div>
 
-- API service forwards the object data to data store
-- Data routing service sends the data to the primary data node
-- Primary data node saves the data locally and replicates it to two secondary data nodes. Response is sent after successful replication.
-- The UUID of the object is returned to the API service.
+- API পরিষেবা অবজেক্ট ডেটা ডেটা স্টোরে ফরোয়ার্ড করে
+- ডেটা রাউটিং পরিষেবা প্রাথমিক ডেটা নোডে ডেটা পাঠায়
+- প্রাথমিক ডেটা নোড স্থানীয়ভাবে ডেটা সংরক্ষণ করে এবং এটি দুটি সেকেন্ডারি ডেটা নোডে প্রতিলিপি করে। উত্তর সফল প্রতিলিপি পরে পাঠানো হয়.
+- বস্তুর UUID API পরিষেবাতে ফেরত দেওয়া হয়।
 
-Caveats:
-- Given an object UUID, it's replication group is deterministically chosen by using consistent hashing
-- In step 4, the primary data node replicates the object data before returning a response. This favors strong consistency over higher latency.
+সতর্কতা:
+- একটি অবজেক্ট UUID প্রদত্ত, এটির প্রতিলিপি গ্রুপটি সুসংগত হ্যাশিং ব্যবহার করে নির্ধারকভাবে নির্বাচিত হয়
+- ধাপ 4-এ, প্রাথমিক ডেটা নোড একটি প্রতিক্রিয়া ফেরত দেওয়ার আগে অবজেক্ট ডেটার প্রতিলিপি করে। এটি উচ্চতর বিলম্বের চেয়ে শক্তিশালী ধারাবাহিকতার পক্ষে।
 
 <div style="margin-left:3rem">
     <img src="./images/consistency-vs-latency.png" alt="consistency-vs-latency" width="500" />
 </div>
 
-#### How data is organized
+#### কিভাবে তথ্য সংগঠিত হয়
 
-One simple approach to managing data is to store each object in a separate file.
+ডেটা পরিচালনার একটি সহজ পদ্ধতি হল প্রতিটি বস্তুকে একটি পৃথক ফাইলে সংরক্ষণ করা।
 
-This works, but is not performant with many small files in a file system:
-- Data blocks on HDD are wasted, because every file uses the whole block size. Typical block size is 4kb.
-- Many files means many inodes. Operating systems don't deal well with too many inodes and there is also a max inode limit.
+এটি কাজ করে, কিন্তু একটি ফাইল সিস্টেমে অনেক ছোট ফাইলের সাথে কার্যকর হয় না:
+- এইচডিডি-তে ডেটা ব্লকগুলি নষ্ট হয়, কারণ প্রতিটি ফাইল সম্পূর্ণ ব্লক আকার ব্যবহার করে। সাধারণ ব্লকের আকার 4kb।
+- অনেক ফাইল মানে অনেক ইনোড। অপারেটিং সিস্টেমগুলি অনেকগুলি ইনোডের সাথে ভালভাবে কাজ করে না এবং একটি সর্বাধিক ইনোড সীমাও রয়েছে।
 
-These issues can be addressed by merging many small files into bigger ones via a write-ahead log (WAL). Once the file reaches its capacity (typically a few GB), a new file is created:
+এই সমস্যাগুলি একটি রাইট-এহেড লগ (WAL) এর মাধ্যমে অনেকগুলি ছোট ফাইলকে বড় ফাইলগুলিতে মার্জ করে সমাধান করা যেতে পারে। একবার ফাইলটি তার ক্ষমতায় পৌঁছালে (সাধারণত কয়েক গিগাবাইট), একটি নতুন ফাইল তৈরি হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/wal-optimization.png" alt="wal-optimization" width="500" />
 </div>
 
-The downside of this approach is that write access to the file needs to be serialized. Multiple cores accessing the same file must wait for each other.
-To fix this, we can confine files to specific cores to avoid lock contention.
+এই পদ্ধতির নেতিবাচক দিক হল যে ফাইলটিতে লেখার অ্যাক্সেস সিরিয়াল করা দরকার। একই ফাইল অ্যাক্সেস করা একাধিক কোর একে অপরের জন্য অপেক্ষা করতে হবে।
+এটি ঠিক করার জন্য, লক বিতর্ক এড়াতে আমরা ফাইলগুলিকে নির্দিষ্ট কোরে সীমাবদ্ধ করতে পারি।
 
-#### Object lookup
+#### অবজেক্ট লুকআপ
 
-To support storing multiple objects in the same file, we need to maintain a table, which tells the data node:
-- `object_id`
-- `filename` where object is stored
-- `file_offset` where object starts
-- `object_size`
+একই ফাইলে একাধিক অবজেক্ট সংরক্ষণ করার জন্য, আমাদের একটি টেবিল বজায় রাখতে হবে, যা ডেটা নোডকে বলে:
+- `অবজেক্ট_আইডি`
+- `ফাইলের নাম` যেখানে বস্তু সংরক্ষণ করা হয়
+- `file_offset` যেখানে বস্তু শুরু হয়
+- `অবজেক্ট_সাইজ`
 
-We can deploy this table in a file-based db like RocksDB or a traditional relational database.
-Since the access pattern is low write+high read, a relational database works better.
+আমরা এই টেবিলটিকে রকসডিবি বা প্রথাগত রিলেশনাল ডাটাবেসের মতো ফাইল-ভিত্তিক ডিবিতে স্থাপন করতে পারি।
+যেহেতু অ্যাক্সেস প্যাটার্ন কম লেখা + উচ্চ পঠিত, একটি রিলেশনাল ডাটাবেস ভাল কাজ করে।
 
-How should we deploy it?
-We could deploy the db and scale it separately in a cluster, accessed by all data nodes.
+আমরা কিভাবে এটি স্থাপন করা উচিত?
+আমরা ডিবি স্থাপন করতে পারি এবং একটি ক্লাস্টারে আলাদাভাবে স্কেল করতে পারি, সমস্ত ডেটা নোড দ্বারা অ্যাক্সেস করা হয়।
 
-Downsides:
-- we'd need to aggressively scale the cluster to serve all requests
-- there's additional network latency between data node and db cluster
+খারাপ দিক:
+- সমস্ত অনুরোধ পরিবেশন করার জন্য আমাদের আক্রমনাত্মকভাবে ক্লাস্টার স্কেল করতে হবে
+- ডেটা নোড এবং ডিবি ক্লাস্টারের মধ্যে অতিরিক্ত নেটওয়ার্ক লেটেন্সি রয়েছে
 
-An alternative is to take advantage of the fact that data nodes are only interested to data related to them,
-so we can deploy the relational db within the data node itself.
+একটি বিকল্প হল ডেটা নোডগুলি শুধুমাত্র তাদের সাথে সম্পর্কিত ডেটাতে আগ্রহী এই সত্যটির সুবিধা নেওয়া,
+তাই আমরা ডেটা নোডের মধ্যেই রিলেশনাল ডিবি স্থাপন করতে পারি।
 
-SQLite is a good option as it's a lightweight file-based relational database.
+SQLite একটি ভাল বিকল্প কারণ এটি একটি লাইটওয়েট ফাইল-ভিত্তিক রিলেশনাল ডাটাবেস।
 
-#### Updated data persistence flow
+#### আপডেট করা ডেটা স্থিরতা প্রবাহ
 
 <div style="margin-left:3rem">
     <img src="./images/updated-data-persistence-flow.png" alt="updated-data-persistence-flow" width="500" />
 </div>
 
-- API Service sends a request to save a new object
-- Data node service appends the new object at the end of a file, named "/data/c"
-- A new record for the object is inserted into the object mapping table
+- API পরিষেবা একটি নতুন বস্তু সংরক্ষণ করার জন্য একটি অনুরোধ পাঠায়
+- ডেটা নোড পরিষেবা "/data/c" নামে একটি ফাইলের শেষে নতুন অবজেক্ট যুক্ত করে
+- বস্তুর জন্য একটি নতুন রেকর্ড অবজেক্ট ম্যাপিং টেবিলে ঢোকানো হয়
 
-#### Durability
+#### স্থায়িত্ব
 
-Data durability is an important requirement in our design. In order to achieve 6 nines of durability, every failure case needs to be properly examined.
+ডেটা স্থায়িত্ব আমাদের ডিজাইনের একটি গুরুত্বপূর্ণ প্রয়োজন। স্থায়িত্বের 6 নাইন অর্জনের জন্য, প্রতিটি ব্যর্থতার ক্ষেত্রে সঠিকভাবে পরীক্ষা করা দরকার।
 
-First problem to address is hardware failures. We can achieve that by replicating data nodes to minimize probability of failure.
-But in addition to that, we also ought to replicate across different failure domains (cross-rack, cross-dc, separate networks, etc).
-A critical event can cause multiple hardware failures within the same domain:
+সমাধানের প্রথম সমস্যা হল হার্ডওয়্যার ব্যর্থতা। আমরা ব্যর্থতার সম্ভাবনা কমাতে ডেটা নোডের প্রতিলিপি করে এটি অর্জন করতে পারি।
+কিন্তু এটি ছাড়াও, আমাদের বিভিন্ন ব্যর্থতা ডোমেন (ক্রস-র্যাক, ক্রস-ডিসি, পৃথক নেটওয়ার্ক ইত্যাদি) জুড়ে প্রতিলিপি করা উচিত।
+একটি জটিল ঘটনা একই ডোমেনের মধ্যে একাধিক হার্ডওয়্যার ব্যর্থতার কারণ হতে পারে:
 
 <div style="margin-left:3rem">
     <img src="./images/failure-domain-isolation.png" alt="failure-domain-isolation" width="500" />
 </div>
 
-Assuming annual failure rate of a typical HDD is 0.81%, making three copies gives us 6 nines of durability.
+একটি সাধারণ HDD-এর বার্ষিক ব্যর্থতার হার 0.81% ধরে নিলে, তিনটি অনুলিপি তৈরি করলে আমাদের 6 নাইন স্থায়িত্ব পাওয়া যায়।
 
-Replicating the data nodes like that grants us the durability we want, but we could also leverage erasure coding to reduce storage costs.
+এর মতো ডেটা নোডগুলিকে প্রতিলিপি করা আমাদেরকে আমরা যে স্থায়িত্ব দিতে চাই তা মঞ্জুর করে, তবে আমরা স্টোরেজ খরচ কমাতে ইরেজার কোডিংও ব্যবহার করতে পারি।
 
-Erasure coding enables us to use parity bits, which allow us to reconstruct lost bits in the event of a failure:
+ইরেজার কোডিং আমাদের প্যারিটি বিট ব্যবহার করতে সক্ষম করে, যা আমাদের ব্যর্থতার ক্ষেত্রে হারিয়ে যাওয়া বিটগুলিকে পুনর্গঠন করতে দেয়:
 
 <div style="margin-left:3rem">
     <img src="./images/erasure-coding.png" alt="erasure-coding" width="500" />
 </div>
 
-Imagine those bits are data nodes. If two of them go down, they can be recovered using the remaining four ones.
+কল্পনা করুন যে বিটগুলি ডেটা নোড। যদি তাদের মধ্যে দুটি নেমে যায় তবে বাকি চারটি ব্যবহার করে সেগুলি পুনরুদ্ধার করা যেতে পারে।
 
-There are different erasure coding schemes. In our case, we could use 8+4 erasure coding, split across different failure domains to maximize reliability:
+বিভিন্ন ইরেজার কোডিং স্কিম আছে। আমাদের ক্ষেত্রে, আমরা 8+4 ইরেজার কোডিং ব্যবহার করতে পারি, নির্ভরযোগ্যতা বাড়াতে বিভিন্ন ব্যর্থতা ডোমেনে বিভক্ত করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/erasure-coding-across-failure-domains.png" alt="erasure-coding-across-failure-domains" width="500" />
 </div>
 
-Erasure coding enables us to achieve a much lower storage cost (50% improvement) at the expense of access speed due to the data routing service having to collect data from multiple locations:
+একাধিক স্থান থেকে ডেটা সংগ্রহ করার কারণে ডেটা রাউটিং পরিষেবার কারণে ইরেজার কোডিং আমাদের অ্যাক্সেস গতির খরচে অনেক কম স্টোরেজ খরচ (50% উন্নতি) অর্জন করতে সক্ষম করে:
 
 <div style="margin-left:3rem">
     <img src="./images/erasure-coding-vs-replication.png" alt="erasure-coding-vs-replication" width="500" />
 </div>
 
-Other caveats:
-- Replication requires 200% storage overhead (in case of 3 replicas) vs. 50% via erasure coding
-- Erasure coding [gives us 11 nines of durability](https://github.com/Backblaze/erasure-coding-durability) vs 6 nines via replication
-- Erasure coding requires more computation to calculate and store parities
+অন্যান্য সতর্কতা:
+- প্রতিলিপির জন্য 200% স্টোরেজ ওভারহেড প্রয়োজন (3টি প্রতিলিপির ক্ষেত্রে) বনাম 50% ইরেজার কোডিংয়ের মাধ্যমে
+- ইরেজির কোডিং [আমাদের স্থায়িত্বের 11 নাইন দেয়](https://github.com/Backblaze/erasure-coding-durability) বনাম প্রতিলিপির মাধ্যমে 6 নাইন
+- ইরেজার কোডিং এর জন্য প্যারিটি গণনা এবং সংরক্ষণ করার জন্য আরও গণনার প্রয়োজন
 
-In sum, replication is more useful for latency-sensitive applications, whereas erasure coding is attractive for storage cost efficiency and durability.
-Erasure coding is also much harder to implement.
+সংক্ষেপে, প্রতিলিপিটি লেটেন্সি-সংবেদনশীল অ্যাপ্লিকেশনের জন্য আরও কার্যকর, যেখানে ইরেজার কোডিং স্টোরেজ খরচ দক্ষতা এবং স্থায়িত্বের জন্য আকর্ষণীয়।
+ইরেজার কোডিং বাস্তবায়ন করাও অনেক কঠিন।
 
-#### Correctness verification
+#### সঠিকতা যাচাই
 
-If a disk fails entirely, then the failure is easy to detect. This is less straightforward in the event part of the disk memory gets corrupted.
+যদি একটি ডিস্ক সম্পূর্ণরূপে ব্যর্থ হয়, তাহলে ব্যর্থতা সনাক্ত করা সহজ। ডিস্ক মেমরির অংশটি নষ্ট হয়ে গেলে এটি কম সহজবোধ্য।
 
-To detect this, we can use checksums - a hash of the file contents, which can be used to verify the file's integrity.
+এটি সনাক্ত করতে, আমরা চেকসাম ব্যবহার করতে পারি - ফাইলের বিষয়বস্তুর একটি হ্যাশ, যা ফাইলের অখণ্ডতা যাচাই করতে ব্যবহার করা যেতে পারে।
 
-In our case, we'll store checksums for each file and each object:
+আমাদের ক্ষেত্রে, আমরা প্রতিটি ফাইল এবং প্রতিটি বস্তুর জন্য চেকসাম সংরক্ষণ করব:
 
 <div style="margin-left:3rem">
     <img src="./images/checksums-for-correctness.png" alt="checksums-for-correctness" width="500" />
 </div>
 
-In the case of erasure coding (8+4), we'll need to fetch each of the 8 pieces of data separately and verify each of their checksums.
+ইরেজার কোডিং (8+4) এর ক্ষেত্রে, আমাদেরকে আলাদাভাবে 8 টুকরো ডেটার প্রতিটি আনতে হবে এবং তাদের প্রতিটি চেকসাম যাচাই করতে হবে।
 
-// sprint 2
+// স্প্রিন্ট 2
 
-### **Metadata data model**
+### **মেটাডেটা ডেটা মডেল**
 
-Table schemas:
+টেবিল স্কিমা:
 
 <div style="margin-left:3rem">
     <img src="./images/metadata-data-model.png" alt="metadata-data-model" width="500" />
 </div>
 
-Queries we need to support:
-- Find an object ID by name
-- Insert/delete object based on name
-- List objects in a bucket sharing the same prefix
+আমাদের সমর্থন করতে হবে এমন প্রশ্ন:
+- নামে একটি অবজেক্ট আইডি খুঁজুন
+- নামের উপর ভিত্তি করে বস্তু সন্নিবেশ/মুছুন
+- একই উপসর্গ ভাগ করে একটি বালতিতে বস্তুর তালিকা করুন
 
-There is usually a limit on the number of buckets a user can create, hence, the size of the buckets table is small and can fit into a single db server.
-But we still need to scale the server for read throughput.
+সাধারণত একজন ব্যবহারকারী কতগুলি বালতি তৈরি করতে পারে তার একটি সীমা থাকে, তাই, বালতি টেবিলের আকার ছোট এবং একটি একক ডিবি সার্ভারে ফিট হতে পারে।
+কিন্তু আমাদের এখনও রিড থ্রুপুটের জন্য সার্ভার স্কেল করতে হবে।
 
-The object table will probably not fit into a single database server, though. Hence, we can scale the table via sharding:
-- Sharding by bucket_id will lead to hotspot issues as a bucket can have billions of objects
-- Sharding by bucket_id makes the load more evenly distributed, but our queries will be slow
-- We choose sharding by `hash(bucket_name, object_name)` since most queries are based on the object/bucket name.
+অবজেক্ট টেবিল সম্ভবত একটি একক ডাটাবেস সার্ভারে মাপসই হবে না, যদিও. সুতরাং, আমরা শার্ডিংয়ের মাধ্যমে টেবিলটি স্কেল করতে পারি:
+- bucket_id দ্বারা ভাগ করা হটস্পট সমস্যার দিকে পরিচালিত করবে কারণ একটি বালতিতে কোটি কোটি বস্তু থাকতে পারে
+- bucket_id দ্বারা ভাগ করা লোডকে আরও সমানভাবে বিতরণ করে, কিন্তু আমাদের প্রশ্নগুলি ধীর হবে
+- আমরা `হ্যাশ(বাকেট_নাম, অবজেক্ট_নাম)` দ্বারা শার্ডিং বেছে নিই যেহেতু বেশিরভাগ প্রশ্নই অবজেক্ট/বালতির নামের উপর ভিত্তি করে।
 
-Even with this sharding scheme, though, listing objects in a bucket will be slow.
+এমনকি এই শার্ডিং স্কিম সহ, যদিও, একটি বালতিতে বস্তুর তালিকা করা ধীর হবে।
 
-### **Listing objects in a bucket**
+### **একটি বালতিতে বস্তুর তালিকা করা**
 
-In a single database, listing an object based on its prefix (looks like a directory) works like this:
+একটি একক ডাটাবেসে, একটি বস্তুকে তার উপসর্গের উপর ভিত্তি করে তালিকাভুক্ত করা (একটি ডিরেক্টরির মতো দেখায়) এইরকম কাজ করে:
 
 ```
 SELECT * FROM object WHERE bucket_id = "123" AND object_name LIKE `abc/%`
 ```
 
-This is challenging to fulfill when the database is sharded. To achieve it, we can run the query on every shard and aggregate the results in-memory.
-This makes pagination challenging though, since different shards contain a different result size and we need to maintain separate limit/offset for each.
+ডাটাবেস শার্ড করা হলে এটি পূরণ করা চ্যালেঞ্জিং। এটি অর্জন করার জন্য, আমরা প্রতিটি শার্ডে ক্যোয়ারী চালাতে পারি এবং মেমরিতে ফলাফলগুলি একত্রিত করতে পারি।
+যদিও এটি পেজিনেশনকে চ্যালেঞ্জিং করে তোলে, যেহেতু বিভিন্ন শার্ডে একটি ভিন্ন ফলাফলের আকার থাকে এবং আমাদের প্রতিটির জন্য আলাদা সীমা/অফসেট বজায় রাখতে হবে।
 
-We can leverage the fact that typically object stores are not optimized for listing objects, so we can sacrifice listing performance.
-We can also create a denormalized table for listing objects, sharded by bucket ID.
-That would make our listing query sufficiently fast as it's isolated to a single database instance.
+আমরা এই সত্যটি লাভ করতে পারি যে সাধারণত অবজেক্ট স্টোরগুলি বস্তুর তালিকা করার জন্য অপ্টিমাইজ করা হয় না, তাই আমরা তালিকার কার্যকারিতা ত্যাগ করতে পারি।
+আমরা বালতি আইডি দ্বারা শার্ড করা বস্তুর তালিকা করার জন্য একটি অস্বাভাবিক টেবিলও তৈরি করতে পারি।
+এটি আমাদের তালিকার ক্যোয়ারীকে যথেষ্ট দ্রুত করে তুলবে কারণ এটি একটি একক ডাটাবেস উদাহরণে বিচ্ছিন্ন।
 
-### **Object versioning**
+### **অবজেক্ট সংস্করণ**
 
-Versioning works by having another `object_version` column which is of type TIMEUUID, enabling us to sort records based on it.
+ভার্সনিং কাজ করে আরেকটি `অবজেক্ট_সংস্করণ` কলাম যা টাইমইউইউআইডি টাইপের, যা আমাদেরকে এর উপর ভিত্তি করে রেকর্ড বাছাই করতে সক্ষম করে।
 
-Each new version produces a new `object_id`:
+প্রতিটি নতুন সংস্করণ একটি নতুন `object_id` তৈরি করে:
 
 <div style="margin-left:3rem">
     <img src="./images/object-versioning.png" alt="object-versioning" width="500" />
 </div>
 
-Deleting an object creates a new version with a special `object_id` indicating that the object was deleted. Queries for it return 404:
+একটি বস্তু মুছে ফেলা একটি বিশেষ `object_id` সহ একটি নতুন সংস্করণ তৈরি করে যা নির্দেশ করে যে বস্তুটি মুছে ফেলা হয়েছে। এর জন্য ক্যোয়ারী রিটার্ন 404:
 
 <div style="margin-left:3rem">
     <img src="./images/deleting-versioned-object.png" alt="deleting-versioned-object" width="500" />
 </div>
 
-### **Optimizing uploads of large files**
+### **বড় ফাইল আপলোড অপ্টিমাইজ করা**
 
-Uploading large files can be optimized by using multipart uploads - splitting a big file into several chunks, uploaded independently:
+মাল্টিপার্ট আপলোডগুলি ব্যবহার করে বড় ফাইল আপলোড করা অপ্টিমাইজ করা যেতে পারে - একটি বড় ফাইলকে কয়েকটি খণ্ডে বিভক্ত করে, স্বাধীনভাবে আপলোড করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/multipart-upload.png" alt="multipart-upload" width="500" />
 </div>
 
-- Client calls service to initiate a multipart upload
-- Data store returns an upload ID which uniquely identifies the upload
-- Client splits the large file into several chunks, uploaded independently using the upload id
-- When a chunk is uploaded, the data store returns an etag, which is a md5 checksum, identifying that upload chunk
-- After all parts are uploaded, client sends a complete multipart upload request, which includes upload_id, part numbers and all etags
-- Data store reassembles the object from its parts. The process can take a few minutes. After that, success response is returned to the client.
+- ক্লায়েন্ট একটি মাল্টিপার্ট আপলোড শুরু করতে পরিষেবা কল করে৷
+- ডেটা স্টোর একটি আপলোড আইডি প্রদান করে যা আপলোডটিকে অনন্যভাবে সনাক্ত করে
+- ক্লায়েন্ট বড় ফাইলটিকে কয়েকটি খণ্ডে বিভক্ত করে, আপলোড আইডি ব্যবহার করে স্বাধীনভাবে আপলোড করা হয়
+- যখন একটি খণ্ড আপলোড করা হয়, তখন ডেটা স্টোর একটি etag ফেরত দেয়, যা একটি md5 চেকসাম, সেই আপলোড অংশটিকে চিহ্নিত করে
+- সমস্ত অংশ আপলোড হওয়ার পরে, ক্লায়েন্ট একটি সম্পূর্ণ মাল্টিপার্ট আপলোড অনুরোধ পাঠায়, যার মধ্যে upload_id, অংশ সংখ্যা এবং সমস্ত ইটাগ রয়েছে
+- ডেটা স্টোর বস্তুটিকে তার অংশগুলি থেকে পুনরায় একত্রিত করে। প্রক্রিয়াটি কয়েক মিনিট সময় নিতে পারে। এর পরে, সাফল্যের প্রতিক্রিয়া ক্লায়েন্টের কাছে ফিরে আসে।
 
-Old parts, which are no longer useful can be removed at this point. We can introduce a garbage collector to deal with it.
+পুরানো অংশ, যা আর দরকারী নয় এই সময়ে সরানো যেতে পারে। আমরা এটি মোকাবেলা করার জন্য একটি আবর্জনা সংগ্রহকারী চালু করতে পারেন.
 
-### **Garbage collection**
+### **আবর্জনা সংগ্রহ**
 
-Garbage collection is the process of reclaiming storage space, which is no longer used. There are a few ways data becomes garbage:
-- **lazy object deletion** - object is marked as deleted without actually getting deleted
-- **orphan data** - eg an upload failed mid-flight and old parts need to be deleted
-- **corrupted data** - data which failed checksum verification
+আবর্জনা সংগ্রহ হল স্টোরেজ স্পেস পুনরুদ্ধার করার প্রক্রিয়া, যা আর ব্যবহার করা হয় না। ডেটা আবর্জনা হয়ে যাওয়ার কয়েকটি উপায় রয়েছে:
+- **অলস বস্তু মুছে ফেলা** - বস্তুটি আসলে মুছে ফেলা ছাড়াই মুছে ফেলা হিসাবে চিহ্নিত করা হয়েছে
+- **অনাথ ডেটা** - যেমন একটি আপলোড মিড-ফ্লাইট ব্যর্থ হয়েছে এবং পুরানো অংশগুলি মুছে ফেলতে হবে
+- **দুষ্ট ডেটা** - ডেটা যা চেকসাম যাচাইকরণে ব্যর্থ হয়েছে
 
-The garbage collector is also responsible for reclaiming unused space in replicas.
-With replication, data is deleted from both primaries and replicas. With erasure coding (8+4), data is deleted from all 12 nodes.
+আবর্জনা সংগ্রহকারী প্রতিলিপিগুলিতে অব্যবহৃত স্থান পুনরুদ্ধার করার জন্যও দায়ী।
+প্রতিলিপির সাথে, প্রাথমিক এবং প্রতিলিপি উভয় থেকে ডেটা মুছে ফেলা হয়। ইরেজার কোডিং (8+4) সহ, সমস্ত 12টি নোড থেকে ডেটা মুছে ফেলা হয়।
 
-To facilitate the deletion, we'll use a process called compaction:
-- Garbage collector copies objects which are not deleted from "data/b" to "data/d"
-- `object_mapping` table is updated once copying is complete using a database transaction
-- To avoid making too many small files, compaction is done on files which grow beyond a certain threshold
+মুছে ফেলার সুবিধার্থে, আমরা কমপ্যাকশন নামক একটি প্রক্রিয়া ব্যবহার করব:
+- আবর্জনা সংগ্রহকারী বস্তুগুলি অনুলিপি করে যা "ডেটা/বি" থেকে "ডেটা/ডি" তে মুছে ফেলা হয় না
+- ডাটাবেস লেনদেন ব্যবহার করে কপি করা সম্পূর্ণ হলে `অবজেক্ট_ম্যাপিং` টেবিল আপডেট করা হয়
+- অনেকগুলি ছোট ফাইল তৈরি এড়াতে, একটি নির্দিষ্ট থ্রেশহোল্ড অতিক্রম করা ফাইলগুলিতে কম্প্যাকশন করা হয়
 
 <div style="margin-left:3rem">
     <img src="./images/compaction.png" alt="compaction" width="500" />
@@ -438,10 +438,10 @@ To facilitate the deletion, we'll use a process called compaction:
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-Things we covered:
-- Designing an S3-like object storage
-- Comparing differences between object, block and file storages
-- Covered uploading, downloading, listing, versioning of objects in a bucket
-- Deep dived in the design - data store and metadata store, replication and erasure coding, multipart uploads, sharding
+আমরা যে জিনিসগুলি কভার করেছি:
+- একটি S3-এর মতো অবজেক্ট স্টোরেজ ডিজাইন করা
+- অবজেক্ট, ব্লক এবং ফাইল স্টোরেজের মধ্যে পার্থক্য তুলনা করা
+- একটি বালতিতে অবজেক্টের আপলোড, ডাউনলোড, তালিকা, সংস্করণ কভার করা
+- ডিজাইনে গভীরভাবে ডুব দেওয়া - ডেটা স্টোর এবং মেটাডেটা স্টোর, রেপ্লিকেশন এবং ইরেজার কোডিং, মাল্টিপার্ট আপলোড, শার্ডিং

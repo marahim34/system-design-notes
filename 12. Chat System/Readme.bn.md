@@ -1,204 +1,204 @@
-# অধ্যায় 12: রিয়েল-টাইম চ্যাট সিস্টেম ডিজাইন
+# অধ্যায় 12: একটি চ্যাট সিস্টেম ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-A **chat system** supports real-time messaging between users. This chapter focuses on designing a chat app that includes:
-- **One-on-One Chat**
-- **Group Chat (max 100 users)**
-- **Online Presence Indicators**
-- **Multiple Device Support**
-- **Push Notifications**
+## ভূমিকা
+একটি **চ্যাট সিস্টেম** ব্যবহারকারীদের মধ্যে রিয়েল-টাইম মেসেজিং সমর্থন করে। এই অধ্যায়টি একটি চ্যাট অ্যাপ ডিজাইন করার উপর ফোকাস করে যার মধ্যে রয়েছে:
+- **একের পর এক চ্যাট**
+- **গ্রুপ চ্যাট (সর্বোচ্চ 100 জন ব্যবহারকারী)**
+- **অনলাইন উপস্থিতি নির্দেশক**
+- **একাধিক ডিভাইস সমর্থন**
+- **পুশ বিজ্ঞপ্তি**
 
-The system targets **50 million daily active users (DAU)** and stores chat history permanently.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-
-### রিকোয়ারমেন্টস (Requirements)
-1. **Features:**
-   - One-on-one and group chat (max 100 members).
-   - Text-based messages (up to 100,000 characters).
-   - Online/offline indicators.
-   - Support for multiple devices.
-   - Push notifications.
-2. **Scale:** Design for 50 million DAU.
-3. **Storage:** Permanent chat history.
+সিস্টেমটি লক্ষ্য করে **50 মিলিয়ন দৈনিক সক্রিয় ব্যবহারকারী (DAU)** এবং চ্যাট ইতিহাস স্থায়ীভাবে সঞ্চয় করে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: সমস্যা বোঝা
 
-### Communication Protocols
-1. **Sender Side:** HTTP for sending messages, leveraging persistent connections for efficiency.
+### প্রয়োজনীয়তা
+1. **বৈশিষ্ট্য:**
+   - একের পর এক এবং গ্রুপ চ্যাট (সর্বোচ্চ 100 সদস্য)।
+   - পাঠ্য-ভিত্তিক বার্তা (100,000 অক্ষর পর্যন্ত)।
+   - অনলাইন/অফলাইন সূচক।
+   - একাধিক ডিভাইসের জন্য সমর্থন।
+   - পুশ বিজ্ঞপ্তি।
+2. **স্কেল:** 50 মিলিয়ন DAU এর জন্য ডিজাইন।
+3. **স্টোরেজ:** স্থায়ী চ্যাট ইতিহাস।
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের নকশা
+
+### কমিউনিকেশন প্রোটোকল
+1. **প্রেরকের দিক:** বার্তা পাঠানোর জন্য HTTP, দক্ষতার জন্য অবিরাম সংযোগের সুবিধা।
 
       <div style="margin-left:2rem">
       <img src="./images/basic-design.png" alt="Basic Design" width="500">    
       <div>
 
-2. **Receiver Side:**
-   - **Polling:**
-      - Client periodically asks the server if there are messages available.
-      - Inefficient due to frequent, redundant requests.
+2. **রিসিভার সাইড:**
+   - **ভোট:**
+      - ক্লায়েন্ট পর্যায়ক্রমে সার্ভারকে জিজ্ঞাসা করে যদি সেখানে বার্তা পাওয়া যায়।
+      - ঘন ঘন, অপ্রয়োজনীয় অনুরোধের কারণে অদক্ষ।
 
          <img src="./images/polling.png" alt="Polling" width="400">    
 
-   - **Long Polling:** 
-      - Keeps the connection open until messages arrive. 
-      - Inefficient for inactive users.
+- **দীর্ঘ ভোটগ্রহণ:** 
+      - বার্তা না আসা পর্যন্ত সংযোগ খোলা রাখে। 
+      - নিষ্ক্রিয় ব্যবহারকারীদের জন্য অদক্ষ।
 
          <img src="./images/long-polling.png" alt="Long Polling" width="400">
 
-   - **WebSocket:** 
-      - A bi-directional, persistent connection for real-time communication, chosen for both sending and receiving messages.
-      - Uses WebSockets (ws) protocol for sending and recieving messages.
+- **ওয়েবসকেট:** 
+      - একটি দ্বি-দিকনির্দেশক, রিয়েল-টাইম যোগাযোগের জন্য অবিরাম সংযোগ, বার্তা প্রেরণ এবং গ্রহণ উভয়ের জন্যই বেছে নেওয়া হয়েছে।
+      - বার্তা পাঠানো এবং গ্রহণ করার জন্য WebSockets (ws) প্রোটোকল ব্যবহার করে।
 
          <img src="./images/websocket.png" alt="Websocket"  width="400" >    
    
 ---
 
-### Components
+### উপাদান
 
 <div style="margin-left:5rem">
    <img src="./images/high-level-stateless-arch.png" alt="High Level Architecture" height="350">    
    <img src="./images/high-level-statefull-arch.png" alt="High Level Architecture" height="350" width="550">
 </div>
 
-1. **Stateless Services:**
-   - Handle signup, login, and user profile management.
-   - Integrated with service discovery to recommend the best chat server.
-2. **Stateful Services:**
-   - Chat servers maintain persistent WebSocket connections.
-   - Responsible for message delivery and synchronization.
-3. **Third-Party Integration:**
-   - Push notification services notify users about new messages.
-   - Refer Notification System chapter for notifications implementation.
+1. **রাষ্ট্রহীন সেবা:**
+   - সাইনআপ, লগইন এবং ব্যবহারকারীর প্রোফাইল পরিচালনা পরিচালনা করুন।
+   - সেরা চ্যাট সার্ভারের সুপারিশ করতে পরিষেবা আবিষ্কারের সাথে একীভূত।
+2. **রাষ্ট্রীয় পরিষেবা:**
+   - চ্যাট সার্ভারগুলি অবিরাম ওয়েবসকেট সংযোগ বজায় রাখে।
+   - বার্তা বিতরণ এবং সিঙ্ক্রোনাইজেশনের জন্য দায়ী।
+3. **তৃতীয় পক্ষের একীকরণ:**
+   - পুশ বিজ্ঞপ্তি পরিষেবাগুলি ব্যবহারকারীদের নতুন বার্তা সম্পর্কে অবহিত করে।
+   - বিজ্ঞপ্তি বাস্তবায়নের জন্য বিজ্ঞপ্তি সিস্টেম অধ্যায় পড়ুন।
 
 
 ---
-### Design
+### ডিজাইন
 
-The client maintains a persistent WebSocket connection to a chat server for real-time messaging.
+ক্লায়েন্ট রিয়েল-টাইম মেসেজিংয়ের জন্য একটি চ্যাট সার্ভারের সাথে একটি অবিরাম ওয়েবসকেট সংযোগ বজায় রাখে।
 
 <div style="margin-left:3rem">
       <img src="./images/high-level-design.png" alt="High Level Design" width="450"> 
 </div>
 
-- Chat servers facilitate message sending/receiving.
-- Presence servers manage online/offline status.
-- API servers handle everything including user login, signup, change profile, etc.
-- Notification servers send push notifications.
-- Finally, the key-value store is used to store chat history.Key-value stores for the database of the chat history data for following reasons:
-   - It allows easy horizontal scaling.
-   - KV stores provide very low latency to access data.
-   - Relational databases do not handle long tail of data well. When the indexes grow
-   large, random access is expensive.
-   - KV stores are adopted by other proven reliable chat applications. For example,
-   both Facebook messenger and Discord.
+- চ্যাট সার্ভারগুলি বার্তা প্রেরণ/গ্রহণের সুবিধা দেয়।
+- উপস্থিতি সার্ভারগুলি অনলাইন/অফলাইন স্থিতি পরিচালনা করে।
+- API সার্ভার ব্যবহারকারী লগইন, সাইনআপ, প্রোফাইল পরিবর্তন ইত্যাদি সহ সবকিছু পরিচালনা করে।
+- বিজ্ঞপ্তি সার্ভার পুশ বিজ্ঞপ্তি পাঠায়।
+- অবশেষে, চ্যাট ইতিহাস সংরক্ষণ করতে কী-মান স্টোর ব্যবহার করা হয়। নিম্নলিখিত কারণে চ্যাট ইতিহাস ডেটার ডাটাবেসের জন্য কী-মূল্য সঞ্চয় করে:
+   - এটা সহজ অনুভূমিক স্কেলিং অনুমতি দেয়.
+   - কেভি স্টোরগুলি ডেটা অ্যাক্সেস করতে খুব কম লেটেন্সি প্রদান করে।
+   - রিলেশনাল ডেটাবেসগুলি ডেটার লম্বা লেজ ভালভাবে পরিচালনা করে না। যখন সূচক বৃদ্ধি পায়
+   বড়, এলোমেলো অ্যাক্সেস ব্যয়বহুল।
+   - কেভি স্টোরগুলি অন্যান্য প্রমাণিত নির্ভরযোগ্য চ্যাট অ্যাপ্লিকেশন দ্বারা গৃহীত হয়। যেমন,
+   ফেসবুক মেসেঞ্জার এবং ডিসকর্ড উভয়ই।
 
 
-Following are the data models for one-to-one chat and group chat.
-   - The primary key is message id, which helps to decide message sequence.
-   - For the group chat the composite primary key is (channel_id, message_id). 
-      - IDs can be generated using a global 64-bit sequence number generator like Snowflake.
-      - A better approach is to use local sequence number generator. Local means IDs are only unique within a group.
-      - The reason why local IDs work is that maintaining message sequence within one-on-one channel or a group channel is sufficient. 
+ওয়ান-টু-ওয়ান চ্যাট এবং গ্রুপ চ্যাটের জন্য ডেটা মডেলগুলি নীচে দেওয়া হল।
+   - প্রাথমিক কী হল মেসেজ আইডি, যা বার্তার ক্রম নির্ধারণ করতে সাহায্য করে।
+   - গ্রুপ চ্যাটের জন্য যৌগিক প্রাথমিক কী হল (channel_id, message_id)। 
+      - স্নোফ্লেকের মতো একটি গ্লোবাল 64-বিট সিকোয়েন্স নম্বর জেনারেটর ব্যবহার করে আইডি তৈরি করা যেতে পারে।
+      - একটি ভাল পদ্ধতি হল স্থানীয় ক্রম নম্বর জেনারেটর ব্যবহার করা। স্থানীয় মানে আইডি শুধুমাত্র একটি গ্রুপের মধ্যে অনন্য।
+      - স্থানীয় আইডিগুলি কেন কাজ করে তা হল একের পর এক চ্যানেল বা একটি গ্রুপ চ্যানেলের মধ্যে বার্তা ক্রম বজায় রাখা যথেষ্ট।
       
       <img src="./images/one-to-one-chat.png" alt="One to one chat design" width="300">   
       <img src="./images/group-chat.png" alt="Group chat design" width="300">   
 
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Service Discovery
+### পরিষেবা আবিষ্কার
 
 <div style="margin-left:3rem">
    <img src="./images/zookeeper.png" alt="Zookeeper" width="400">   
 </div>
 
-- The primary role of service discovery is to recommend the best chat server for a client based
-on the criteria like geographical location, server capacity. 
-- Uses **Apache Zookeeper** to allocate chat servers based on criteria like geographic location and server capacity.
-- Ensures efficient load distribution and minimizes latency.
+- পরিষেবা আবিষ্কারের প্রাথমিক ভূমিকা হল ক্লায়েন্ট ভিত্তিক সেরা চ্যাট সার্ভারের সুপারিশ করা
+ভৌগলিক অবস্থান, সার্ভারের ক্ষমতার মতো মানদণ্ডে। 
+- ভৌগলিক অবস্থান এবং সার্ভারের ক্ষমতার মতো মানদণ্ডের উপর ভিত্তি করে চ্যাট সার্ভার বরাদ্দ করতে **Apache Zookeeper** ব্যবহার করে।
+- দক্ষ লোড বিতরণ নিশ্চিত করে এবং বিলম্ব কমিয়ে দেয়।
 
 
-### Messaging Flows
-#### One-on-One Chat
+### মেসেজিং প্রবাহ
+#### একের পর এক চ্যাট
 
 
-1. User A sends a message to Chat Server 1.
-2. Chat Server 1 assigns a unique message ID and stores the message in a key-value store.
-3. If User B is online, the message is forwarded to Chat Server 2, maintaining a persistent WebSocket connection.
-4. If User B is offline, a push notification is sent.
+1. ব্যবহারকারী A চ্যাট সার্ভার 1 এ একটি বার্তা পাঠায়।
+2. চ্যাট সার্ভার 1 একটি অনন্য বার্তা আইডি বরাদ্দ করে এবং একটি মূল-মূল্যের দোকানে বার্তা সংরক্ষণ করে।
+3. ব্যবহারকারী B অনলাইন থাকলে, একটি স্থায়ী ওয়েবসকেট সংযোগ বজায় রেখে বার্তাটি চ্যাট সার্ভার 2-এ ফরোয়ার্ড করা হয়।
+4. ব্যবহারকারী B অফলাইনে থাকলে, একটি পুশ বিজ্ঞপ্তি পাঠানো হয়।
 
 
 
-#### Group Chat
+#### গ্রুপ চ্যাট
 
 <div style="margin-left:3rem">
    <img src="./images/group-chat-flow.png" alt="Group Chat Flow" width="400">  
 </div>
 
-- Messages are copied to individual inboxes for each recipient in the group.
-- Simplifies synchronization but becomes expensive for larger groups.
-- On the recipient side, a recipient can receive messages from multiple users. Each recipient
-has an inbox (message sync queue) which contains messages from different senders.
+- গ্রুপের প্রতিটি প্রাপকের জন্য বার্তাগুলি পৃথক ইনবক্সে অনুলিপি করা হয়।
+- সিঙ্ক্রোনাইজেশন সহজ করে কিন্তু বড় গোষ্ঠীর জন্য ব্যয়বহুল হয়ে ওঠে।
+- প্রাপকের দিকে, একজন প্রাপক একাধিক ব্যবহারকারীর কাছ থেকে বার্তা পেতে পারেন। প্রতিটি প্রাপক
+একটি ইনবক্স রয়েছে (বার্তা সিঙ্ক সারি) যাতে বিভিন্ন প্রেরকের বার্তা থাকে৷
 
 ---
 
-#### Message Synchronization
+#### বার্তা সিঙ্ক্রোনাইজেশন
 
-Many users have multiple devices. We need to synchronize the message across the devices.
-Each device maintains a variable called cur_max_message_id, which keeps track of the latest
-message ID on the device. Messages that satisfy the following two conditions are considered
-as news messages:
+অনেক ব্যবহারকারীর একাধিক ডিভাইস রয়েছে। আমাদের সমস্ত ডিভাইস জুড়ে বার্তাটি সিঙ্ক্রোনাইজ করতে হবে।
+প্রতিটি ডিভাইস cur_max_message_id নামক একটি ভেরিয়েবল বজায় রাখে, যা সর্বশেষ ট্র্যাক রাখে
+ডিভাইসে বার্তা আইডি। নিম্নলিখিত দুটি শর্ত পূরণ করে এমন বার্তা বিবেচনা করা হয়
+সংবাদ বার্তা হিসাবে:
 
 <div style="margin-left:3rem">
    <img src="./images/message-synchronization.png" alt="Message Synchronization"  width="400">  
 </div>
 
-- The recipient ID is equal to the currently logged-in user ID.
-- Message ID in the key-value store is larger than cur_max_message_id
+- প্রাপক আইডি বর্তমানে লগ ইন করা ইউজার আইডির সমান।
+- কী-মানের দোকানে বার্তা আইডি cur_max_message_id থেকে বড়
 
 ---
 
-### Online Presence
-1. **Heartbeat Mechanism:** 
+### অনলাইন উপস্থিতি
+1. **হার্টবিট মেকানিজম:**
    <div style="margin-left:3rem">
       <img src="./images/heartbeat-mechanism.png" alt="Heartbeat Mechanism" width="400"> 
    </div>
    
-   - Clients send periodic heartbeats to presence servers to indicate they are online. 
-   - If no heartbeat is received within a threshold (for eg x = 30), the user is marked offline.
+- ক্লায়েন্টরা অনলাইনে রয়েছে তা নির্দেশ করার জন্য উপস্থিতি সার্ভারগুলিতে পর্যায়ক্রমিক হার্টবিট পাঠায়। 
+   - যদি একটি থ্রেশহোল্ডের মধ্যে কোনো হার্টবিট না পাওয়া যায় (যেমন x = 30), ব্যবহারকারী অফলাইনে চিহ্নিত করা হয়।
 
      
 
-2. **Fanout Model:** 
+2. **ফ্যানআউট মডেল:**
 
    <div style="margin-left:3rem">
       <img src="./images/fanout-presence.png" alt="Fanout Presence" width="400"> 
    </div>
 
-   - Presence updates are pushed to friends using a publish-subscribe model in which each friend pair maintains a channel.
-   - When User A’s online status changes, it publishes the event to three channels, channel A-B, A-C, and A-D. 
-   - Those three channels are subscribed by User B, C, and D, respectively which get the online status updates.
-   - The above design is effective for a small user groups.
+- উপস্থিতি আপডেটগুলি একটি প্রকাশ-সাবস্ক্রাইব মডেল ব্যবহার করে বন্ধুদের কাছে পাঠানো হয় যেখানে প্রতিটি বন্ধু জুটি একটি চ্যানেল বজায় রাখে৷
+   - যখন ব্যবহারকারী A এর অনলাইন স্থিতি পরিবর্তিত হয়, তখন এটি তিনটি চ্যানেল, চ্যানেল A-B, A-C এবং A-D-এ ইভেন্টটি প্রকাশ করে। 
+   - এই তিনটি চ্যানেল যথাক্রমে ব্যবহারকারী B, C, এবং D দ্বারা সাবস্ক্রাইব করা হয়েছে, যা অনলাইন স্ট্যাটাস আপডেট পায়।
+   - উপরের নকশাটি একটি ছোট ব্যবহারকারী গ্রুপের জন্য কার্যকর।
 
 
 ---
 
-## Additional Considerations
-### Scalability
-- **Horizontal Scaling:** Add servers as user count increases.
-- **Load Balancing:** Distribute traffic evenly across servers.
-- **Caching:** Reduce database load and improve latency.
+## অতিরিক্ত বিবেচনা
+### পরিমাপযোগ্যতা
+- **অনুভূমিক স্কেলিং:** ব্যবহারকারীর সংখ্যা বাড়লে সার্ভার যোগ করুন।
+- **লোড ব্যালেন্সিং:** সার্ভার জুড়ে সমানভাবে ট্রাফিক বিতরণ করুন।
+- **ক্যাশিং:** ডাটাবেস লোড হ্রাস করুন এবং লেটেন্সি উন্নত করুন।
 
-### Error Handling
-- **Retry Mechanisms:** Handle message delivery failures with retries and queuing.
-- **Server Failures:** Use service discovery to allocate new servers in case of failures.
+### ত্রুটি হ্যান্ডলিং
+- **পুনরায় চেষ্টা করার প্রক্রিয়া:** মেসেজ ডেলিভারি ব্যর্থতাকে পুনঃপ্রচেষ্টা এবং সারিবদ্ধ করে পরিচালনা করুন।
+- **সার্ভার ব্যর্থতা:** ব্যর্থতার ক্ষেত্রে নতুন সার্ভার বরাদ্দ করতে পরিষেবা আবিষ্কার ব্যবহার করুন।
 
-### Future Extensions
-1. **Media Support:** Add handling for photos and videos, including compression and cloud storage.
-2. **End-to-End Encryption:** Ensure message privacy.
-3. **Client-Side Caching:** Reduce data transfer for better performance.
-4. **Improved Load Times:** Use geographically distributed caching networks.
+### ভবিষ্যত এক্সটেনশন
+1. **মিডিয়া সমর্থন:** কম্প্রেশন এবং ক্লাউড স্টোরেজ সহ ফটো এবং ভিডিওগুলির জন্য হ্যান্ডলিং যোগ করুন।
+2. **এন্ড-টু-এন্ড এনক্রিপশন:** বার্তার গোপনীয়তা নিশ্চিত করুন।
+3. **ক্লায়েন্ট-সাইড ক্যাশিং:** ভাল পারফরম্যান্সের জন্য ডেটা স্থানান্তর হ্রাস করুন।
+4. **উন্নত লোড সময়:** ভৌগলিকভাবে বিতরণ করা ক্যাশিং নেটওয়ার্ক ব্যবহার করুন।
 

@@ -1,150 +1,150 @@
-# অধ্যায় 1: শূন্য থেকে লক্ষ-কোটি ব্যবহারকারীতে স্কেলিং
+# অধ্যায় 1: শূন্য থেকে মিলিয়ন ব্যবহারকারীর স্কেল
 
-## ভূমিকা (Introduction)
-লক্ষ-কোটি ব্যবহারকারীকে সাপোর্ট দেওয়ার জন্য একটি সিস্টেম স্কেল করা একটি ধারাবাহিক এবং পুনরাবৃত্তিমূলক যাত্রা requiring refinement and optimization. This chapter outlines how to begin with a single server setup and scale the architecture step by step to handle millions of users.
+## ভূমিকা
+লক্ষ লক্ষ ব্যবহারকারীদের সমর্থন করার জন্য একটি সিস্টেমকে স্কেল করা একটি জটিল, পুনরাবৃত্তিমূলক যাত্রা যা পরিমার্জন এবং অপ্টিমাইজেশানের প্রয়োজন৷ এই অধ্যায়ে রূপরেখা দেওয়া হয়েছে কিভাবে একটি একক সার্ভার সেটআপ দিয়ে শুরু করতে হয় এবং লক্ষ লক্ষ ব্যবহারকারীকে পরিচালনা করার জন্য ধাপে ধাপে আর্কিটেকচার স্কেল করতে হয়।
 
 ---
 
-## সেকশন ১: সিঙ্গেল সার্ভার সেটআপ (Single Server Setup)
-শুরুর দিকে সমস্ত উপাদান (ওয়েব অ্যাপ, ডাটাবেস, ক্যাশ) একটিমাত্র সার্ভারেই পরিচালিত হয়। 
+## বিভাগ 1: একক সার্ভার সেটআপ
+প্রাথমিকভাবে, সমস্ত উপাদান (ওয়েব অ্যাপ, ডাটাবেস, ক্যাশে) একটি একক সার্ভারে চলে।
 
 <div style="margin-left:3rem">
    <img src="./images/single-server.png" width="400" />
 </div>
 
-### রিকোয়েস্ট ফ্লো (Request Flow)
-1. ব্যবহারকারীরা ডোমেন নামের মাধ্যমে অ্যাপ্লিকেশনে প্রবেশ করে (e.g., `api.mysite.com`), resolved to IP addresses using DNS.
-2. IP address of the web-server is returned to the browser or mobile app.
-3. HTTP requests are sent to the web server, which returns HTML or JSON responses.
+### অনুরোধ প্রবাহ
+1. ব্যবহারকারীরা ডোমেন নামের মাধ্যমে অ্যাপ্লিকেশন অ্যাক্সেস করে (যেমন, `api.mysite.com`), ডিএনএস ব্যবহার করে আইপি ঠিকানায় সমাধান করা হয়।
+2. ওয়েব সার্ভারের IP ঠিকানা ব্রাউজার বা মোবাইল অ্যাপে ফেরত দেওয়া হয়।
+3. HTTP অনুরোধগুলি ওয়েব সার্ভারে পাঠানো হয়, যা HTML বা JSON প্রতিক্রিয়া প্রদান করে।
 
-### ট্রাফিক সোর্সসমূহ (Traffic Sources)
-1. **Web Applications:** Use server-side languages (e.g., Python, Java) for business logic and client-side languages (e.g., JavaScript, HTML) for presentation.
-2. **Mobile Applications:** Communicate with the web server using HTTP and JSON for lightweight data exchange.
+### ট্রাফিক সোর্স
+1. **ওয়েব অ্যাপ্লিকেশন:** ব্যবসায়িক যুক্তির জন্য সার্ভার-সাইড ভাষা (যেমন, পাইথন, জাভা) এবং উপস্থাপনার জন্য ক্লায়েন্ট-সাইড ভাষা (যেমন, জাভাস্ক্রিপ্ট, এইচটিএমএল) ব্যবহার করুন।
+2. **মোবাইল অ্যাপ্লিকেশন:** হালকা ডেটা বিনিময়ের জন্য HTTP এবং JSON ব্যবহার করে ওয়েব সার্ভারের সাথে যোগাযোগ করুন।
 
 ---
 
-## সেকশন ২: ডাটাবেস পৃথকীকরণ (Database Separation)
-ব্যবহারকারীর সংখ্যা বৃদ্ধির সাথে সাথে ডাটাবেসকে একটি স্বতন্ত্র ডেডিকেটেড সার্ভারে স্থানান্তরিত করা হয় to allow independent scaling of web and database tiers.
+## বিভাগ 2: ডাটাবেস বিচ্ছেদ
+ব্যবহারকারীর ভিত্তি বাড়ার সাথে সাথে, ওয়েব এবং ডাটাবেস স্তরগুলির স্বাধীন স্কেলিংকে অনুমতি দেওয়ার জন্য ডেটাবেস একটি ডেডিকেটেড সার্ভারে সরানো হয়।
 
 <div style="margin-left:3rem">
    <img src="./images/database.png" width="400" />
 </div>
 
-### ডাটাবেস নির্বাচন (Database Choices)
+### ডাটাবেস পছন্দ
 
-1. **রিলেশনাল ডাটাবেস (SQL):** Structured data stored in tables. Examples: MySQL, PostgreSQL.
-2. **নন-রিলেশনাল ডাটাবেস (NoSQL):** Suitable for unstructured data or low-latency requirements. Categories include:
-   - কী-ভ্যালু স্টোর (Key-Value Stores)
-   - গ্রাফ ডাটাবেস (Graph Databases)
-   - কলাম স্টোর (Column Stores)
-   - ডকুমেন্ট স্টোর (Document Stores)
+1. **রিলেশনাল ডেটাবেস (SQL):** স্ট্রাকচার্ড ডেটা টেবিলে সংরক্ষিত। উদাহরণ: MySQL, PostgreSQL।
+2. **নন-রিলেশনাল ডেটাবেস (NoSQL):** অসংগঠিত ডেটা বা কম লেটেন্সি প্রয়োজনীয়তার জন্য উপযুক্ত। বিভাগ অন্তর্ভুক্ত:
+   - কী-ভ্যালু স্টোর
+   - গ্রাফ ডাটাবেস
+   - কলাম স্টোর
+   - নথির দোকান
 
-- Non-relational databases might be the right choice if:
-   - application requires super-low latency.
-   - data is unstructured, or  there is no relational data.
-   - only need to serialize and deserialize data (JSON, XML, YAML, etc.).
-   - need to store a massive amount of data.
+- সম্পর্কহীন ডাটাবেস সঠিক পছন্দ হতে পারে যদি:
+   - অ্যাপ্লিকেশনের জন্য অতি-লো লেটেন্সি প্রয়োজন।
+   - ডেটা অসংগঠিত, বা কোনও সম্পর্কযুক্ত ডেটা নেই।
+   - শুধুমাত্র ডেটা সিরিয়ালাইজ এবং ডিসিরিয়ালাইজ করতে হবে (JSON, XML, YAML, ইত্যাদি)।
+   - প্রচুর পরিমাণে ডেটা সঞ্চয় করতে হবে।
 
 ---
 
-## সেকশন ৩: ভার্টিক্যাল বনাম হরাইজন্টাল স্কেলিং
-### ভার্টিক্যাল স্কেলিং (Vertical Scaling)
-- বিদ্যমান সার্ভারে আরও রিসোর্স (CPU, RAM) যুক্ত করে ক্ষমতা বৃদ্ধি করা।
-- হার্ডওয়্যার সীমাবদ্ধতা রয়েছে এবং কোনো রিডানড্যান্সি থাকে না।
+## বিভাগ 3: উল্লম্ব বনাম অনুভূমিক স্কেলিং
+### উল্লম্ব স্কেলিং
+- বিদ্যমান সার্ভারগুলিতে আরও সংস্থান (CPU, RAM) যোগ করে।
+- হার্ডওয়্যার সীমাবদ্ধতা দ্বারা সীমাবদ্ধ এবং অপ্রয়োজনীয়তার অভাব।
 
-### হরাইজন্টাল স্কেলিং (Horizontal Scaling)
-- সার্ভার পুলে নতুন সার্ভার যুক্ত করে অনুভূমিকভাবে স্কেল করা হয়, যা বড় আকারের সিস্টেমের জন্য আদর্শ।
-- সার্ভারগুলোর মাঝে ট্রাফিক সুষমভাবে বন্টন করার জন্য একটি লোড ব্যালেন্সার (Load Balancer) ব্যবহৃত হয়।
+### অনুভূমিক স্কেলিং
+- পুলে আরও সার্ভার যোগ করে, এটিকে বড় আকারের সিস্টেমের জন্য আরও উপযুক্ত করে তোলে।
+- সার্ভারের মধ্যে অনুরোধ রাউটিং পরিচালনা করতে একটি লোড ব্যালেন্সার ব্যবহার করা হয়।
 ---
 
-## সেকশন ৪: লোড ব্যালেন্সার (Load Balancer)
+## বিভাগ 4: লোড ব্যালেন্সার
 
 <div style="margin-left:3rem">
    <img src="./images/load-balancer.png" width="400" />
 </div>
 
-A **load balancer** distributes traffic among multiple servers. Benefits include:
-1. Redundancy: If a server goes offline, traffic is rerouted.
-   -  If server 1 goes offline, all the traffic will be routed to server 2.
-2. Scalability: Easily add servers to handle traffic spikes.
-   -  If the website traffic grows rapidly, subsequent servers can be added to handle the additional traffic.
+একটি **লোড ব্যালেন্সার** একাধিক সার্ভারের মধ্যে ট্রাফিক বিতরণ করে। সুবিধার মধ্যে রয়েছে:
+1. অপ্রয়োজনীয়তা: যদি একটি সার্ভার অফলাইনে যায়, তাহলে ট্রাফিক পুনরায় রুট করা হয়।
+   - সার্ভার 1 অফলাইনে গেলে, সমস্ত ট্র্যাফিক সার্ভার 2 এ রুট করা হবে৷
+2. পরিমাপযোগ্যতা: ট্র্যাফিক স্পাইকগুলি পরিচালনা করতে সহজে সার্ভার যোগ করুন।
+   - ওয়েবসাইট ট্র্যাফিক দ্রুত বৃদ্ধি পেলে, পরবর্তী সার্ভারগুলি অতিরিক্ত ট্র্যাফিক পরিচালনা করতে যোগ করা যেতে পারে।
 
 ---
 
-## সেকশন ৫: ডাটাবেস রেপ্লিকেশন (Database Replication)
+## বিভাগ 5: ডাটাবেস প্রতিলিপি
 
 <div style="margin-left:3rem">
    <img src="./images/database-replication.png" width="400" />
 </div>
 
-### Master-Slave Model
-- **Master Database:** Handles write operations.
-   - All the data-modifying commands like insert, delete, or update must be sent to the master database.
-- **Slave Databases:** Handle read operations, improving performance and reliability.
-   - Since the ratio of reads to writes is higher in most applications; thus, the number of slave
-databases in a system is usually larger than the number of master databases.
+### মাস্টার-স্লেভ মডেল
+- **মাস্টার ডাটাবেস:** লেখার ক্রিয়াকলাপ পরিচালনা করে।
+   - সন্নিবেশ, মুছে ফেলা বা আপডেটের মতো সমস্ত ডেটা-সংশোধনকারী কমান্ডগুলি অবশ্যই মাস্টার ডাটাবেসে পাঠাতে হবে।
+- **স্লেভ ডেটাবেস:** রিড অপারেশন পরিচালনা করুন, কর্মক্ষমতা এবং নির্ভরযোগ্যতা উন্নত করুন।
+   - যেহেতু বেশিরভাগ অ্যাপ্লিকেশনে রিড এবং রাইটের অনুপাত বেশি; এইভাবে, ক্রীতদাসের সংখ্যা
+একটি সিস্টেমে ডাটাবেস সাধারণত মাস্টার ডাটাবেসের সংখ্যার চেয়ে বড় হয়।
 
-### সুবিধাসমূহ (Benefits)
-1. Improved performance through parallel read operations.
-2. উচ্চ প্রাপ্যতা (High Availability) and data reliability through redundancy.
+### সুবিধা
+1. সমান্তরাল রিড অপারেশনের মাধ্যমে উন্নত কর্মক্ষমতা।
+2. অপ্রয়োজনীয়তার মাধ্যমে উচ্চ প্রাপ্যতা এবং ডেটা নির্ভরযোগ্যতা।
 
 
-### Failure Handling
-- If only one slave database is available and it goes offline, read operations will be directed
-to the master database temporarily.
-- In case multiple slave databases are available, read operations are
-redirected to other healthy slave databases and a new server will replace the old one. 
--  If the master database goes offline, a slave database will be promoted to be the new
-master.
-- In production system the chosen slave database might not be up to date, hence data needs to be updated by running data
-recovery scripts (methods like multi-masters and circular replication could help).
+### ব্যর্থ হ্যান্ডলিং
+- যদি শুধুমাত্র একটি স্লেভ ডাটাবেস উপলব্ধ থাকে এবং এটি অফলাইনে চলে যায়, তাহলে পঠিত ক্রিয়াকলাপগুলি নির্দেশিত হবে৷
+অস্থায়ীভাবে মাস্টার ডাটাবেসে।
+- যদি একাধিক স্লেভ ডাটাবেস পাওয়া যায়, তাহলে রিড অপারেশন হয়
+অন্যান্য সুস্থ স্লেভ ডাটাবেসে পুনঃনির্দেশিত করা হয়েছে এবং একটি নতুন সার্ভার পুরানোটিকে প্রতিস্থাপন করবে। 
+- যদি মাস্টার ডাটাবেস অফলাইনে যায়, একটি স্লেভ ডাটাবেসকে নতুন হিসাবে উন্নীত করা হবে
+মাস্টার
+- প্রোডাকশন সিস্টেমে নির্বাচিত স্লেভ ডাটাবেস আপ টু ডেট নাও হতে পারে, তাই ডেটা চালিয়ে ডেটা আপডেট করতে হবে
+রিকভারি স্ক্রিপ্ট (মাল্টি-মাস্টার এবং সার্কুলার রেপ্লিকেশনের মতো পদ্ধতি সাহায্য করতে পারে)।
 
 ---
 
-## সেকশন 6: Caching
-A **cache** stores frequently accessed data in memory to reduce database load. The cache tier is a temporary data store layer, much faster than the database. 
+## বিভাগ 6: ক্যাশিং
+একটি **ক্যাশে** ডেটাবেস লোড কমাতে মেমরিতে ঘন ঘন অ্যাক্সেস করা ডেটা সঞ্চয় করে। ক্যাশে স্তর হল একটি অস্থায়ী ডেটা স্টোর স্তর, ডাটাবেসের চেয়ে অনেক দ্রুত।
 
 <div style="margin-left:3rem">
    <img src="./images/cache.png" width="500" />
 </div>
 
-### Caching considerations
-1. **Use case**: Consider using cache when data is read frequently but modified infrequently.
-2. **Expiration Policies:** Once cached data is expired, it is removed from the cache. When there is no expiration policy, cached
-data will be stored in the memory permanently.
-3. **Consistency:** This means keeping the data store and the cache in sync. Inconsistency
-can happen because data-modifying operations on the data store and cache are not in a single transaction. 
-4. **Mitigating failures**: A single cache server represents a potential single point of failure, multiple
-cache servers across different data centers are recommended to avoid SPOF.
-5. **Eviction Policies:**: Once the cache is full, items need to be evicted to free up memory. LRU is the most popular cache eviction policy.
+### ক্যাশিং বিবেচনা
+1. **কেস ব্যবহার করুন**: যখন ডেটা ঘন ঘন পড়া হয় কিন্তু কদাচিৎ পরিবর্তন করা হয় তখন ক্যাশে ব্যবহার করার কথা বিবেচনা করুন।
+2. **মেয়াদ শেষ হওয়ার নীতি:** একবার ক্যাশ করা ডেটার মেয়াদ শেষ হয়ে গেলে, এটি ক্যাশে থেকে সরানো হয়। যখন কোন মেয়াদ শেষ হওয়ার নীতি নেই, ক্যাশে
+ডেটা স্থায়ীভাবে মেমরিতে সংরক্ষণ করা হবে।
+3. **সংগতি:** এর অর্থ হল ডেটা স্টোর এবং ক্যাশে সিঙ্কে রাখা। অসঙ্গতি
+ঘটতে পারে কারণ ডেটা স্টোর এবং ক্যাশে ডেটা পরিবর্তন করার ক্রিয়াকলাপগুলি একক লেনদেনে নয়। 
+4. **ব্যর্থতা প্রশমন**: একটি একক ক্যাশে সার্ভার ব্যর্থতার সম্ভাব্য একক পয়েন্ট, একাধিক
+SPOF এড়াতে বিভিন্ন ডেটা সেন্টার জুড়ে ক্যাশে সার্ভারগুলি সুপারিশ করা হয়।
+5. **উচ্ছেদ নীতি:**: একবার ক্যাশে পূর্ণ হয়ে গেলে, মেমরি খালি করতে আইটেমগুলিকে উচ্ছেদ করতে হবে। LRU হল সবচেয়ে জনপ্রিয় ক্যাশে উচ্ছেদ নীতি।
 
 ---
 
-## সেকশন ৭: কনটেন্ট ডেলিভারি নেটওয়ার্ক (CDN)
-A **CDN** improves load times by caching static content (images, CSS, JavaScript) on geographically distributed servers.
+## বিভাগ 7: বিষয়বস্তু বিতরণ নেটওয়ার্ক (CDN)
+একটি **CDN** ভৌগলিকভাবে বিতরণ করা সার্ভারে স্ট্যাটিক কন্টেন্ট (ছবি, CSS, জাভাস্ক্রিপ্ট) ক্যাশে করে লোডের সময় উন্নত করে।
 
 <div style="margin-left:3rem">
    <img src="./images/cdn.png" width="400" />
 </div>
 
-### Workflow
-1. User requests content from the nearest CDN server.
-2. If unavailable, content is fetched from the origin server and cached.
+### কর্মপ্রবাহ
+1. ব্যবহারকারী নিকটতম CDN সার্ভার থেকে বিষয়বস্তুর অনুরোধ করে৷
+2. অনুপলব্ধ হলে, মূল সার্ভার থেকে সামগ্রী আনা হয় এবং ক্যাশে করা হয়।
 
 
-### CDN considerations
-1. **Cost:** CDNs are run by third-party providers which charge for data transfers in and out of the CDN.
-2. **Cache Expiry:** The cache expiry time should neither be too long nor too short.
-3. **CDN fallback:** If there is a temporary CDN outage, clients should be able to detect the problem
-and request resources from the origin.
-4. **Invalidating files:** If files are updated the cache should be invalidated to point to the updated files.
+### CDN বিবেচনা
+1. **খরচ:** CDNগুলি তৃতীয়-পক্ষ প্রদানকারী দ্বারা চালিত হয় যা CDN-এর মধ্যে এবং বাইরে ডেটা স্থানান্তরের জন্য চার্জ নেয়৷
+2. **ক্যাশ এক্সপায়ারি:** ক্যাশ এক্সপায়ারির সময় খুব বেশি লম্বা বা খুব কম হওয়া উচিত নয়।
+3. **CDN ফলব্যাক:** যদি একটি অস্থায়ী CDN বিভ্রাট থাকে, ক্লায়েন্টদের সমস্যাটি সনাক্ত করতে সক্ষম হওয়া উচিত
+এবং উত্স থেকে সংস্থান অনুরোধ.
+4. **অবৈধ ফাইল:** যদি ফাইলগুলি আপডেট করা হয় তবে আপডেট করা ফাইলগুলির দিকে নির্দেশ করার জন্য ক্যাশেকে অবৈধ করা উচিত৷
 
 ---
 
-## সেকশন ৮: স্টেটলেস ওয়েব টিয়ার (Stateless Web Tier)
-By moving session data to a shared datastore, web servers become stateless. This allows:
-1. Easier horizontal scaling.
-2. Auto-scaling based on traffic.
+## বিভাগ 8: রাষ্ট্রহীন ওয়েব স্তর
+একটি শেয়ার্ড ডেটাস্টোরে সেশন ডেটা সরানোর মাধ্যমে, ওয়েব সার্ভারগুলি রাষ্ট্রহীন হয়ে যায়। এটি অনুমতি দেয়:
+1. সহজ অনুভূমিক স্কেলিং.
+2. ট্র্যাফিকের উপর ভিত্তি করে অটো-স্কেলিং।
 
 <div style="margin-left:3rem">
    <img src="./images/stateless.png" width="400" />
@@ -152,88 +152,88 @@ By moving session data to a shared datastore, web servers become stateless. This
 
 ---
 
-## সেকশন 9: Multi-Data Center Setup
-Deploying across multiple data centers improves availability and reduces latency. Strategies include:
+## বিভাগ 9: মাল্টি-ডেটা সেন্টার সেটআপ
+একাধিক ডেটা সেন্টার জুড়ে স্থাপন করা প্রাপ্যতা উন্নত করে এবং বিলম্ব কমায়। কৌশল অন্তর্ভুক্ত:
 
 <div style="margin-left:3rem">
    <img src="./images/data-center.png" width="400" />
 </div>
 
-1. **GeoDNS Routing:** Direct users to the nearest data center.
-2. **Data Replication:** Synchronize data across centers to prevent inconsistencies.
+1. **জিওডিএনএস রাউটিং:** ব্যবহারকারীদের নিকটতম ডেটা সেন্টারে সরাসরি পাঠান।
+2. **ডেটা রেপ্লিকেশন:** অসঙ্গতি রোধ করতে কেন্দ্র জুড়ে ডেটা সিঙ্ক্রোনাইজ করুন।
 
-### Key considerations
-- **Traffic redirection:** Effective tools are needed to direct traffic to the correct data center.
-- **Data synchronization:** A common strategy is to replicate data across multiple data centers. 
-- **Test and deployment:**  Automated deployment tools are vital to keep services consistent through all the data centers.
+### মূল বিবেচনা
+- **ট্রাফিক পুনঃনির্দেশ:** সঠিক ডেটা সেন্টারে ট্র্যাফিককে নির্দেশিত করার জন্য কার্যকর সরঞ্জামগুলির প্রয়োজন৷
+- **ডেটা সিঙ্ক্রোনাইজেশন:** একটি সাধারণ কৌশল হল একাধিক ডেটা সেন্টার জুড়ে ডেটা প্রতিলিপি করা। 
+- **পরীক্ষা এবং স্থাপনা:** স্বয়ংক্রিয় স্থাপনার সরঞ্জামগুলি সমস্ত ডেটা সেন্টারের মাধ্যমে পরিষেবাগুলিকে সামঞ্জস্যপূর্ণ রাখার জন্য গুরুত্বপূর্ণ৷
 
 ---
 
-## সেকশন ১০: মেসেজ কিউ (Message Queue)
-A **message queue** is a durable component, stored in memory, that supports asynchronous
-communication. It serves as a buffer and distributes asynchronous requests.
+## বিভাগ 10: বার্তা সারি
+একটি **বার্তা সারি** একটি টেকসই উপাদান, মেমরিতে সংরক্ষিত, যা অ্যাসিঙ্ক্রোনাস সমর্থন করে
+যোগাযোগ এটি একটি বাফার হিসাবে কাজ করে এবং অ্যাসিঙ্ক্রোনাস অনুরোধগুলি বিতরণ করে।
 
 <div style="margin-left:3rem">
    <img src="./images//message-queue.png" width="500" />
 </div>
 
-- Input services, called producers/publishers, create messages, and publish them to a message queue.
-- Other services called consumers/subscribers, connect to the queue, and perform actions defined by the messages.
+- ইনপুট পরিষেবা, যাকে প্রযোজক/প্রকাশক বলা হয়, বার্তা তৈরি করে এবং একটি বার্তা সারিতে প্রকাশ করে৷
+- ভোক্তা/সাবস্ক্রাইবার নামে পরিচিত অন্যান্য পরিষেবা, সারির সাথে সংযোগ স্থাপন করে এবং বার্তা দ্বারা সংজ্ঞায়িত ক্রিয়া সম্পাদন করে।
 
 ---
 
-## সেকশন 11: Logging, Metrics, and Automation
+## বিভাগ 11: লগিং, মেট্রিক্স, এবং অটোমেশন
 
 <div style="margin-left:3rem">
    <img src="./images/logging.png" width="400" />
 </div>
 
-### Importance
-1. **Logging:** Tracks errors and system health.
-2. **Metrics:** Provides insights into performance and user activity.
-3. **Automation:** Streamlines testing, deployment, and scaling.
+### গুরুত্ব
+1. **লগিং:** ত্রুটি এবং সিস্টেমের স্বাস্থ্য ট্র্যাক করে।
+2. **মেট্রিক্স:** কর্মক্ষমতা এবং ব্যবহারকারীর কার্যকলাপের অন্তর্দৃষ্টি প্রদান করে।
+3. **অটোমেশন:** স্ট্রীমলাইন টেস্টিং, ডিপ্লয়মেন্ট এবং স্কেলিং।
 
 ---
 
-## সেকশন ১২: ডাটাবেস স্কেলিং ও শার্ডিং (Database Scaling)
-### ভার্টিক্যাল স্কেলিং (Vertical Scaling)
-- Adds hardware resources but has physical and cost limitations.
-- Has multiple drawbacks:
-   -  Greater risk of single point of failures.
-   -  Overall cost of vertical scaling is high
+## বিভাগ 12: ডাটাবেস স্কেলিং
+### উল্লম্ব স্কেলিং
+- হার্ডওয়্যার সংস্থান যোগ করে তবে শারীরিক এবং খরচের সীমাবদ্ধতা রয়েছে।
+- একাধিক অপূর্ণতা আছে:
+   - ব্যর্থতার একক পয়েন্টের বৃহত্তর ঝুঁকি।
+   - উল্লম্ব স্কেলিং এর সামগ্রিক খরচ বেশি
 
-### হরাইজন্টাল স্কেলিং (শার্ডিং)
+### অনুভূমিক স্কেলিং (ভাগ করা)
 
 <div style="margin-left:3rem">
    <img src="./images/horizontal-scaling.png" width="400" />
 </div>
 
-- Divides data across multiple shards using keys (e.g., `user_id`).
-   - Sharding separates large databases into smaller, more easily managed parts called shards.
-   - Each shard shares the same schema, though the actual data on each shard is unique to the shard.
--  Sharding key is critical when implementing a sharding strategy. When choosing a sharding key it is important to choose a key that can evenly distribute data.
+- কী ব্যবহার করে একাধিক শার্ড জুড়ে ডেটা ভাগ করে (যেমন, `user_id`)।
+   - শার্ডিং বড় ডাটাবেসকে ছোট, আরও সহজে পরিচালিত অংশে বিভক্ত করে যাকে শার্ড বলা হয়।
+   - প্রতিটি শার্ড একই স্কিমা ভাগ করে, যদিও প্রতিটি শার্ডের প্রকৃত ডেটা শার্ডের জন্য অনন্য।
+- একটি শার্ডিং কৌশল প্রয়োগ করার সময় শার্ডিং কী গুরুত্বপূর্ণ। একটি শার্ডিং কী নির্বাচন করার সময় একটি কী নির্বাচন করা গুরুত্বপূর্ণ যা সমানভাবে ডেটা বিতরণ করতে পারে।
 
-#### Challenges
-1. **Resharding data:** Resharding data is needed when:
-   - Single shard could no longer hold more data due to rapid growth. 
-   - Certain shards might experience shard exhaustion faster than others due to uneven data distribution.
-   - Consistent Hashing is used to overcome these problems
+#### চ্যালেঞ্জ
+1. **ডেটা রিশার্ড করা:** ডেটা রিশার্ড করার প্রয়োজন হয় যখন:
+   - দ্রুত বৃদ্ধির কারণে একক শার্ড আর বেশি ডেটা ধারণ করতে পারে না। 
+   - অসম ডেটা বিতরণের কারণে কিছু শার্ড অন্যদের তুলনায় দ্রুত ক্লান্তি অনুভব করতে পারে।
+   - এই সমস্যাগুলি কাটিয়ে উঠতে সামঞ্জস্যপূর্ণ হ্যাশিং ব্যবহার করা হয়
 
-2. **Celebrity problem:**  Excessive access to a specific shard could cause server overload.
-   - To solve this problem, we may need to allocate a shard for each celebrity.
+2. **সেলিব্রিটি সমস্যা:** একটি নির্দিষ্ট শার্ডে অতিরিক্ত অ্যাক্সেস সার্ভার ওভারলোডের কারণ হতে পারে।
+   - এই সমস্যাটি সমাধান করার জন্য, আমাদের প্রতিটি সেলিব্রিটির জন্য একটি শার্ড বরাদ্দ করতে হতে পারে।
 
-3. **Join and de-normalization:** Once a database has been sharded across multiple servers, it is hard to perform join operations across database shards.
-   -  A common workaround is to de-normalize the database so that queries can be performed in a single table.
+3. **যোগদান এবং ডি-নর্মালাইজেশন:** একবার একাধিক সার্ভারে একটি ডাটাবেস শার্ড হয়ে গেলে, ডাটাবেস শার্ড জুড়ে জয়েন অপারেশন করা কঠিন।
+   - একটি সাধারণ সমাধান হল ডাটাবেসটিকে স্বাভাবিক করা যাতে একটি একক টেবিলে প্রশ্নগুলি সম্পাদন করা যায়।
 
 ---
 
-## Conclusion
-### Key Takeaways
-1. Keep the web tier stateless.
-2. Build redundancy at every tier.
-3. Use caching and CDNs to optimize performance.
-4. Scale the data tier with sharding.
-5. Decouple components for flexibility.
+## উপসংহার
+### মূল গ্রহণ
+1. ওয়েব স্তর রাষ্ট্রহীন রাখুন.
+2. প্রতিটি স্তরে অপ্রয়োজনীয়তা তৈরি করুন।
+3. কর্মক্ষমতা অপ্টিমাইজ করতে ক্যাশিং এবং CDN ব্যবহার করুন।
+4. শার্ডিং দিয়ে ডেটা স্তর স্কেল করুন।
+5. নমনীয়তার জন্য উপাদানগুলিকে দ্বিগুণ করুন।
 
-This chapter provides a solid foundation for building scalable systems that can handle millions of users.
+এই অধ্যায়টি স্কেলযোগ্য সিস্টেম তৈরির জন্য একটি শক্ত ভিত্তি প্রদান করে যা লক্ষ লক্ষ ব্যবহারকারীকে পরিচালনা করতে পারে।
 

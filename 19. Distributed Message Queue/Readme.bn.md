@@ -1,588 +1,588 @@
-# অধ্যায় 19: ডিস্ট্রিবিউটেড মেসেজ কিউ (Kafka/Pulsar)
+# অধ্যায় 19: বিতরণ করা বার্তা সারি
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-We'll be designing a **distributed message queue** in this chapter.
+আমরা এই অধ্যায়ে একটি **ডিস্ট্রিবিউটেড মেসেজ সারি** ডিজাইন করব।
 
-Benefits of message queues:
-- **Decoupling**: Eliminates tight coupling between components. Let them update separately.
-- **Improved scalability**: Producers and consumers can be scaled independently based on traffic.
-- **Increased availability**: If one part of the system goes down, other parts continue interacting with the queue.
-- **Better performance**: Producers can produce messages without waiting for consumer confirmation.
+বার্তা সারির সুবিধা:
+- **ডিকপলিং**: উপাদানগুলির মধ্যে টাইট কাপলিং দূর করে। তাদের আলাদাভাবে আপডেট করা যাক।
+- **উন্নত মাপযোগ্যতা**: প্রযোজক এবং ভোক্তাদের ট্রাফিকের উপর ভিত্তি করে স্বাধীনভাবে মাপানো যেতে পারে।
+- **বর্ধিত প্রাপ্যতা**: যদি সিস্টেমের একটি অংশ নিচে চলে যায়, অন্য অংশগুলি সারির সাথে ইন্টারঅ্যাক্ট করতে থাকে।
+- **আরো ভালো পারফরম্যান্স**: প্রযোজকরা ভোক্তা নিশ্চিতকরণের জন্য অপেক্ষা না করে বার্তা তৈরি করতে পারেন।
 
-Some popular message queue implementations - Kafka, RabbitMQ, RocketMQ, Apache Pulsar, ActiveMQ, ZeroMQ.
+কিছু জনপ্রিয় বার্তা সারি বাস্তবায়ন - Kafka, RabbitMQ, RocketMQ, Apache Pulsar, ActiveMQ, ZeroMQ।
 
-Strictly speaking, Kafka and Pulsar are not message queues. They are event streaming platforms.
-There is however a convergence of features which blurs the distinction between message queues and event streaming platforms.
+কঠোরভাবে বলতে গেলে, কাফকা এবং পালসার বার্তা সারি নয়। তারা ইভেন্ট স্ট্রিমিং প্ল্যাটফর্ম.
+তবে বৈশিষ্ট্যগুলির একটি মিলন রয়েছে যা বার্তা সারি এবং ইভেন্ট স্ট্রিমিং প্ল্যাটফর্মগুলির মধ্যে পার্থক্যকে অস্পষ্ট করে।
 
-In this chapter, we'll be building a message queue with support for more advanced features such as long data retention, repeated message consumption, etc.
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-
-Message queues ought to support few basic features - producers produce messages and consumers consume them.
-There are, however, different considerations with regards to performance, message delivery, data retention, etc.
-
-Here's a set of potential questions between Candidate and Interviewer:
- * C: What's the format and average message size? Is it text only?
- * I: Messages are text-only and usually a few KBs
- * C: Can messages be repeatedly consumed?
- * I: Yes, messages can be repeatedly consumed by different consumers. This is an added requirement, which traditional message queues don't support.
- * C: Are messages consumed in the same order they were produced?
- * I: Yes, order guarantee should be preserved. This is an added requirement, traditional message queues don't support this.
- * C: What are the data retention requirements?
- * I: Messages need to have a retention of two weeks. This is an added requirement.
- * C: How many producers and consumers do we want to support?
- * I: The more, the better.
- * C: What data delivery semantic do we want to support? At-most-once, at-least-once, exactly-once?
- * I: We definitely want to support at-least-once. Ideally, we can support all and make them configurable.
- * C: What's the target throughput for end-to-end latency?
- * I: It should support high throughput for use cases like log aggregation and low throughput for more traditional use cases.
-
-### **Functional requirements**
-
- * Producers send messages to a message queue
- * Consumers consume messages from the queue
- * Messages can be consumed once or repeatedly
- * Historical data can be truncated
- * Message size is in the KB range
- * Order of messages needs to be preserved
- * Data delivery semantics is configurable - at-most-once/at-least-once/exactly-once.
-
-### **Non-functional requirements**
-
-- **High throughput or low latency**: Configurable based on use-case
-- **Scalable**: system should be distributed and support a sudden surge in message volume
-- **Persistent and durable**: data should be persisted on disk and replicated among nodes
-
-Traditional message queues typically don't support data retention and don't provide ordering guarantees. This greatly simplifies the design and we'll discuss it.
+এই অধ্যায়ে, আমরা আরও উন্নত বৈশিষ্ট্যগুলির জন্য সমর্থন সহ একটি বার্তা সারি তৈরি করব যেমন দীর্ঘ ডেটা ধরে রাখা, বারবার বার্তা ব্যবহার করা ইত্যাদি।
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-Key components of a message queue:
+বার্তা সারি কয়েকটি মৌলিক বৈশিষ্ট্য সমর্থন করা উচিত - প্রযোজকরা বার্তা উত্পাদন করে এবং ভোক্তারা সেগুলি গ্রহণ করে।
+তবে কর্মক্ষমতা, বার্তা বিতরণ, ডেটা ধারণ ইত্যাদির ক্ষেত্রে বিভিন্ন বিবেচনা রয়েছে।
+
+এখানে প্রার্থী এবং ইন্টারভিউয়ারের মধ্যে সম্ভাব্য প্রশ্নগুলির একটি সেট রয়েছে:
+ * C: বিন্যাস এবং গড় বার্তা আকার কি? এটা কি শুধু টেক্সট?
+ * আমি: বার্তাগুলি শুধুমাত্র পাঠ্য এবং সাধারণত কয়েক KB
+ * C: বারবার মেসেজ করা যাবে?
+ * আমি: হ্যাঁ, বিভিন্ন ভোক্তারা বারবার মেসেজ ব্যবহার করতে পারে। এটি একটি অতিরিক্ত প্রয়োজনীয়তা, যা ঐতিহ্যগত বার্তা সারি সমর্থন করে না।
+ * সি: বার্তাগুলি কি একই ক্রমে উত্পাদিত হয়েছিল?
+ * আমি: হ্যাঁ, অর্ডার গ্যারান্টি সংরক্ষণ করা উচিত। এটি একটি অতিরিক্ত প্রয়োজনীয়তা, ঐতিহ্যগত বার্তা সারি এটি সমর্থন করে না।
+ * সি: ডেটা ধরে রাখার প্রয়োজনীয়তাগুলি কী কী?
+ * আমি: বার্তা দুটি সপ্তাহ ধরে রাখতে হবে। এটি একটি অতিরিক্ত প্রয়োজন.
+ * সি: আমরা কতজন প্রযোজক এবং ভোক্তাদের সমর্থন করতে চাই?
+ * আমি: যত বেশি, তত ভাল।
+ * সি: আমরা কোন ডেটা ডেলিভারি শব্দার্থকে সমর্থন করতে চাই? অন্তত-একবার, অন্তত-একবার, ঠিক-একবার?
+ * আমি: আমরা অবশ্যই অন্তত-একবার সমর্থন করতে চাই। আদর্শভাবে, আমরা সকলকে সমর্থন করতে পারি এবং তাদের কনফিগারযোগ্য করে তুলতে পারি।
+ * সি: এন্ড-টু-এন্ড লেটেন্সির জন্য টার্গেট থ্রুপুট কী?
+ * আমি: এটি ব্যবহার ক্ষেত্রে উচ্চ থ্রুপুট সমর্থন করবে যেমন লগ একত্রিতকরণ এবং আরও ঐতিহ্যগত ব্যবহারের ক্ষেত্রে কম থ্রুপুট।
+
+### **কার্যকর প্রয়োজনীয়তা**
+
+* প্রযোজকরা একটি বার্তা সারিতে বার্তা পাঠান
+ * গ্রাহকরা সারি থেকে বার্তা গ্রহণ করেন
+ * বার্তা একবার বা বারবার ব্যবহার করা যেতে পারে
+ * ঐতিহাসিক তথ্য ছাঁটাই করা যেতে পারে
+ * বার্তার আকার KB পরিসরে
+ * বার্তার ক্রম সংরক্ষণ করা প্রয়োজন
+ * ডেটা ডেলিভারি শব্দার্থবিদ্যা কনফিগারযোগ্য - সর্বাধিক-একবার/অন্তত-একবার/ঠিক-একবার।
+
+### **অকার্যকর প্রয়োজনীয়তা**
+
+- **উচ্চ থ্রুপুট বা কম লেটেন্সি**: ব্যবহারের ক্ষেত্রের উপর ভিত্তি করে কনফিগারযোগ্য
+- **স্কেলযোগ্য**: সিস্টেমটি বিতরণ করা উচিত এবং বার্তার ভলিউমের হঠাৎ বৃদ্ধিকে সমর্থন করা উচিত
+- **অস্থির এবং টেকসই**: ডেটা ডিস্কে থাকা উচিত এবং নোডগুলির মধ্যে প্রতিলিপি করা উচিত
+
+ঐতিহ্যগত বার্তা সারি সাধারণত ডেটা ধারণ সমর্থন করে না এবং অর্ডার গ্যারান্টি প্রদান করে না। এটি নকশাটিকে ব্যাপকভাবে সরল করে এবং আমরা এটি নিয়ে আলোচনা করব।
+
+---
+
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+
+একটি বার্তা সারির মূল উপাদান:
 
 <div style="margin-left:3rem">
     <img src="./images/message-queue-components.png" alt="message-queue-components" width="500" />
 </div>
 
- * Producer sends messages to a queue
- * Consumer subscribes to a queue and consumes the subscribed messages
- * Message queue is a service in the middle which decouples producers from consumers, letting them scale independently.
- * Producer and consumer are both clients, while the message queue is the server.
+* প্রযোজক একটি সারিতে বার্তা পাঠায়
+ * ভোক্তা একটি সারিতে সাবস্ক্রাইব করে এবং সাবস্ক্রাইব করা বার্তাগুলি গ্রহণ করে
+ * মেসেজ কিউ হল মাঝখানের একটি পরিষেবা যা ভোক্তাদের থেকে উৎপাদকদের আলাদা করে, তাদের স্বাধীনভাবে স্কেল করতে দেয়।
+ * প্রযোজক এবং ভোক্তা উভয়ই ক্লায়েন্ট, যখন বার্তা সারি সার্ভার।
 
-### **Messaging models**
+### **মেসেজিং মডেল**
 
-The first type of messaging model is point-to-point and it's commonly found in traditional message queues:
+প্রথম ধরনের মেসেজিং মডেল হল পয়েন্ট-টু-পয়েন্ট এবং এটি সাধারণত প্রথাগত বার্তা সারিগুলিতে পাওয়া যায়:
 
 <div style="margin-left:3rem">
     <img src="./images/point-to-point-model.png" alt="point-to-point-model" width="500" />
 </div>
 
- * A message is sent to a queue and it's consumed by exactly one consumer.
- * There can be multiple consumers, but a message is consumed only once.
- * Once message is acknowledged as consumed, it is removed from the queue.
- * There is no data retention in the point-to-point model, but there is such in our design.
+* একটি বার্তা একটি সারিতে পাঠানো হয় এবং এটি ঠিক একজন ভোক্তা গ্রহণ করেন।
+ * একাধিক ভোক্তা থাকতে পারে, কিন্তু একটি বার্তা শুধুমাত্র একবার ব্যবহার করা হয়।
+ * একবার বার্তা গ্রহণ করা হয়েছে বলে স্বীকার করা হলে, এটি সারি থেকে সরানো হয়।
+ * পয়েন্ট-টু-পয়েন্ট মডেলে কোনও ডেটা ধারণ নেই, তবে আমাদের ডিজাইনে এমনটি রয়েছে।
 
-On the other hand, the publish-subscribe model is more common for event streaming platforms:
+অন্যদিকে, ইভেন্ট স্ট্রিমিং প্ল্যাটফর্মের জন্য প্রকাশ-সাবস্ক্রাইব মডেলটি বেশি সাধারণ:
 
 <div style="margin-left:3rem">
     <img src="./images/publish-subscribe-model.png" alt="publish-subscribe-model" width="500" />
 </div>
 
- * In this model, messages are associated to a topic.
- * Consumers are subscribed to a topic and they receive all messages sent to this topic.
+* এই মডেলে, বার্তাগুলি একটি বিষয়ের সাথে যুক্ত।
+ * ভোক্তারা একটি বিষয়ের সদস্যতা নিয়েছেন এবং তারা এই বিষয়ে প্রেরিত সমস্ত বার্তা পাবেন।
 
-### **Topics, partitions and brokers**
+### **বিষয়, পার্টিশন এবং দালাল**
 
-What if the data volume for a topic is too large? One way to scale is by splitting a topic into partitions (aka sharding):
+একটি বিষয়ের জন্য ডেটা ভলিউম খুব বড় হলে কি হবে? স্কেল করার একটি উপায় হল একটি বিষয়কে পার্টিশনে বিভক্ত করা (ওরফে শার্ডিং):
 
 <div style="margin-left:3rem">
     <img src="./images/partitions.png" alt="partitions" width="500" />
 </div>
 
- * Messages sent to a topic are evenly distributed across partitions
- * The servers that host partitions are called brokers
- * Each topic operates like a queue using FIFO for message processing. Message order is preserved within a partition.
- * The position of a message within the partition is called an **offset**.
- * Each message produced is sent to a specific partition. A partition key specifies which partition a message should land in. 
-   * Eg a `user_id` can be used as a partition key to guarantee order of messages for the same user.
- * Each consumer subscribes to one or more partitions. When there are multiple consumers for the same messages, they form a consumer group.
+* একটি বিষয়ে প্রেরিত বার্তাগুলি পার্টিশন জুড়ে সমানভাবে বিতরণ করা হয়
+ * যে সার্ভারগুলি পার্টিশন হোস্ট করে তাদের ব্রোকার বলা হয়
+ * প্রতিটি বিষয় বার্তা প্রক্রিয়াকরণের জন্য FIFO ব্যবহার করে একটি সারির মতো কাজ করে। বার্তা অর্ডার একটি পার্টিশনের মধ্যে সংরক্ষিত হয়।
+ * পার্টিশনের মধ্যে একটি বার্তার অবস্থানকে **অফসেট** বলা হয়।
+ * উত্পাদিত প্রতিটি বার্তা একটি নির্দিষ্ট পার্টিশনে পাঠানো হয়। একটি পার্টিশন কী নির্দিষ্ট করে যে কোন পার্টিশনে একটি বার্তা অবতরণ করা উচিত। 
+   * যেমন একটি `user_id` একই ব্যবহারকারীর জন্য বার্তার অর্ডার নিশ্চিত করার জন্য একটি পার্টিশন কী হিসেবে ব্যবহার করা যেতে পারে।
+ * প্রতিটি ভোক্তা এক বা একাধিক পার্টিশনে সাবস্ক্রাইব করে। যখন একই বার্তার জন্য একাধিক গ্রাহক থাকে, তারা একটি ভোক্তা গোষ্ঠী গঠন করে।
 
-### **Consumer groups**
+### **ভোক্তা গোষ্ঠী**
 
-Consumer groups are a set of consumers working together to consume messages from a topic:
+ভোক্তা গোষ্ঠী হল একটি বিষয় থেকে বার্তা গ্রহণ করার জন্য একসাথে কাজ করা ভোক্তাদের একটি সেট:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-groups.png" alt="consumer-groups" width="500" />
 </div>
 
- * Messages are replicated per consumer group (not per consumer).
- * Each consumer group maintains its own offset.
- * Reading messages in parallel by a consumer group improves throughput but hampers the ordering guarantee.
- * This can be mitigated by only allowing one consumer from a group to be subscribed to a partition. 
- * This means that we can't have more consumers in a group than there are partitions.
+* বার্তাগুলি প্রতি ভোক্তা গোষ্ঠীর প্রতি অনুলিপি করা হয় (গ্রাহকের প্রতি নয়)।
+ * প্রতিটি ভোক্তা গোষ্ঠী তার নিজস্ব অফসেট বজায় রাখে।
+ * একটি ভোক্তা গোষ্ঠী দ্বারা সমান্তরালভাবে বার্তা পড়া থ্রুপুট উন্নত করে কিন্তু অর্ডার গ্যারান্টিকে বাধা দেয়।
+ * শুধুমাত্র একটি গ্রুপ থেকে একজন ভোক্তাকে একটি পার্টিশনে সাবস্ক্রাইব করার অনুমতি দিয়ে এটি প্রশমিত করা যেতে পারে। 
+ * এর মানে হল পার্টিশনের তুলনায় আমাদের একটি গ্রুপে বেশি ভোক্তা থাকতে পারে না।
 
-### **High-level architecture**
+### **উচ্চ-স্তরের স্থাপত্য**
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-architecture.png" alt="high-level-architecture" width="500" />
 </div>
 
-- **Clients**: producer and consumer. Producer pushes messages to a designated topic. Consumer group subscribes to messages from a topic.
-- **Brokers**: hold multiple partitions. A partition holds a subset of messages for a topic.
-- **Data storage**: stores messages in partitions.
-- **State storage**: keeps the consumer states.
-- **Metadata storage**: stores configuration and topic properties
-- **Coordination service**: responsible for service discovery (which brokers are alive) and leader election (which broker is leader, responsible for assigning partitions).
+- **ক্লায়েন্ট**: প্রযোজক এবং ভোক্তা। প্রযোজক একটি মনোনীত বিষয়ে বার্তা ঠেলে দেয়। ভোক্তা গ্রুপ একটি বিষয় থেকে বার্তা সদস্যতা.
+- **দালাল**: একাধিক পার্টিশন ধরে রাখুন। একটি পার্টিশন একটি বিষয়ের জন্য বার্তাগুলির একটি উপসেট ধারণ করে।
+- **ডেটা স্টোরেজ**: পার্টিশনে বার্তা সঞ্চয় করে।
+- **স্টেট স্টোরেজ**: ভোক্তাদের অবস্থা বজায় রাখে।
+- **মেটাডেটা স্টোরেজ**: কনফিগারেশন এবং বিষয় বৈশিষ্ট্য সংরক্ষণ করে
+- **সমন্বয় পরিষেবা**: পরিষেবা আবিষ্কারের জন্য দায়ী (যা দালাল জীবিত) এবং নেতা নির্বাচন (যা দালাল নেতা, পার্টিশন নির্ধারণের জন্য দায়ী)।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-In order to achieve high throughput and preserve the high data retention requirement, we made some important design choices:
- * We chose an on-disk data structure which takes advantage of the properties of modern HDD and disk caching strategies of modern OS-es.
- * The message data structure is immutable to avoid extra copying, which we want to avoid in a high volume/high traffic system.
- * We designed our writes around batching as small I/O is an enemy of high throughput.
+উচ্চ থ্রুপুট অর্জন করতে এবং উচ্চ ডেটা ধরে রাখার প্রয়োজনীয়তা সংরক্ষণ করার জন্য, আমরা কিছু গুরুত্বপূর্ণ ডিজাইন পছন্দ করেছি:
+ * আমরা একটি অন-ডিস্ক ডেটা স্ট্রাকচার বেছে নিয়েছি যা আধুনিক OS-es-এর আধুনিক HDD এবং ডিস্ক ক্যাশিং কৌশলগুলির বৈশিষ্ট্যগুলির সুবিধা নেয়৷
+ * অতিরিক্ত অনুলিপি এড়াতে বার্তা ডেটা কাঠামো অপরিবর্তনীয়, যা আমরা একটি উচ্চ ভলিউম/উচ্চ ট্রাফিক সিস্টেমে এড়াতে চাই।
+ * আমরা আমাদের লেখাগুলিকে ব্যাচিংয়ের চারপাশে ডিজাইন করেছি কারণ ছোট I/O উচ্চ থ্রুপুটের শত্রু।
 
-### **Data storage**
+### **ডেটা স্টোরেজ**
 
-In order to find the best data store for messages, we must examine a message's properties:
- * Write-heavy, read-heavy
- * No update/delete operations. In traditional message queues, there is a "delete" operation as messages are not retained.
- * Predominantly sequential read/write access pattern.
+বার্তাগুলির জন্য সর্বোত্তম ডেটা স্টোর খুঁজে পেতে, আমাদের অবশ্যই একটি বার্তার বৈশিষ্ট্যগুলি পরীক্ষা করতে হবে:
+ * লিখুন-ভারী, পড়া-ভারী
+ * কোন আপডেট/ডিলিট অপারেশন নেই। প্রথাগত বার্তা সারিগুলিতে, একটি "মুছুন" অপারেশন রয়েছে কারণ বার্তাগুলি ধরে রাখা হয় না।
+ * প্রধানত অনুক্রমিক পঠন/লেখা অ্যাক্সেস প্যাটার্ন।
 
-What are our options:
-- **Database**: not ideal as typical databases don't support well both write and read heavy systems.
-- **Write-ahead log (WAL)**: a plain text file which only supports appending to it and is very HDD-friendly. 
-  * We split partitions into segments to avoid maintaining a very large file.
-  * Old segments are read-only. Writes are accepted by latest segment only.
+আমাদের বিকল্প কি:
+- **ডেটাবেস**: আদর্শ নয় কারণ সাধারণ ডাটাবেসগুলি ভারী সিস্টেম লেখা এবং পড়া উভয়ই ভালভাবে সমর্থন করে না।
+- **রাইট-হেড লগ (ওয়াল)**: একটি প্লেইন টেক্সট ফাইল যা শুধুমাত্র এটির সাথে যুক্ত করাকে সমর্থন করে এবং খুব HDD-বান্ধব। 
+  * খুব বড় ফাইল রক্ষণাবেক্ষণ এড়াতে আমরা পার্টিশনকে ভাগে ভাগ করি।
+  * পুরানো বিভাগগুলি শুধুমাত্র পঠনযোগ্য। লেটেস্ট সেগমেন্ট শুধুমাত্র দ্বারা গৃহীত হয়.
 
 <div style="margin-left:3rem">
     <img src="./images/wal-example.png" alt="wal-example" width="500" />
 </div>
 
-WAL files are extremely efficient when used with traditional HDDs. 
+ঐতিহ্যগত HDD-এর সাথে ব্যবহার করা হলে WAL ফাইলগুলি অত্যন্ত দক্ষ।
 
-There is a misconception that HDD acces is slow, but that hugely depends on the access pattern.
-When the access pattern is sequential (as in our case), HDDs can achieve several MB/s write/read speed which is sufficient for our needs.
-We also piggyback on the fact that the OS caches disk data in memory aggressively.
+একটি ভুল ধারণা রয়েছে যে HDD অ্যাক্সেস ধীর, তবে এটি অ্যাক্সেস প্যাটার্নের উপর ব্যাপকভাবে নির্ভর করে।
+যখন অ্যাক্সেস প্যাটার্নটি ক্রমিক হয় (আমাদের ক্ষেত্রে যেমন), HDDগুলি বেশ কিছু MB/s লেখা/পড়ার গতি অর্জন করতে পারে যা আমাদের প্রয়োজনের জন্য যথেষ্ট।
+OS মেমরিতে ডিস্কের ডেটা আক্রমনাত্মকভাবে ক্যাশে করে সেই বিষয়েও আমরা পিগিব্যাক করি।
 
-### **Message data structure**
+### **বার্তা ডেটা কাঠামো**
 
-It is important that the message schema is compliant between producer, queue and consumer to avoid extra copying. This allows much more efficient processing.
+এটি গুরুত্বপূর্ণ যে অতিরিক্ত অনুলিপি এড়াতে প্রযোজক, সারি এবং ভোক্তার মধ্যে বার্তা স্কিমা সঙ্গতিপূর্ণ। এটি অনেক বেশি দক্ষ প্রক্রিয়াকরণের অনুমতি দেয়।
 
-Example message structure:
+উদাহরণ বার্তা গঠন:
 
 <div style="margin-left:3rem">
     <img src="./images/message-structure.png" alt="message-structure" width="500" />
 </div>
 
-The key of the message specifies which partition a message belongs to. An example mapping is `hash(key) % numPartitions`.
-For more flexibility, the producer can override default keys in order to control which partitions messages are distributed to.
+বার্তার কী একটি বার্তা কোন পার্টিশনের অন্তর্গত তা নির্দিষ্ট করে। একটি উদাহরণ ম্যাপিং হল `হ্যাশ(কী) % numPartitions`।
+আরও নমনীয়তার জন্য, প্রযোজক ডিফল্ট কীগুলিকে ওভাররাইড করতে পারেন কোন পার্টিশন বার্তাগুলি বিতরণ করা হবে তা নিয়ন্ত্রণ করতে।
 
-The message value is the payload of a message. It can be plaintext or a compressed binary block.
+বার্তার মান হল একটি বার্তার পেলোড। এটি প্লেইনটেক্সট বা একটি সংকুচিত বাইনারি ব্লক হতে পারে।
 
-**Note:** Message keys, unlike traditional KV stores, need not be unique. It is acceptable to have duplicate keys and for it to even be missing.
+**দ্রষ্টব্য:** মেসেজ কী, ঐতিহ্যবাহী কেভি স্টোরের বিপরীতে, অনন্য হওয়ার দরকার নেই। ডুপ্লিকেট কী থাকা গ্রহণযোগ্য এবং এটি অনুপস্থিত হওয়ার জন্যও।
 
-Other message files:
-- **Topic**: topic the message belongs to
-- **Partition**: The ID of the partition a message belongs to
-- **Offset**: The position of the message in a partition. A message can be located via `topic`, `partition`, `offset`.
-- **Timestamp**: When the message is stored
-- **Size**: the size of this message
-- **CRC**: checksum to ensure message integrity
+অন্যান্য বার্তা ফাইল:
+- **বিষয়**: বার্তাটি যে বিষয়ের অন্তর্গত
+- **পার্টিশন**: একটি বার্তা যে পার্টিশনের সাথে সম্পর্কিত তার আইডি
+- **অফসেট**: একটি পার্টিশনে বার্তাটির অবস্থান। একটি বার্তা `বিষয়`, `পার্টিশন`, `অফসেট` এর মাধ্যমে অবস্থিত হতে পারে।
+- **টাইমস্ট্যাম্প**: যখন বার্তাটি সংরক্ষণ করা হয়
+- **আকার**: এই বার্তাটির আকার
+- **CRC**: বার্তার অখণ্ডতা নিশ্চিত করতে চেকসাম
 
-Additional features such as filtering can be supported by adding additional fields.
+অতিরিক্ত বৈশিষ্ট্য যেমন ফিল্টারিং অতিরিক্ত ক্ষেত্র যোগ করে সমর্থিত হতে পারে।
 
-### **Batching**
+### **ব্যাচিং**
 
-Batching is critical for the performance of our system. We apply it in the producer, consumer and message queue.
+ব্যাচিং আমাদের সিস্টেমের কর্মক্ষমতা জন্য গুরুত্বপূর্ণ. আমরা এটি প্রযোজক, ভোক্তা এবং বার্তা সারিতে প্রয়োগ করি।
 
-It is critical because:
- * It allows the operating system to group messages together, amortizing the cost of expensive network round trips
- * Messages are written to the WAL in groups sequentially, which leads to a lot of sequential writes and disk caching.
+এটি সমালোচনামূলক কারণ:
+ * এটি অপারেটিং সিস্টেমকে বার্তাগুলিকে একসাথে গ্রুপ করার অনুমতি দেয়, ব্যয়বহুল নেটওয়ার্ক রাউন্ড ট্রিপের খরচ পরিমাপ করে
+ * বার্তাগুলি ক্রমানুসারে দলে WAL-এ লেখা হয়, যা প্রচুর ক্রমিক লেখা এবং ডিস্ক ক্যাশিংয়ের দিকে নিয়ে যায়।
 
-There is a trade-off between latency and throughput:
- * High batching leads to high throughput and higher latency. 
- * Less batching leads to lower throughput and lower latency.
+লেটেন্সি এবং থ্রুপুটের মধ্যে একটি ট্রেড-অফ রয়েছে:
+ * উচ্চ ব্যাচিং উচ্চ থ্রুপুট এবং উচ্চতর বিলম্বের দিকে পরিচালিত করে। 
+ * কম ব্যাচিং কম থ্রুপুট এবং কম লেটেন্সি বাড়ে।
 
-If we need to support lower latency since the system is deployed as a traditional message queue, the system could be tuned to use a smaller batch size.
+সিস্টেমটিকে একটি প্রথাগত বার্তা সারি হিসাবে মোতায়েন করার কারণে যদি আমাদের কম লেটেন্সি সমর্থন করার প্রয়োজন হয়, তবে সিস্টেমটিকে একটি ছোট ব্যাচের আকার ব্যবহার করার জন্য টিউন করা যেতে পারে।
 
-If tuned for throughput, we might need more partitions per topic to compensate for the slower sequential disk write throughput.
+যদি থ্রুপুটের জন্য টিউন করা হয়, তাহলে ধীর ক্রমিক ডিস্ক লেখার থ্রুপুটের জন্য ক্ষতিপূরণ দিতে আমাদের প্রতি বিষয়ের জন্য আরও পার্টিশনের প্রয়োজন হতে পারে।
 
-### **Producer flow**
+### **প্রযোজক প্রবাহ**
 
-If a producer wants to send a message to a partition, which broker should it connect to?
+যদি একজন প্রযোজক একটি পার্টিশনে একটি বার্তা পাঠাতে চান, তাহলে এটি কোন ব্রোকারের সাথে সংযোগ করা উচিত?
 
-One option is to introduce a routing layer, which route messages to the correct broker. If replication is enabled, the correct broker is the leader replica:
+একটি বিকল্প হল একটি রাউটিং স্তর প্রবর্তন করা, যা সঠিক ব্রোকারকে বার্তা পাঠায়। যদি প্রতিলিপি সক্ষম করা হয়, সঠিক ব্রোকার হল লিডার রেপ্লিকা:
 
 <div style="margin-left:3rem">
     <img src="./images/routing-layer.png" alt="routing-layer" width="500" />
 </div>
 
- * Routing layer reads the replication plan from the metadata store and caches it locally.
- * Producer sends a message to the routing layer.
- * Message is forwarded to broker 1 who is the leader of the given partition
- * Follower replicas pull the new message from the leader. Once enough confirmations are received, the leader commits the data and responds to the producer.
+* রাউটিং স্তর মেটাডেটা স্টোর থেকে প্রতিলিপি পরিকল্পনা পড়ে এবং স্থানীয়ভাবে ক্যাশে করে।
+ * প্রযোজক রাউটিং স্তরে একটি বার্তা পাঠায়।
+ * বার্তাটি ব্রোকার 1 কে ফরোয়ার্ড করা হয় যিনি প্রদত্ত পার্টিশনের নেতা
+ * অনুসরণকারীর প্রতিলিপি নেতার কাছ থেকে নতুন বার্তা টানে। পর্যাপ্ত নিশ্চিতকরণ প্রাপ্ত হলে, নেতা ডেটা কমিট করেন এবং প্রযোজকের কাছে প্রতিক্রিয়া জানান।
 
-The reason for having replicas is to enable fault tolerance.
+প্রতিলিপি থাকার কারণ হল দোষ সহনশীলতা সক্ষম করা।
 
-This approach works but has some drawbacks:
- * Additional network hops due to the extra component
- * The design doesn't enable batching messages
+এই পদ্ধতি কাজ করে কিন্তু কিছু অসুবিধা আছে:
+ * অতিরিক্ত উপাদান কারণে অতিরিক্ত নেটওয়ার্ক hops
+ * নকশা ব্যাচিং বার্তা সক্ষম করে না
 
-To mitigate these issues, we can embed the routing layer into the producer:
+এই সমস্যাগুলি প্রশমিত করতে, আমরা প্রযোজকের মধ্যে রাউটিং স্তরটি এম্বেড করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/routing-layer-producer.png" alt="routing-layer-producer" width="500" />
 </div>
 
- * Fewer network hops lead to lower latency
- * Producers can control which partition a message is routed to
- * The buffer allows us to batch messages in-memory and send out larger batches in a single request, which increases throughput.
+* কম নেটওয়ার্ক হপ কম বিলম্বের দিকে নিয়ে যায়
+ * প্রযোজকরা নিয়ন্ত্রণ করতে পারেন কোন পার্টিশনে একটি বার্তা পাঠানো হবে
+ * বাফার আমাদের মেমরির মধ্যে বার্তা ব্যাচ করতে এবং একটি একক অনুরোধে বড় ব্যাচ পাঠাতে দেয়, যা থ্রুপুট বাড়ায়।
 
-The batch size choice is a classical trade-off between throughput and latency. 
+ব্যাচ সাইজ পছন্দ হল থ্রুপুট এবং লেটেন্সির মধ্যে একটি ক্লাসিক্যাল ট্রেড-অফ।
 
 <div style="margin-left:3rem">
     <img src="./images/batch-size-throughput-vs-latency.png" alt="batch-size-throughput-vs-latency" width="500" />
 </div>
 
- * Larger batch size leads to longer wait time before batch is committed. 
- * Smaller batch size leads to request being sent sooner and having lower latency but lower throughput.
+* বৃহত্তর ব্যাচের আকার ব্যাচ প্রতিশ্রুতিবদ্ধ হওয়ার আগে দীর্ঘ অপেক্ষার সময় বাড়ে। 
+ * ছোট ব্যাচের আকারের ফলে অনুরোধ তাড়াতাড়ি পাঠানো হয় এবং কম লেটেন্সি কিন্তু কম থ্রুপুট হয়।
 
-### **Consumer flow**
+### **ভোক্তা প্রবাহ**
 
-The consumer specifies its offset in a partition and receives a chunk of messages, beginning from that offset:
+ভোক্তা একটি পার্টিশনে তার অফসেট নির্দিষ্ট করে এবং সেই অফসেট থেকে শুরু করে এক খণ্ড বার্তা পায়:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-example.png" alt="consumer-example" width="500" />
 </div>
 
-One important consideration when designing the consumer is whether to use a push or a pull model:
-- **Push model**: leads to lower latency as broker pushes messages to consumer as it receives them.
-  * However, if rate of consumption falls behind the rate of production, the consumer can be overwhelmed.
-  * It is challenging to deal with consumers with varying processing power as the broker controls the rate of consumption.
-- **Pull model**: leads to the consumer controlling the consumption rate. 
-  * If rate of consumption is slow, consumer will not be overwhelmed and we can scale it to catch up.
-  * The pull model is more suitable for batch processing, because with the push model, the broker can't know how many messages a consumer can handle. 
-  * With the pull model, on the other hand, consumers can aggressively fetch large message batches.
-  * The down side is the higher latency and extra network calls when there are no new messages. Latter issue can be mitigated using long polling.
+ভোক্তাদের ডিজাইন করার সময় একটি গুরুত্বপূর্ণ বিবেচ্য বিষয় হল একটি ধাক্কা বা একটি টান মডেল ব্যবহার করবেন কিনা:
+- **পুশ মডেল**: কম বিলম্বের দিকে নিয়ে যায় কারণ ব্রোকার গ্রাহকদের কাছে বার্তাগুলি গ্রহণ করার সাথে সাথে ঠেলে দেয়।
+  * তবে, যদি উৎপাদনের হারের তুলনায় ভোগের হার পিছিয়ে যায়, তাহলে ভোক্তা অভিভূত হতে পারে।
+  * বিভিন্ন প্রসেসিং ক্ষমতা সহ ভোক্তাদের সাথে মোকাবিলা করা চ্যালেঞ্জিং কারণ ব্রোকার খরচের হার নিয়ন্ত্রণ করে।
+- **পুল মডেল**: ভোক্তাকে খরচের হার নিয়ন্ত্রণের দিকে নিয়ে যায়। 
+  * যদি খরচের হার ধীর হয়, তাহলে ভোক্তা অভিভূত হবেন না এবং আমরা তা ধরতে স্কেল করতে পারি।
+  * পুল মডেলটি ব্যাচ প্রক্রিয়াকরণের জন্য আরও উপযুক্ত, কারণ পুশ মডেলের সাথে, ব্রোকার জানতে পারে না একজন গ্রাহক কতগুলি বার্তা পরিচালনা করতে পারে। 
+  * পুল মডেলের সাথে, অন্যদিকে, গ্রাহকরা আক্রমনাত্মকভাবে বড় বার্তা ব্যাচ আনতে পারেন।
+  * নিচের দিকটি হল উচ্চতর লেটেন্সি এবং অতিরিক্ত নেটওয়ার্ক কল যখন কোনো নতুন বার্তা নেই৷ পরবর্তী সমস্যা দীর্ঘ ভোটিং ব্যবহার করে প্রশমিত করা যেতে পারে.
 
-Hence, most message queues (and us) choose the pull model.
+তাই, বেশিরভাগ বার্তা সারি (এবং আমাদের) টান মডেলটি বেছে নেয়।
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-flow.png" alt="consumer-flow" width="500" />
 </div>
 
- * A new consumer subscribes to topic A and joins group 1.
- * The correct broker node is found by hashing the group name. This way, all consumers in a group connect to the same broker.
- * Note that this consumer group coordinator is different from the coordination service (ZooKeeper).
- * Coordinator confirms that the consumer has joined the group and assigns partition 2 to that consumer.
- * There are different partition assignment strategies - round-robin, range, etc.
- * Consumer fetches latest messages from the last offset. The state storage keeps the consumer offsets.
- * Consumer processes messages and commits the offset to the broker. The order of those operations affects the message delivery semantics.
+* একজন নতুন ভোক্তা বিষয় A-তে সদস্যতা নেয় এবং গ্রুপ 1-এ যোগ দেয়।
+ * গ্রুপের নাম হ্যাশ করে সঠিক ব্রোকার নোড পাওয়া যায়। এইভাবে, একটি গ্রুপের সমস্ত গ্রাহক একই ব্রোকারের সাথে সংযোগ স্থাপন করে।
+ * মনে রাখবেন যে এই ভোক্তা গ্রুপ সমন্বয়কারী সমন্বয় পরিষেবা (ZooKeeper) থেকে আলাদা।
+ * সমন্বয়কারী নিশ্চিত করে যে ভোক্তা গ্রুপে যোগদান করেছে এবং সেই ভোক্তাকে পার্টিশন 2 বরাদ্দ করে।
+ * বিভিন্ন পার্টিশন অ্যাসাইনমেন্ট কৌশল রয়েছে - রাউন্ড-রবিন, রেঞ্জ ইত্যাদি।
+ * ভোক্তা সর্বশেষ অফসেট থেকে সর্বশেষ বার্তা নিয়ে আসে। রাষ্ট্রীয় স্টোরেজ ভোক্তাদের অফসেট রাখে।
+ * ভোক্তা বার্তা প্রসেস করে এবং দালালের কাছে অফসেট কমিট করে। এই অপারেশনগুলির ক্রম বার্তা বিতরণ শব্দার্থকে প্রভাবিত করে।
 
-### **Consumer rebalancing**
+### **ভোক্তা পুনঃভারসাম্য**
 
-Consumer rebalancing is responsible for deciding which consumers are responsible for which partition.
+কোন ভোক্তারা কোন পার্টিশনের জন্য দায়ী তা নির্ধারণের জন্য ভোক্তা পুনঃব্যালেন্সিং দায়ী।
 
-This process occurs when a consumer joins/leaves or a partition is added/removed.
+এই প্রক্রিয়াটি ঘটে যখন একজন ভোক্তা যোগদান/ত্যাগ করে বা একটি পার্টিশন যোগ/সরানো হয়।
 
-The broker, acting as a coordinator plays a huge role in orchestrating the rebalancing workflow.
+ব্রোকার, একজন সমন্বয়কারী হিসেবে কাজ করে, কর্মপ্রবাহের ভারসাম্য পুনঃস্থাপনে একটি বিশাল ভূমিকা পালন করে।
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-rebalancing.png" alt="consumer-rebalancing" width="500" />
 </div>
 
- * All consumers from the same group are connected to the same coordinator. The coordinator is found by hashing the group name.
- * When the consumer list changes, the coordinator chooses a new leader of the group.
- * The leader of the group calculates a new partition dispatch plan and reports it back to the coordinator, which broadcasts it to the other consumers.
+* একই গ্রুপের সমস্ত গ্রাহক একই সমন্বয়কারীর সাথে সংযুক্ত। গ্রুপের নাম হ্যাশ করে সমন্বয়কারী পাওয়া যায়।
+ * যখন ভোক্তা তালিকা পরিবর্তিত হয়, তখন সমন্বয়কারী দলের একজন নতুন নেতা নির্বাচন করেন।
+ * গ্রুপের নেতা একটি নতুন পার্টিশন প্রেরণ পরিকল্পনা গণনা করে এবং এটি সমন্বয়কারীর কাছে রিপোর্ট করে, যা এটি অন্য গ্রাহকদের কাছে সম্প্রচার করে।
 
-When the coordinator stops receiving heartbeats from the consumers in a group, a rebalancing is triggered:
+যখন সমন্বয়কারী একটি গ্রুপে ভোক্তাদের কাছ থেকে হৃদস্পন্দন গ্রহণ করা বন্ধ করে, তখন একটি পুনঃভারসাম্য ট্রিগার হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-rebalance-example.png" alt="consumer-rebalance-example" width="500" />
 </div>
 
-Let's explore what happens when a consumer joins a group:
+একজন ভোক্তা একটি গোষ্ঠীতে যোগদান করলে কী ঘটে তা অন্বেষণ করা যাক:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-join-group-usecase.png" alt="consumer-join-group-usecase" width="500" />
 </div>
 
- * Initially, only consumer A is in the group and it consumes all partitions.
- * Consumer B sends a request to join the group.
- * The coordinator notifies all group members that it's time to rebalance passively - as a response to the heartbeat.
- * Once all consumers rejoin the group, the coordinator chooses a leader and notifies the rest about the election result.
- * The leader generates the partition dispatch plan and sends it to the coordinator. Others wait for the dispatch plan.
- * Consumers start consuming from the newly assigned partitions.
+* প্রাথমিকভাবে, শুধুমাত্র ভোক্তা A গ্রুপে থাকে এবং এটি সমস্ত পার্টিশন ব্যবহার করে।
+ * উপভোক্তা বি গ্রুপে যোগদানের জন্য একটি অনুরোধ পাঠায়।
+ * সমন্বয়কারী গ্রুপের সকল সদস্যকে অবহিত করেন যে এটি নিষ্ক্রিয়ভাবে পুনরায় ভারসাম্য বজায় রাখার সময় - হৃদস্পন্দনের প্রতিক্রিয়া হিসাবে।
+ * একবার সমস্ত ভোক্তারা গ্রুপে পুনরায় যোগদান করলে, সমন্বয়কারী একজন নেতা নির্বাচন করেন এবং বাকিদের নির্বাচনের ফলাফল সম্পর্কে অবহিত করেন।
+ * নেতা পার্টিশন প্রেরণের পরিকল্পনা তৈরি করে এবং সমন্বয়কারীর কাছে পাঠায়। অন্যরা প্রেরণ পরিকল্পনার জন্য অপেক্ষা করে।
+ * ভোক্তারা নতুন বরাদ্দ করা পার্টিশন থেকে ব্যবহার শুরু করে।
 
-Here's what happens when a consumer leaves the group:
+যখন একজন ভোক্তা গোষ্ঠী ছেড়ে চলে যায় তখন এখানে কী ঘটে:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-leaves-group-usecase.png" alt="consumer-leaves-group-usecase" width="500" />
 </div>
 
- * Consumer A and B are in the same group
- * Consumer B asks to leave the group
- * When coordinator receives A's heartbeat, it informs them that it's time to rebalance.
- * The rest of the steps are the same.
+* ভোক্তা A এবং B একই গ্রুপে রয়েছে
+ * ভোক্তা B গ্রুপ ছেড়ে যেতে বলে
+ * যখন সমন্বয়কারী A এর হৃদস্পন্দন গ্রহণ করে, তখন এটি তাদের জানায় যে এটি পুনরায় ভারসাম্য বজায় রাখার সময়।
+ * বাকি ধাপগুলো একই।
 
-The process is similar when a consumer doesn't send a heartbeat for a long time:
+প্রক্রিয়াটি একই রকম যখন একজন ভোক্তা দীর্ঘ সময়ের জন্য হার্টবিট পাঠায় না:
 
 <div style="margin-left:3rem">
     <img src="./images/consumer-no-heartbeat-usecase.png" alt="consumer-no-heartbeat-usecase" width="500" />
 </div>
 
-### **State storage**
+### **স্টেট স্টোরেজ**
 
-The state storage stores mapping between partitions and consumers, as well as the last consumed offsets for a partition.
+স্টেট স্টোরেজ পার্টিশন এবং ভোক্তাদের মধ্যে ম্যাপিং সঞ্চয় করে, সেইসাথে একটি পার্টিশনের জন্য শেষ গ্রাসকৃত অফসেট।
 
 <div style="margin-left:3rem">
     <img src="./images/state-storage.png" alt="state-storage" width="500" />
 </div>
 
-Group 1's offset is at 6, meaning all previous messages are consumed. If a consumer crashes, the new consumer will continue from that message on wards.
+গ্রুপ 1-এর অফসেট 6-এ, যার অর্থ পূর্ববর্তী সমস্ত বার্তাগুলি গ্রাস করা হয়েছে৷ যদি একজন ভোক্তা ক্র্যাশ করে, নতুন ভোক্তা সেই বার্তা থেকে ওয়ার্ডগুলিতে চলতে থাকবে।
  
-Data access patterns for consumer states:
- * Frequent read/write operations, but low volume
- * Data is updated frequently, but rarely deleted
- * Random read/write
- * Data consistency is important
+ভোক্তা রাজ্যের জন্য ডেটা অ্যাক্সেস প্যাটার্ন:
+ * ঘন ঘন পঠন/লেখা অপারেশন, কিন্তু কম ভলিউম
+ * ডেটা ঘন ঘন আপডেট করা হয়, কিন্তু খুব কমই মুছে ফেলা হয়
+ * এলোমেলোভাবে পড়া/লেখা
+ * ডেটা সামঞ্জস্য গুরুত্বপূর্ণ
 
-Given these requirements, a fast KV storage like Zookeeper is ideal.
+এই প্রয়োজনীয়তার পরিপ্রেক্ষিতে, Zookeeper এর মত একটি দ্রুত KV স্টোরেজ আদর্শ।
 
-### **Metadata storage**
+### **মেটাডেটা স্টোরেজ**
 
-The metadata storage stores configuration and topic properties - partition number, retention period, replica distribution.
+মেটাডেটা স্টোরেজ কনফিগারেশন এবং বিষয় বৈশিষ্ট্য সংরক্ষণ করে - পার্টিশন নম্বর, ধরে রাখার সময়কাল, প্রতিরূপ বিতরণ।
 
-Metadata doesn't change often and volume is small, but there is a high consistency requirement.
-Zookeeper is a good choice for this storage.
+মেটাডেটা প্রায়ই পরিবর্তিত হয় না এবং ভলিউম ছোট, কিন্তু একটি উচ্চ সামঞ্জস্যের প্রয়োজন আছে।
+Zookeeper এই স্টোরেজ জন্য একটি ভাল পছন্দ.
 
-### **ZooKeeper**
+### **চিড়িয়াখানার রক্ষক**
 
-Zookeeper is essential for building distributed message queues.
+বিতরণ করা বার্তা সারি তৈরির জন্য চিড়িয়াখানার কর্মী অপরিহার্য।
 
-It is a hierarchical key-value store, commonly used for a distributed configuration, synchronization service and naming registry (ie service discovery).
+এটি একটি অনুক্রমিক কী-মূল্যের দোকান, যা সাধারণত বিতরণ করা কনফিগারেশন, সিঙ্ক্রোনাইজেশন পরিষেবা এবং নামকরণ রেজিস্ট্রি (যেমন পরিষেবা আবিষ্কার) এর জন্য ব্যবহৃত হয়।
 
 <div style="margin-left:3rem">
     <img src="./images/zookeeper.png" alt="zookeeper" width="500" />
 </div>
 
-With this change, the broker only needs to maintain data for the messages. Metadata and state storage is in Zookeeper.
+এই পরিবর্তনের সাথে, ব্রোকারকে শুধুমাত্র বার্তাগুলির জন্য ডেটা বজায় রাখতে হবে। মেটাডেটা এবং স্টেট স্টোরেজ Zookeeper এ আছে।
 
-Zookeeper also helps with leader election of the broker replicas.
+চিড়িয়াখানার দালালের প্রতিলিপিগুলির নেতা নির্বাচনের ক্ষেত্রেও সাহায্য করে।
 
-### **Replication**
+### **প্রতিলিপি**
 
-In distributed systems, hardware issues are inevitable. We can tackle this via replication to achieve high availability.
+বিতরণ করা সিস্টেমে, হার্ডওয়্যার সমস্যা অনিবার্য। উচ্চ প্রাপ্যতা অর্জনের জন্য আমরা প্রতিলিপির মাধ্যমে এটি মোকাবেলা করতে পারি।
 
 <div style="margin-left:3rem">
     <img src="./images/replication-example.png" alt="replication-example" width="500" />
 </div>
 
- * Each partition is replicated across multiple brokers, but there is only one leader replica.
- * Producers send messages to leader replicas
- * Followers pull the replicated messages from the leader
- * Once enough replicas are synchronized, the leader returns acknowledgment to the producer
- * Distribution of replicas for each partition is called the replica distribution plan.
- * The leader for a given partition creates the replica distribution plan and saves it in Zookeeper
+* প্রতিটি পার্টিশন একাধিক ব্রোকার জুড়ে প্রতিলিপি করা হয়, কিন্তু শুধুমাত্র একটি লিডার রেপ্লিকা আছে।
+ * প্রযোজক নেতা প্রতিলিপি বার্তা পাঠান
+ * অনুগামীরা নেতার কাছ থেকে প্রতিলিপিকৃত বার্তাগুলি টেনে নেয়
+ * একবার পর্যাপ্ত প্রতিলিপিগুলি সিঙ্ক্রোনাইজ করা হলে, নেতা প্রযোজকের কাছে স্বীকৃতি ফিরিয়ে দেন
+ * প্রতিটি পার্টিশনের জন্য প্রতিলিপি বিতরণকে রেপ্লিকা বিতরণ পরিকল্পনা বলা হয়।
+ * একটি প্রদত্ত পার্টিশনের জন্য নেতা প্রতিরূপ বিতরণ পরিকল্পনা তৈরি করে এবং এটি জুকিপারে সংরক্ষণ করে
 
-### **In-sync replicas**
+### **ইন-সিঙ্ক প্রতিলিপি**
 
-One problem we need to tackle is keeping messages in-sync between the leader and the followers for a given partition.
+একটি সমস্যা যা আমাদের মোকাবেলা করতে হবে তা হল প্রদত্ত পার্টিশনের জন্য নেতা এবং অনুসারীদের মধ্যে বার্তাগুলি ইন-সিঙ্ক রাখা।
 
-In-sync replicas (ISR) are replicas for a partition that stay in-sync with the leader.
+ইন-সিঙ্ক রেপ্লিকাস (ISR) হল একটি পার্টিশনের প্রতিলিপি যা লিডারের সাথে সিঙ্ক থাকে।
 
-The `replica.lag.max.messages` defines how many messages can a replica be lagging behind the leader to be considered in-sync.
+'replica.lag.max.messages' সংজ্ঞায়িত করে যে একটি প্রতিলিপি কতগুলি বার্তা লিডারের থেকে পিছিয়ে থাকতে পারে যাতে সিঙ্ক হিসাবে বিবেচিত হয়৷
 
 <div style="margin-left:3rem">
     <img src="./images/in-sync-replicas-example.png" alt="in-sync-replicas-example" width="500" />
 </div>
 
- * Committed offset is 13
- * Two new messages are written to the leader, but not committed yet.
- * A message is committed once all replicas in the ISR have synchronized that message
- * Replica 2 and 3 have fully caught up with leader, hence, they are in ISR
- * Replica 4 has lagged behind, hence, is removed from ISR for now
+* প্রতিশ্রুতিবদ্ধ অফসেট হল 13
+ * নেতাকে দুটি নতুন বার্তা লেখা হয়েছে, তবে এখনও প্রতিশ্রুতিবদ্ধ হয়নি।
+ * আইএসআর-এর সমস্ত প্রতিলিপি সেই বার্তাটি সিঙ্ক্রোনাইজ করার পরে একটি বার্তা প্রতিশ্রুতিবদ্ধ হয়
+ * রেপ্লিকা 2 এবং 3 সম্পূর্ণরূপে নেতার সাথে ধরা পড়েছে, তাই, তারা ISR-এ রয়েছে৷
+ * রেপ্লিকা 4 পিছিয়ে গেছে, তাই আপাতত ISR থেকে সরিয়ে দেওয়া হয়েছে
 
-ISR reflects a trade-off between performance and durability.
- * In order for producers not to lose messages, all replicas should be in sync before sending an acknowledgment
- * But a slow replica will cause the whole partition to become unavailable
+ISR পারফরম্যান্স এবং স্থায়িত্বের মধ্যে একটি ট্রেড-অফ প্রতিফলিত করে।
+ * প্রযোজকদের যাতে বার্তাগুলি না হারায়, সমস্ত প্রতিলিপিগুলি একটি স্বীকৃতি পাঠানোর আগে সিঙ্ক হওয়া উচিত
+ * কিন্তু একটি ধীর প্রতিলিপি পুরো পার্টিশনকে অনুপলব্ধ করে দেবে
 
-Acknowledgment handling is configurable.
+স্বীকৃতি হ্যান্ডলিং কনফিগারযোগ্য.
 
-`ACK=all` means that all replicas in ISR have to sync a message. Message sending is slow, but message durability is highest.
+`ACK=all` এর অর্থ হল ISR-এর সমস্ত প্রতিলিপিকে একটি বার্তা সিঙ্ক করতে হবে। বার্তা প্রেরণ ধীর, কিন্তু বার্তা স্থায়িত্ব সর্বোচ্চ।
 
 <div style="margin-left:3rem">
     <img src="./images/ack-all.png" alt="ack-all" width="500" />
 </div>
 
-`ACK=1` means that producer receives acknowledgment once leader receives the message. Message sending is fast, but message durability is low.
+`ACK=1` এর অর্থ হল নেতা বার্তা পেলে প্রযোজক স্বীকৃতি পান। বার্তা পাঠানো দ্রুত, কিন্তু বার্তা স্থায়িত্ব কম।
 
 <div style="margin-left:3rem">
     <img src="./images/ack-1.png" alt="ack-1" width="500" />
 </div>
 
-`ACK=0` means that producer sends messages without waiting for any acknowledgment from leader. Message sending is fastest, message durability is lowest.
+`ACK=0` মানে প্রযোজক নেতার কাছ থেকে কোনো স্বীকৃতির জন্য অপেক্ষা না করেই বার্তা পাঠান। বার্তা প্রেরণ দ্রুততম, বার্তা স্থায়িত্ব সর্বনিম্ন।
 
 <div style="margin-left:3rem">
     <img src="./images/ack-0.png" alt="ack-0" width="500" />
 </div>
 
-On the consumer side, we can connect all consumers to the leader for a partition and let them read messages from it:
- * This makes for the simplest design and easiest operation
- * Messages in a partition are sent to only one consumer in a group, which limits the connections to the leader replica
- * The number of connections to leader replica is typically not high as long as the topic is not super hot
- * We can scale a hot topic by increasing the number of partitions and consumers
- * In certain scenarios, it might make sense to let a consumer lead from an ISR, eg if they're located in a separate DC
+ভোক্তার দিক থেকে, আমরা পার্টিশনের জন্য সমস্ত ভোক্তাদের লিডারের সাথে সংযুক্ত করতে পারি এবং তাদের এটি থেকে বার্তা পড়তে দিতে পারি:
+ * এটি সহজতম নকশা এবং সবচেয়ে সহজ অপারেশনের জন্য তৈরি করে
+ * একটি পার্টিশনের বার্তাগুলি একটি গ্রুপে শুধুমাত্র একজন গ্রাহককে পাঠানো হয়, যা লিডার প্রতিরূপের সাথে সংযোগগুলিকে সীমিত করে
+ * লিডার রেপ্লিকাতে সংযোগের সংখ্যা সাধারণত বেশি হয় না যতক্ষণ না বিষয়টি খুব বেশি গরম না হয়
+ * আমরা পার্টিশন এবং ভোক্তাদের সংখ্যা বাড়িয়ে একটি আলোচিত বিষয় স্কেল করতে পারি
+ * নির্দিষ্ট পরিস্থিতিতে, একজন ভোক্তাকে আইএসআর থেকে নেতৃত্ব দেওয়াটা বোধগম্য হতে পারে, যেমন তারা যদি আলাদা ডিসিতে থাকে
 
-The ISR list is maintained by the leader who tracks the lag between itself and each replica.
+আইএসআর তালিকাটি সেই নেতা দ্বারা রক্ষণাবেক্ষণ করা হয় যিনি নিজের এবং প্রতিটি প্রতিরূপের মধ্যে ব্যবধান ট্র্যাক করেন।
 
-### **Scalability**
+### **স্কেলযোগ্যতা**
 
-Let's evaluate how we can scale different parts of the system.
+আসুন আমরা কীভাবে সিস্টেমের বিভিন্ন অংশ স্কেল করতে পারি তা মূল্যায়ন করি।
 
-#### Producer
+#### প্রযোজক
 
-The producer is much smaller than the consumer. Its scalability can easily be achieved by adding/removing new producer instances.
+উৎপাদক ভোক্তার তুলনায় অনেক ছোট। নতুন প্রযোজক দৃষ্টান্ত যোগ/অপসারণের মাধ্যমে এর মাপযোগ্যতা সহজেই অর্জন করা যেতে পারে।
 
-#### Consumer
+#### ভোক্তা
 
-Consumer groups are isolated from each other. It is easy to add/remove consumer groups at will.
+ভোক্তা গোষ্ঠী একে অপরের থেকে বিচ্ছিন্ন। ইচ্ছামত ভোক্তা গোষ্ঠী যোগ/সরানো সহজ।
 
-Rebalancing help handle the case when consumers are added/removed from a group gracefully.
+পুনঃব্যালেন্সিং কেস হ্যান্ডেল করতে সাহায্য করে যখন ভোক্তাদের একটি গ্রুপ থেকে সুন্দরভাবে যুক্ত/সরানো হয়।
 
-Consumer groups are rebalancing help us achieve scalability and fault tolerance.
+ভোক্তা গোষ্ঠীগুলি পুনরায় ভারসাম্য তৈরি করছে যা আমাদের মাপযোগ্যতা এবং ত্রুটি সহনশীলতা অর্জনে সহায়তা করে।
 
-#### Broker
+#### দালাল
 
-How do brokers handle failure?
+দালালরা ব্যর্থতা কিভাবে পরিচালনা করে?
 
 <div style="margin-left:3rem">
     <img src="./images/broker-failure-recovery.png" alt="broker-failure-recovery" width="500" />
 </div>
 
- * Once a broker fails, there are still enough replicas to avoid partition data loss
- * A new leader is elected and the broker coordinator redistributes partitions which were at the failed broker to existing replicas
- * Existing replicas pick up the new partitions and act as followers until they're caught up with the leader and become ISR
+* একবার একজন ব্রোকার ব্যর্থ হলে, পার্টিশন ডেটা ক্ষতি এড়াতে এখনও যথেষ্ট প্রতিলিপি রয়েছে
+ * একজন নতুন নেতা নির্বাচিত হয় এবং ব্রোকার কোঅর্ডিনেটর সেই পার্টিশনগুলিকে পুনর্বন্টন করে যা ব্যর্থ ব্রোকারে বিদ্যমান প্রতিলিপিগুলিতে ছিল
+ * বিদ্যমান প্রতিলিপিগুলি নতুন পার্টিশন বাছাই করে এবং অনুসরণকারী হিসাবে কাজ করে যতক্ষণ না তারা নেতার সাথে ধরা পড়ে এবং ISR হয়ে যায়
 
-Additional considerations to make the broker fault-tolerant:
- * The minimum number of ISRs balances latency and safety. You can fine-tune it to meet your needs.
- * If all replicas of a partition are in the same node, then it's a waste of resources. Replicas should be across different brokers.
- * If all replicas of a partition crash, then the data is lost forever. Spreading replicas across data centers can help, but it adds up a lot of latency. One option is to use [data mirroring](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=27846330) as a work around.
+ব্রোকারকে দোষ-সহনশীল করার জন্য অতিরিক্ত বিবেচনা:
+ * ISR-এর ন্যূনতম সংখ্যা লেটেন্সি এবং নিরাপত্তার ভারসাম্য বজায় রাখে। আপনি আপনার প্রয়োজন মেটাতে এটি সূক্ষ্ম-টিউন করতে পারেন।
+ * যদি একটি পার্টিশনের সমস্ত প্রতিলিপি একই নোডে থাকে, তবে এটি সম্পদের অপচয়। প্রতিলিপি বিভিন্ন দালাল জুড়ে হতে হবে.
+ * যদি একটি পার্টিশন ক্র্যাশের সমস্ত প্রতিলিপি হয়ে যায়, তবে ডেটা চিরতরে হারিয়ে যাবে। ডেটা সেন্টার জুড়ে প্রতিলিপিগুলি ছড়িয়ে দেওয়া সাহায্য করতে পারে, তবে এটি অনেক বিলম্বিত করে। একটি বিকল্প হল [ডেটা মিররিং](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=27846330) ব্যবহার করা।
 
-How do we handle redistribution of replicas when a new broker is added?
+যখন একটি নতুন ব্রোকার যোগ করা হয় তখন আমরা কীভাবে প্রতিলিপিগুলির পুনর্বন্টন পরিচালনা করব?
 
 <div style="margin-left:3rem">
     <img src="./images/broker-replica-redistribution.png" alt="broker-replica-redistribution" width="500" />
 </div>
 
- * We can temporarily allow more replicas than configured, until new broker catches up
- * Once it does, we can remove the partition replica which is no longer needed
+* নতুন ব্রোকার ধরা না হওয়া পর্যন্ত আমরা সাময়িকভাবে কনফিগার করা থেকে আরও বেশি প্রতিলিপির অনুমতি দিতে পারি
+ * এটি হয়ে গেলে, আমরা পার্টিশনের প্রতিলিপিটি সরিয়ে ফেলতে পারি যার আর প্রয়োজন নেই
 
-#### Partition
+#### বিভাজন
 
-Whenever a new partition is added, the producer is notified and consumer rebalancing is triggered.
+যখনই একটি নতুন পার্টিশন যোগ করা হয়, প্রযোজককে অবহিত করা হয় এবং ভোক্তার ভারসাম্য বজায় রাখা হয়।
 
-In terms of data storage, we can only store new messages to the new partition vs. trying to copy all old ones:
+ডেটা স্টোরেজের ক্ষেত্রে, আমরা শুধুমাত্র নতুন বার্তাগুলিকে নতুন পার্টিশনে সংরক্ষণ করতে পারি বনাম সমস্ত পুরানোগুলি অনুলিপি করার চেষ্টা করছি:
 
 <div style="margin-left:3rem">
     <img src="./images/partition-exmaple.png" alt="partition-example" width="500" />
 </div>
 
-Decreasing the number of partitions is more involved:
+পার্টিশনের সংখ্যা কমানো আরও জড়িত:
 
 <div style="margin-left:3rem">
     <img src="./images/partition-decrease.png" alt="partition-decrease" width="500" />
 </div>
 
- * Once a partition is decommissioned, new messages are only received by remaining partitions
- * The decommissioned partition isn't removed immediately as messages can still be consumed from it
- * Once a pre-configured retention period passes, do we truncate the data and storage space is freed up
- * During the transitional period, producers only send messages to active partitions, but consumers read from all
- * Once retention period expires, consumers are rebalanced
+* একবার একটি পার্টিশন ডিকমিশন হয়ে গেলে, শুধুমাত্র অবশিষ্ট পার্টিশনের মাধ্যমে নতুন বার্তা পাওয়া যায়
+ * ডিকমিশন করা পার্টিশনটি অবিলম্বে সরানো হয় না কারণ এটি থেকে বার্তাগুলি এখনও ব্যবহার করা যেতে পারে
+ * একবার পূর্ব-কনফিগার করা ধরে রাখার সময়কাল চলে গেলে, আমরা কি ডেটা ছেঁটে ফেলি এবং স্টোরেজ স্পেস খালি হয়ে যায়
+ * ক্রান্তিকালীন সময়ে, প্রযোজকরা শুধুমাত্র সক্রিয় পার্টিশনে বার্তা পাঠান, কিন্তু ভোক্তারা সব থেকে পড়ে
+ * একবার ধরে রাখার মেয়াদ শেষ হয়ে গেলে, ভোক্তারা পুনরায় ভারসাম্যপূর্ণ হয়
 
-### **Data delivery semantics**
+### **ডেটা ডেলিভারি শব্দার্থবিদ্যা**
 
-Let's discuss different delivery semantics.
+আসুন বিভিন্ন ডেলিভারি শব্দার্থ নিয়ে আলোচনা করি।
 
-#### At-most once
+#### অন্তত একবার
 
-With this guarantee, messages are delivered not more than once and could not be delivered at all.
+এই গ্যারান্টি সহ, বার্তাগুলি একবারের বেশি বিতরণ করা হয় না এবং বিতরণ করা যায় না।
 
 <div style="margin-left:3rem">
     <img src="./images/at-most-once.png" alt="at-most-once" width="500" />
 </div>
 
- * Producer sends a message asynchronously to a topic. If message delivery fails, there is no retry.
- * Consumer fetches message and immediately commits offset. If consumer crashes before processing the message, the message will not be processed.
+* প্রযোজক একটি বিষয়কে অসিঙ্ক্রোনাসভাবে একটি বার্তা পাঠায়। বার্তা বিতরণ ব্যর্থ হলে, কোন পুনঃচেষ্টা নেই।
+ * ভোক্তা বার্তা নিয়ে আসে এবং অবিলম্বে অফসেট করে। বার্তাটি প্রক্রিয়া করার আগে গ্রাহক ক্র্যাশ হলে, বার্তাটি প্রক্রিয়া করা হবে না।
 
-#### At-least once
+#### অন্তত একবার
 
-A message can be sent more than once and no message should be left unprocessed.
+একটি বার্তা একাধিকবার পাঠানো যেতে পারে এবং কোনও বার্তা প্রক্রিয়া না করে রাখা উচিত নয়৷
 
 <div style="margin-left:3rem">
     <img src="./images/at-least-once.png" alt="at-least-once" width="500" />
 </div>
 
- * Producer sends message with `ack=1` or `ack=all`. If there is any issue, it will keep retrying.
- * Consumer fetches the message and consumes the offset only after it's done processing it.
- * It is possible for a message to be delivered more than once if eg consumer crashes before committing offset but after processing it.
- * This is why, this is good for use-cases where data duplication is acceptable or deduplication is possible.
+* প্রযোজক `ack=1` বা `ack=all` দিয়ে বার্তা পাঠান। যদি কোন সমস্যা হয়, এটি আবার চেষ্টা চালিয়ে যাবে.
+ * ভোক্তা বার্তাটি নিয়ে আসে এবং এটি প্রক্রিয়াকরণ সম্পন্ন করার পরেই অফসেটটি গ্রহণ করে।
+ * একটি বার্তা একাধিকবার বিতরণ করা সম্ভব যদি যেমন গ্রাহক অফসেট করার আগে ক্র্যাশ করে তবে এটি প্রক্রিয়া করার পরে।
+ * এই কারণেই, এটি ব্যবহারের ক্ষেত্রে ভাল যেখানে ডেটা ডুপ্লিকেশন গ্রহণযোগ্য বা ডিডপ্লিকেশন সম্ভব।
 
-#### Exactly once
+#### ঠিক একবার
 
-Extremely costly to implement for the system, albeit it's the friendliest guarantee to users:
+সিস্টেমের জন্য প্রয়োগ করা অত্যন্ত ব্যয়বহুল, যদিও এটি ব্যবহারকারীদের জন্য সবচেয়ে বন্ধুত্বপূর্ণ গ্যারান্টি:
 
 <div style="margin-left:3rem">
     <img src="./images/exactly-once.png" alt="exactly-once" width="500" />
 </div>
 
-### **Advanced features**
+### **উন্নত বৈশিষ্ট্য**
 
-Let's discuss some advanced features, we might discuss in the interview.
+আসুন কিছু উন্নত বৈশিষ্ট্য নিয়ে আলোচনা করি, আমরা সাক্ষাত্কারে আলোচনা করতে পারি।
 
-#### Message filtering
+#### বার্তা ফিল্টারিং
 
-Some consumers might want to only consume messages of a certain type within a partition.
+কিছু ভোক্তা একটি পার্টিশনের মধ্যে শুধুমাত্র একটি নির্দিষ্ট ধরনের বার্তা ব্যবহার করতে চাইতে পারে।
 
-This can be achieved by building separate topics for each subset of messages, but this can be costly if systems have too many differing use-cases.
- * It is a waste of resources to store the same message on different topics
- * Producer is now tightly coupled to consumers as it changes with each new consumer requirement
+প্রতিটি বার্তার উপসেটের জন্য পৃথক বিষয় তৈরি করে এটি অর্জন করা যেতে পারে, তবে সিস্টেমে অনেকগুলি ভিন্ন ব্যবহারের ক্ষেত্রে থাকলে এটি ব্যয়বহুল হতে পারে।
+ * বিভিন্ন বিষয়ে একই বার্তা সংরক্ষণ করা সম্পদের অপচয়
+ * প্রযোজক এখন ভোক্তাদের সাথে শক্তভাবে মিলিত হয়েছে কারণ এটি প্রতিটি নতুন ভোক্তার প্রয়োজনীয়তার সাথে পরিবর্তিত হয়
 
-We can resolve this using message filtering.
- * A naive approach would be to do the filtering on the consumer-side, but that introduces unnecessary consumer traffic
- * Alternatively, messages can have tags attached to them and consumers can specify which tags they're subscribed to
- * Filtering could also be done via the message payloads but that can be challenging and unsafe for encrypted/serialized messages
- * For more complex mathematical formulaes, the broker could implement a grammar parser or script executor, but that can be heavyweight for the message queue
+আমরা বার্তা ফিল্টারিং ব্যবহার করে এটি সমাধান করতে পারি।
+ * একটি সাদাসিধা পন্থা হবে ভোক্তাদের দিকে ফিল্টারিং করা, কিন্তু এটি অপ্রয়োজনীয় ভোক্তা ট্রাফিকের পরিচয় দেয়
+ * বিকল্পভাবে, বার্তাগুলির সাথে ট্যাগ সংযুক্ত থাকতে পারে এবং গ্রাহকরা নির্দিষ্ট করতে পারেন যে তারা কোন ট্যাগগুলিতে সদস্যতা নিয়েছেন
+ * ফিল্টারিং বার্তা পেলোডের মাধ্যমেও করা যেতে পারে তবে এটি এনক্রিপ্ট করা/ক্রমিক বার্তাগুলির জন্য চ্যালেঞ্জিং এবং অনিরাপদ হতে পারে
+ * আরও জটিল গাণিতিক সূত্রের জন্য, ব্রোকার একটি ব্যাকরণ পার্সার বা স্ক্রিপ্ট নির্বাহক প্রয়োগ করতে পারে, তবে এটি বার্তা সারির জন্য ভারী হতে পারে
 
 <div style="margin-left:3rem">
     <img src="./images/message-filtering.png" alt="message-filtering" width="500" />
 </div>
 
-#### Delayed messages & scheduled messages
+#### বিলম্বিত বার্তা এবং নির্ধারিত বার্তা
 
-For some use-cases, we might want to delay or schedule message delivery. 
-For example, we might submit a payment verification check for 30m from now, which triggers the consumer to see if a payment was successful.
+কিছু ব্যবহারের ক্ষেত্রে, আমরা বার্তা বিতরণে বিলম্ব বা সময়সূচী করতে চাই। 
+উদাহরণস্বরূপ, আমরা এখন থেকে 30m এর জন্য একটি অর্থপ্রদান যাচাইকরণ চেক জমা দিতে পারি, যা গ্রাহককে একটি অর্থপ্রদান সফল হয়েছে কিনা তা দেখতে ট্রিগার করে।
 
-This can be achieved by sending messages to temporary storage in the broker and moving the message to the partition at the right time:
+ব্রোকারে অস্থায়ী সঞ্চয়স্থানে বার্তা পাঠিয়ে এবং সঠিক সময়ে বার্তাটিকে পার্টিশনে সরানোর মাধ্যমে এটি অর্জন করা যেতে পারে:
 
 <div style="margin-left:3rem">
     <img src="./images/delayed-message-implementation.png" alt="delayed-message-implementation" width="500" />
 </div>
 
- * The temporary storage can be one or more special message topics
- * The timing function can be achieved using dedicated delay queues or a [hierarchical time wheel](http://www.cs.columbia.edu/~nahum/w6998/papers/sosp87-timing-wheels.pdf)
+* অস্থায়ী স্টোরেজ এক বা একাধিক বিশেষ বার্তা বিষয় হতে পারে
+ * সময় ফাংশন ডেডিকেটেড বিলম্ব সারি বা একটি [হায়ারার্কিক্যাল টাইম হুইল] (http://www.cs.columbia.edu/~nahum/w6998/papers/sosp87-timing-wheels.pdf) ব্যবহার করে অর্জন করা যেতে পারে
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-Additional talking points:
-- **Protocol of communication**: Important considerations - support all use-cases and high data volume, as well as verify message integrity. Popular protocols - AMQP and Kafka protocol.
-- **Retry consumption**: if we can't process a message immediately, we could send it to a dedicated retry topic to be attempted later.
-- **Historical data archive**: old messages can be backed up in high-capacity storages such as HDFS or object storage (eg S3).
+অতিরিক্ত কথা বলার পয়েন্ট:
+- **যোগাযোগের প্রোটোকল**: গুরুত্বপূর্ণ বিবেচ্য বিষয়গুলি - সমস্ত ব্যবহারের ক্ষেত্রে এবং উচ্চ ডেটা ভলিউম সমর্থন করে, সেইসাথে বার্তার অখণ্ডতা যাচাই করে৷ জনপ্রিয় প্রোটোকল - AMQP এবং কাফকা প্রোটোকল।
+- **পুনরায় চেষ্টা করুন**: যদি আমরা অবিলম্বে একটি বার্তা প্রক্রিয়া করতে না পারি, তাহলে আমরা এটিকে পরবর্তীতে চেষ্টা করার জন্য একটি ডেডিকেটেড পুনঃচেষ্টার বিষয়ে পাঠাতে পারি।
+- **ঐতিহাসিক তথ্য সংরক্ষণাগার**: পুরানো বার্তাগুলি উচ্চ-ক্ষমতার স্টোরেজ যেমন HDFS বা অবজেক্ট স্টোরেজে (যেমন S3) ব্যাক আপ করা যেতে পারে।

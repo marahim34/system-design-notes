@@ -1,143 +1,143 @@
-# অধ্যায় 8: ইউআরএল শর্টনার ডিজাইন (TinyURL)
+# অধ্যায় 8: একটি URL শর্টনার ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-This chapter discusses the design of a URL shortening service like TinyURL. The system's main goals include **URL shortening**, **redirecting**, and **high scalability** to handle large traffic volumes.
+## ভূমিকা
+এই অধ্যায়ে টিনিইউআরএল-এর মতো একটি URL সংক্ষিপ্তকরণ পরিষেবার নকশা নিয়ে আলোচনা করা হয়েছে। সিস্টেমের প্রধান লক্ষ্যগুলির মধ্যে রয়েছে **ইউআরএল সংক্ষিপ্তকরণ**, **পুনঃনির্দেশ**, এবং **উচ্চ পরিমাপযোগ্যতা** বড় ট্রাফিক ভলিউম পরিচালনা করার জন্য।
 
-### রিকোয়ারমেন্টস (Requirements)
-- Shortened URLs must be **unique** and as **short as possible**.
-- Handle **100 million URL generations per day** with a 10-year support capacity.
-- Support **efficient read operations** with a 10:1 read-to-write ratio.
-- Store 365 billion records, requiring approximately **365 TB** of storage over 10 years.
+### প্রয়োজনীয়তা
+- সংক্ষিপ্ত URL গুলি অবশ্যই **অনন্য** এবং **যতটা সম্ভব ছোট** হতে হবে।
+- 10 বছরের সমর্থন ক্ষমতা সহ **প্রতিদিন 100 মিলিয়ন ইউআরএল জেনারেশন পরিচালনা করুন।
+- 10:1 পঠন-টু-রাইট অনুপাত সহ **দক্ষ পঠন ক্রিয়াকলাপ** সমর্থন করে।
+- 365 বিলিয়ন রেকর্ড সঞ্চয় করুন, 10 বছরের মধ্যে প্রায় **365 TB** স্টোরেজ প্রয়োজন৷
 
 ---
 
-## ধাপ 1: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: উচ্চ-স্তরের নকশা
 
-### API Endpoints
-1. **URL Shortening:**  
-   - Endpoint: `POST api/v1/data/shorten`  
-   - Parameters: `{longUrl: longURLString}`  
-   - Returns: `shortURL`
+### API এন্ডপয়েন্ট
+1. **ইউআরএল সংক্ষিপ্ত করা:**  
+   - এন্ডপয়েন্ট: `POST api/v1/data/shorten`  
+   - প্যারামিটার: `{longUrl: longURLString}`  
+   - রিটার্ন: `shortURL`
 
-2. **URL Redirecting:**  
-   - Endpoint: `GET api/v1/shortUrl`  
-   - Returns: `longURL` for redirection.
+2. **ইউআরএল রিডাইরেক্টিং:**  
+   - এন্ডপয়েন্ট: `GET api/v1/shortUrl`  
+   - রিটার্ন: পুনঃনির্দেশের জন্য `longURL`।
 
-    <p align="center">
+<p align="center">
     <img src="./images/url-redirection.png" alt="URL Redirection" width="600">
-    </p>
+</p>
 
-### URL Redirection
-- **301 Redirect:**  A 301 redirect shows that the requested URL is “permanently” moved to the long URL. The browser caches the response, and
-subsequent requests for the same URL will not be sent to the URL shortening service.
-- **302 Redirect:** Temporary; useful for analytics like tracking clicks.
+### URL পুনর্নির্দেশ
+- **301 রিডাইরেক্ট:** একটি 301 রিডাইরেক্ট দেখায় যে অনুরোধ করা ইউআরএলটি "স্থায়ীভাবে" লম্বা ইউআরএলে সরানো হয়েছে। ব্রাউজার প্রতিক্রিয়া ক্যাশে, এবং
+একই URL এর জন্য পরবর্তী অনুরোধগুলি URL সংক্ষিপ্তকরণ পরিষেবাতে পাঠানো হবে না।
+- **302 পুনঃনির্দেশ:** অস্থায়ী; ট্র্যাকিং ক্লিকের মত বিশ্লেষণের জন্য দরকারী।
 
-### URL Shortening
+### URL সংক্ষিপ্তকরণ
 <p align="center">
     <img src="./images/url-shortening.png" alt="URL Shortening" width="400">
 </p>
 
-- Use a **hash function** to generate a short URL, mapping long URLs to unique shortened versions.
-- The hash function must satisfy the following requirements:
-    - Each longURL must be hashed to one hashValue.
-    - Each hashValue can be mapped back to the longURL.
+- একটি ছোট ইউআরএল তৈরি করতে একটি **হ্যাশ ফাংশন** ব্যবহার করুন, লম্বা ইউআরএলগুলিকে অনন্য সংক্ষিপ্ত সংস্করণে ম্যাপ করুন।
+- হ্যাশ ফাংশন নিম্নলিখিত প্রয়োজনীয়তা পূরণ করতে হবে:
+    - প্রতিটি লংইউআরএল অবশ্যই একটি হ্যাশ ভ্যালুতে হ্যাশ করতে হবে।
+    - প্রতিটি হ্যাশভ্যালু লংইউআরএল-এ আবার ম্যাপ করা যেতে পারে।
     
 
 ---
 
-## ধাপ 2: Deep Dive into Design
+## ধাপ 2: ডিজাইনে গভীরভাবে ডুব দিন
 
-### Data Model
-Store `<shortURL, longURL>` mappings in a relational database to optimize memory usage. The table schema includes:
-- `id` (primary key),
+### ডেটা মডেল
+মেমরি ব্যবহার অপ্টিমাইজ করতে একটি রিলেশনাল ডাটাবেসে `<shortURL, longURL>` ম্যাপিং সংরক্ষণ করুন। টেবিল স্কিমা অন্তর্ভুক্ত:
+- `আইডি` (প্রাথমিক কী),
 - `shortURL`,
-- `longURL`.
+- `longURL`।
 
     <img src="./images/table-schema.png" alt="Table Schema" width="300">
 
-### Hash Function
-#### 1. Base 62 Conversion:
-- Encodes numbers using characters `[0-9, a-z, A-Z]`, providing **62 possible characters**.
-- Base conversion is another approach commonly used for URL shorteners. 
-- A unique id can be assigned to the short url and ID can be base 62 converted to get the short URL.
-- A 7-character hash supports up to **3.5 trillion unique URLs**, enough for 365 billion URLs.
+### হ্যাশ ফাংশন
+#### 1. ভিত্তি 62 রূপান্তর:
+- **62 সম্ভাব্য অক্ষর** প্রদান করে `[0-9, a-z, A-Z]` অক্ষর ব্যবহার করে সংখ্যাগুলিকে এনকোড করে।
+- বেস রূপান্তর হল আরেকটি পদ্ধতি যা সাধারণত ইউআরএল শর্টনারের জন্য ব্যবহৃত হয়। 
+- একটি অনন্য আইডি শর্ট ইউআরএলে বরাদ্দ করা যেতে পারে এবং আইডিটি বেস 62 রূপান্তরিত হতে পারে ছোট ইউআরএল পেতে।
+- একটি 7-অক্ষরের হ্যাশ **3.5 ট্রিলিয়ন অনন্য URL ** সমর্থন করে, 365 বিলিয়ন URL-এর জন্য যথেষ্ট।
 
-**Example:**  
-Convert ID `2009215674938` to Base 62:
-- `2009215674938` → `zn9edcu`.
+**উদাহরণ:**  
+ID `2009215674938` কে বেস 62-এ রূপান্তর করুন:
+- `2009215674938` → `zn9edcu`।
 
-#### 2. Hash + Collision Resolution:
-- Use hash functions like CRC32, MD5, or SHA-1.
+#### 2. হ্যাশ + সংঘর্ষের রেজোলিউশন:
+- CRC32, MD5, বা SHA-1 এর মত হ্যাশ ফাংশন ব্যবহার করুন।
 
     <img src="./images/hash-function.png" alt="Hash Function" width="500">
 
-- One approach is to collect the first 7 characters of a hash value; however, this method can lead to hash collisions.
-- To resolve collisions,recursively append a new predefined string until no more collision but this can be expensive.
-- Resolve collisions with **Bloom Filters** for efficient lookup.
+- একটি পদ্ধতি হল হ্যাশ মানের প্রথম 7টি অক্ষর সংগ্রহ করা; যাইহোক, এই পদ্ধতি হ্যাশ সংঘর্ষ হতে পারে.
+- সংঘর্ষগুলি সমাধান করতে, পুনরাবৃত্তিমূলকভাবে একটি নতুন পূর্বনির্ধারিত স্ট্রিং যুক্ত করুন যতক্ষণ না আর সংঘর্ষ হয় তবে এটি ব্যয়বহুল হতে পারে।
+- দক্ষ লুকআপের জন্য **ব্লুম ফিল্টার** দিয়ে সংঘর্ষের সমাধান করুন।
 
-    <p align="center">
+<p align="center">
     <img src="./images/url-lookup.png" alt="URL Lookup" width="500">
-    </p>
+</p>
 
-### Comparison
+### তুলনা
 
--  **Hash + Collision Resolution:**
-    - Fixed short URL length
-    - Does not need a unique ID generator
-    - Collision is possbile and needs resolution
-    - Not possible to find the next available short URL because it does not depend on ID
+- **হ্যাশ + সংঘর্ষের রেজোলিউশন:**
+    - নির্দিষ্ট সংক্ষিপ্ত URL দৈর্ঘ্য
+    - একটি অনন্য আইডি জেনারেটর প্রয়োজন নেই
+    - সংঘর্ষ সম্ভব এবং সমাধান প্রয়োজন
+    - পরবর্তী উপলব্ধ সংক্ষিপ্ত URL খুঁজে পাওয়া সম্ভব নয় কারণ এটি আইডির উপর নির্ভর করে না
 
-- **Base 62 Conversion**
-    - The length is not fixed and goes up with ID
-    - It needs a unique ID generator
-    - Collision is not possbile
-    - Easy to find the next short URL if ID increments by 1 (Can be a security concern)
+- **বেস 62 রূপান্তর**
+    - দৈর্ঘ্য স্থির নয় এবং আইডি দিয়ে উপরে যায়
+    - এটি একটি অনন্য আইডি জেনারেটর প্রয়োজন
+    - সংঘর্ষ সম্ভব নয়
+    - আইডি 1 দ্বারা বৃদ্ধি পেলে পরবর্তী সংক্ষিপ্ত URL খুঁজে পাওয়া সহজ (একটি নিরাপত্তা উদ্বেগ হতে পারে)
 
 
 ---
 
-### URL Shortening Flow
+### URL শর্টনিং ফ্লো
 
 <p align="center">
     <img src="./images/url-shortening-flow.png" alt="URL Shortening" width="500">
 </p>
 
-1. Check if `longURL` exists in the database.
-2. If found, return the existing `shortURL`.
-3. Otherwise:
-   - Generate a unique ID using a **distributed ID generator**.
-   - Convert the ID to `shortURL` using Base 62.
-   - Store the `<id, shortURL, longURL>` mapping in the database.
+1. ডাটাবেসে `longURL` বিদ্যমান কিনা তা পরীক্ষা করুন।
+2. পাওয়া গেলে, বিদ্যমান `shortURL` ফেরত দিন।
+3. অন্যথায়:
+   - একটি **ডিস্ট্রিবিউটেড আইডি জেনারেটর** ব্যবহার করে একটি অনন্য আইডি তৈরি করুন।
+   - Base 62 ব্যবহার করে ID কে `shortURL` এ রূপান্তর করুন।
+   - ডাটাবেসে `<id, shortURL, longURL>` ম্যাপিং সংরক্ষণ করুন।
 
 
 
 ---
 
-### URL Redirecting Flow
+### URL পুনঃনির্দেশিত প্রবাহ
 <p align="center">
     <img src="./images/url-redirecting-flow.png" alt="URL Shortening" width="600">
 </p>
 
-1. User clicks a `shortURL`.
-2. Query `<shortURL, longURL>` mapping:
-   - Check the **cache** first for faster access.
-   - If not in the cache, query the database.
-3. Redirect the user to `longURL`.
+1. ব্যবহারকারী একটি `shortURL` ক্লিক করে।
+2. প্রশ্ন `<shortURL, longURL>` ম্যাপিং:
+   - দ্রুত অ্যাক্সেসের জন্য প্রথমে **ক্যাশে** চেক করুন।
+   - ক্যাশে না থাকলে, ডাটাবেস জিজ্ঞাসা করুন।
+3. ব্যবহারকারীকে `longURL`-এ পুনঃনির্দেশিত করুন।
 
 
 ---
 
-## Additional Considerations
-### Rate Limiter
-- Prevent abuse by setting limits on requests per IP.
+## অতিরিক্ত বিবেচনা
+### রেট লিমিটার
+- প্রতি IP অনুরোধের সীমা নির্ধারণ করে অপব্যবহার রোধ করুন।
 
-### Scalability
-1. **Web Tier:** Stateless, scalable by adding/removing web servers.
-2. **Database Tier:** Use replication and sharding.
+### পরিমাপযোগ্যতা
+1. **ওয়েব টিয়ার:** স্টেটলেস, ওয়েব সার্ভার যোগ/মুছে ফেলার মাধ্যমে মাপযোগ্য।
+2. **ডাটাবেস টিয়ার:** প্রতিলিপি এবং শার্ডিং ব্যবহার করুন।
 
-### Analytics
-- Collect data like click rates, source, and timestamps for business insights.
+### বিশ্লেষণ
+- ব্যবসার অন্তর্দৃষ্টির জন্য ক্লিক রেট, উত্স এবং টাইমস্ট্যাম্পের মতো ডেটা সংগ্রহ করুন৷
 
-### High Availability and Reliability
-- Ensure consistent and reliable services using database replication and fault-tolerant design.
+### উচ্চ প্রাপ্যতা এবং নির্ভরযোগ্যতা
+- ডাটাবেস প্রতিলিপি এবং ত্রুটি-সহনশীল নকশা ব্যবহার করে সামঞ্জস্যপূর্ণ এবং নির্ভরযোগ্য পরিষেবা নিশ্চিত করুন।
 

@@ -1,41 +1,41 @@
-# অধ্যায় 22: হোটেল বুকিং এবং রিজার্ভেশন সিস্টেম
+# অধ্যায় 22: হোটেল রিজার্ভেশন সিস্টেম
 
-## ভূমিকা (Introduction)
-In this chapter, we're designing a **hotel reservation system**, similar to Marriott International.
+## ভূমিকা
+এই অধ্যায়ে, আমরা ম্যারিয়ট ইন্টারন্যাশনালের মতো একটি **হোটেল রিজার্ভেশন সিস্টেম** ডিজাইন করছি।
 
-Applicable to other types of systems as well - Airbnb, flight reservation, movie ticket booking.
+অন্যান্য ধরনের সিস্টেমের ক্ষেত্রেও প্রযোজ্য - Airbnb, ফ্লাইট রিজার্ভেশন, সিনেমার টিকিট বুকিং।
 
 ---
 
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
-Before diving into designing the system, we should ask the interviewer questions to clarify the scope:
- - C: What is the scale of the system?
- - I: We're building a website for a hotel chain \w 5000 hotels and 1mil rooms
- - C: Do customers pay when they make a reservation or when they arrive at the hotel?
- - I: They pay in full when making reservations.
- - C: Do customers book hotel rooms through the website only? Do we have to support other reservation options such as phone calls?
- - I: They make bookings through the website or app only.
- - C: Can customers cancel reservations?
- - I: Yes
- - C: Other things to consider?
- - I: Yes, we allow overbooking by 10%. Hotel will sell more rooms than there actually are. Hotels do this in anticipation that clients will cancel bookings.
- - C: Since not much time, we'll focus on - show hotel-related page, hotel-room details page, reserve a room, admin panel, support overbooking.
- - I: Sounds good.
- - I: One more thing - hotel prices change all the time. Assume a hotel room's price changes every day.
- - C: OK.
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
+সিস্টেম ডিজাইন করার আগে, আমাদের সাক্ষাত্কারকারীকে সুযোগটি স্পষ্ট করার জন্য প্রশ্ন জিজ্ঞাসা করা উচিত:
+ - C: সিস্টেমের স্কেল কি?
+ - আমি: আমরা একটি হোটেল চেইন \w 5000 হোটেল এবং 1 মিলিয়ন কক্ষের জন্য একটি ওয়েবসাইট তৈরি করছি
+ - সি: গ্রাহকরা যখন রিজার্ভেশন করেন বা হোটেলে পৌঁছান তখন কি তারা অর্থ প্রদান করেন?
+ - আমি: রিজার্ভেশন করার সময় তারা সম্পূর্ণ অর্থ প্রদান করে।
+ - সি: গ্রাহকরা কি শুধুমাত্র ওয়েবসাইটের মাধ্যমে হোটেল রুম বুক করেন? আমাদের কি অন্যান্য রিজার্ভেশন বিকল্পগুলিকে সমর্থন করতে হবে যেমন ফোন কল?
+ - আমি: তারা শুধুমাত্র ওয়েবসাইট বা অ্যাপের মাধ্যমে বুকিং করে।
+ - C: গ্রাহকরা কি রিজার্ভেশন বাতিল করতে পারেন?
+ - আমি: হ্যাঁ
+ - সি: অন্যান্য বিষয় বিবেচনা?
+ - আমি: হ্যাঁ, আমরা 10% বেশি বুকিংয়ের অনুমতি দিই। হোটেল আসলে আছে তুলনায় আরো কক্ষ বিক্রি হবে. হোটেলগুলি এই প্রত্যাশায় করে যে গ্রাহকরা বুকিং বাতিল করবে।
+ - সি: যেহেতু বেশি সময় নেই, আমরা ফোকাস করব - হোটেল-সম্পর্কিত পৃষ্ঠা, হোটেল-রুমের বিবরণ পৃষ্ঠা, একটি রুম রিজার্ভ করা, অ্যাডমিন প্যানেল, ওভারবুকিং সমর্থন।
+ - আমি: ভালো লাগছে।
+ - আমি: আরেকটা জিনিস - হোটেলের দাম সব সময় পরিবর্তন হয়। ধরুন একটি হোটেল রুমের দাম প্রতিদিন পরিবর্তিত হয়।
+ - সি: ঠিক আছে।
 
-### **Non-functional requirements**
- - Support high concurrency - there might be a lot of customers trying to book the same hotel during peak season.
- - Moderate latency - it's ideal to have low latency when a user makes a reservation, but it's acceptable if the system takes a few seconds to process it.
+### **অকার্যকর প্রয়োজনীয়তা**
+- উচ্চ একযোগে সমর্থন করুন - পিক সিজনে একই হোটেল বুক করার চেষ্টা করতে পারে এমন অনেক গ্রাহক থাকতে পারে।
+ - মাঝারি লেটেন্সি - যখন কোনও ব্যবহারকারী একটি রিজার্ভেশন করে তখন কম বিলম্ব থাকা আদর্শ, তবে সিস্টেমটি প্রক্রিয়া করতে কয়েক সেকেন্ড সময় নিলে এটি গ্রহণযোগ্য৷
 
-### **Back-of-the-envelope estimation**
- - 5000 hotels and 1mil rooms in total
- - Assume 70% of rooms are occupied and average stay duration is 3 days
- - Estimated daily reservations - 1mil * 0.7 / 3 = ~240k reservations per day
- - Reservations per second - 240k / 10^5 seconds in a day = ~3. Average reservation TPS is low.
+### **খামের পিছনের অনুমান**
+- মোট 5000 হোটেল এবং 1 মিলিয়ন রুম
+ - অনুমান করুন 70% রুম দখল করা হয়েছে এবং গড় থাকার সময়কাল 3 দিন
+ - আনুমানিক দৈনিক সংরক্ষণ - 1mil * 0.7 / 3 = ~240k প্রতি দিন সংরক্ষণ
+ - প্রতি সেকেন্ডে সংরক্ষণ - দিনে 240k / 10^5 সেকেন্ড = ~3। গড় সংরক্ষণ TPS কম।
 
-Let's estimate the QPS. If we assume that there are three steps to reach the reservation page and there is a 10% conversion rate per page,
-we can estimate that if there are 3 reservations, then there must be 30 views of reservation page and 300 views of hotel room detail page.
+আসুন QPS অনুমান করা যাক। যদি আমরা ধরে নিই যে রিজার্ভেশন পৃষ্ঠায় পৌঁছানোর জন্য তিনটি ধাপ রয়েছে এবং প্রতি পৃষ্ঠায় 10% রূপান্তর হার রয়েছে,
+আমরা অনুমান করতে পারি যে যদি 3টি রিজার্ভেশন থাকে, তাহলে অবশ্যই রিজার্ভেশন পৃষ্ঠার 30টি ভিউ এবং হোটেল রুমের বিস্তারিত পৃষ্ঠার 300টি ভিউ থাকতে হবে।
 
 <div style="margin-left:3rem">
     <img src="./images/qps-estimation.png" alt="qps-estimation" width="500" />
@@ -43,34 +43,34 @@ we can estimate that if there are 3 reservations, then there must be 30 views of
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
-We'll explore - API Design, Data model, high-level design.
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+আমরা অন্বেষণ করব - API ডিজাইন, ডেটা মডেল, উচ্চ-স্তরের নকশা।
 
-### **API Design**
-This API Design focuses on the core endpoints (using RESTful practices), we'll need in order to support a hotel reservation system.
+### **এপিআই ডিজাইন**
+এই API ডিজাইন মূল এন্ডপয়েন্টের উপর ফোকাস করে (RESTful অনুশীলন ব্যবহার করে), হোটেল রিজার্ভেশন সিস্টেমকে সমর্থন করার জন্য আমাদের প্রয়োজন হবে।
 
-A fully-fledged system would require a more extensive API with support for searching for rooms based on lots of criteria, but we won't be focusing on that in this section.
-Reason is that they aren't technically challenging, so they're out of scope.
+অনেক মানদণ্ডের উপর ভিত্তি করে রুম অনুসন্ধানের জন্য সমর্থন সহ একটি সম্পূর্ণরূপে উন্নত সিস্টেমের জন্য আরও বিস্তৃত API প্রয়োজন, কিন্তু আমরা এই বিভাগে এটির উপর ফোকাস করব না।
+কারণ হল তারা প্রযুক্তিগতভাবে চ্যালেঞ্জিং নয়, তাই তারা সুযোগের বাইরে।
 
-**Hotel-related API**
- - `GET /v1/hotels/{id}` - get detailed info about a hotel
- - `POST /v1/hotels` - add a new hotel. Only available to ops
- - `PUT /v1/hotels/{id}` - update hotel info. Only available to ops
- - `DELETE /v1/hotels/{id}` - delete a hotel. API is only available to ops
+**হোটেল-সম্পর্কিত API**
+ - `GET /v1/hotels/{id}` - একটি হোটেল সম্পর্কে বিস্তারিত তথ্য পান
+ - `POST /v1/hotels` - একটি নতুন হোটেল যোগ করুন। শুধুমাত্র অপ্সের জন্য উপলব্ধ
+ - `PUT /v1/hotels/{id}` - হোটেলের তথ্য আপডেট করুন। শুধুমাত্র অপ্সের জন্য উপলব্ধ
+ - `/v1/hotels/{id}` মুছুন - একটি হোটেল মুছুন। API শুধুমাত্র অপ্সের জন্য উপলব্ধ
 
-**Room-related API**
- - `GET /v1/hotels/{id}/rooms/{id}` - get detailed information about a room
- - `POST /v1/hotels/{id}/rooms` - Add a room. Only available to ops
- - `PUT /v1/hotels/{id}/rooms/{id}` - Update room info. Only available to ops
- - `DELETE /v1/hotels/{id}/rooms/{id}` - Delete a room. Only available to ops
+**রুম-সম্পর্কিত API**
+ - `GET /v1/hotels/{id}/rooms/{id}` - একটি রুম সম্পর্কে বিস্তারিত তথ্য পান
+ - `POST /v1/hotels/{id}/rooms` - একটি রুম যোগ করুন। শুধুমাত্র অপ্সের জন্য উপলব্ধ
+ - `PUT /v1/hotels/{id}/rooms/{id}` - রুমের তথ্য আপডেট করুন। শুধুমাত্র অপ্সের জন্য উপলব্ধ
+ - `/v1/hotels/{id}/rooms/{id}` মুছুন - একটি রুম মুছুন। শুধুমাত্র অপ্সের জন্য উপলব্ধ
 
-**Reservation-related API**
- - `GET /v1/reservations` - get reservation history of current user
- - `GET /v1/reservations/{id}` - get detailed info about a reservation
- - `POST /v1/reservations` - make a new reservation
- - `DELETE /v1/reservations/{id}` - cancel a reservation
+**রিজার্ভেশন-সম্পর্কিত API**
+ - `GET /v1/সংরক্ষণ` - বর্তমান ব্যবহারকারীর সংরক্ষণের ইতিহাস পান
+ - `GET /v1/reservations/{id}` - একটি রিজার্ভেশন সম্পর্কে বিস্তারিত তথ্য পান
+ - `POST /v1/সংরক্ষণ` - একটি নতুন সংরক্ষণ করুন
+ - `মুছুন /v1/সংরক্ষণ/{id}` - একটি সংরক্ষণ বাতিল করুন
 
-Here's an example request to make a reservation:
+এখানে একটি রিজার্ভেশন করার জন্য একটি উদাহরণ অনুরোধ:
 
 ```
 {
@@ -82,75 +82,75 @@ Here's an example request to make a reservation:
 }
 ```
 
-Note that the `reservationID` is an idempotency key to avoid double booking. Details explained in [concurrency section](#concurrency-issues)
+মনে রাখবেন যে 'রিজার্ভেশনআইডি' হল ডবল বুকিং এড়ানোর জন্য একটি অদম্যতা কী। বিশদ বিবরণ [সঙ্গম বিভাগে](#concurrency-issues) এ ব্যাখ্যা করা হয়েছে
 
-### **Data model**
-Before we choose what database to use, let's consider our access patterns.
+### **ডেটা মডেল**
+আমরা কোন ডাটাবেস ব্যবহার করব তা বেছে নেওয়ার আগে, আসুন আমাদের অ্যাক্সেসের ধরণগুলি বিবেচনা করি।
 
-We need to support the following queries:
- - View detailed info about a hotel
- - Find available types of rooms given a date range
- - Record a reservation
- - Look up a reservation or past history of reservations
+আমাদের নিম্নলিখিত প্রশ্নগুলি সমর্থন করতে হবে:
+ - একটি হোটেল সম্পর্কে বিস্তারিত তথ্য দেখুন
+ - একটি তারিখ পরিসীমা দেওয়া রুম উপলব্ধ ধরনের খুঁজুন
+ - একটি রিজার্ভেশন রেকর্ড
+ - একটি সংরক্ষণ বা সংরক্ষণের অতীত ইতিহাস দেখুন
 
-From our estimations, we know the scale of the system is not large, but we need to prepare for traffic surges.
+আমাদের অনুমান থেকে, আমরা জানি সিস্টেমের স্কেল বড় নয়, কিন্তু ট্রাফিক বৃদ্ধির জন্য আমাদের প্রস্তুত থাকতে হবে।
 
-Given this knowledge, we'll choose a relational database because:
- - Relational DBs work well with read-heavy and less write-heavy systems.
- - NoSQL databases are normally optimized for writes, but we know we won't have many as only a fraction of users who visit the site make a reservation.
- - Relational DBs provide ACID guarantees. These are important for such a system as without them, we won't be able to prevent problems such as negative balance, double charge, etc.
- - Relational DBs can easily model the data as the structure is very clear.
+এই জ্ঞান দেওয়া হলে, আমরা একটি রিলেশনাল ডাটাবেস বেছে নেব কারণ:
+ - রিলেশনাল ডিবি পঠন-ভারী এবং কম লেখা-ভারী সিস্টেমের সাথে ভাল কাজ করে।
+ - NoSQL ডাটাবেসগুলি সাধারণত লেখার জন্য অপ্টিমাইজ করা হয়, কিন্তু আমরা জানি যে আমাদের কাছে অনেকগুলি থাকবে না কারণ শুধুমাত্র একটি ভগ্নাংশ ব্যবহারকারী যারা সাইটটি পরিদর্শন করে তারা সংরক্ষণ করে৷
+ - রিলেশনাল ডিবি এসিআইডি গ্যারান্টি প্রদান করে। এগুলি এমন একটি সিস্টেমের জন্য গুরুত্বপূর্ণ কারণ এগুলি ছাড়া, আমরা নেতিবাচক ব্যালেন্স, ডাবল চার্জ ইত্যাদির মতো সমস্যাগুলি প্রতিরোধ করতে সক্ষম হব না।
+ - রিলেশনাল ডিবি সহজেই ডেটা মডেল করতে পারে কারণ গঠনটি খুব পরিষ্কার।
 
-Here is our schema design:
+এখানে আমাদের স্কিমা ডিজাইন:
 
 <div style="margin-left:3rem">
     <img src="./images/schema-design.png" alt="schema-design" width="500" />
 </div>
 
-Most fields are self-explanatory. Only field worth mentioning is the `status` field which represents the state machine of a given room:
+অধিকাংশ ক্ষেত্র স্ব-ব্যাখ্যামূলক। উল্লেখ করার মতো একমাত্র ক্ষেত্র হল `স্থিতি` ক্ষেত্র যা একটি প্রদত্ত ঘরের রাষ্ট্রীয় যন্ত্রকে প্রতিনিধিত্ব করে:
 
 <div style="margin-left:3rem">
     <img src="./images/status-state-machine.png" alt="status-state-machine" width="500" />
 </div>
 
-This data model works well for a system like Airbnb, but not for hotels where users don't reserve a particular room but a room type.
-They reserve a type of room and a room number is chosen at the point of reservation.
+এই ডেটা মডেলটি Airbnb-এর মতো একটি সিস্টেমের জন্য ভাল কাজ করে, তবে এমন হোটেলগুলির জন্য নয় যেখানে ব্যবহারকারীরা একটি নির্দিষ্ট রুম সংরক্ষণ করেন না কিন্তু একটি রুমের ধরন।
+তারা এক ধরনের রুম রিজার্ভ করে এবং রিজার্ভেশনের সময় একটি রুম নম্বর বেছে নেওয়া হয়।
 
-This shortcoming will be addressed in the [Improved Data Model](#improved-data-model) section.
+এই ত্রুটিটি [উন্নত ডেটা মডেল](#উন্নত-ডেটা-মডেল) বিভাগে সমাধান করা হবে।
 
-### **High-level Design**
-We've chosen a microservice architecture for this design. It has gained great popularity in recent years:
+### **উচ্চ-স্তরের ডিজাইন**
+আমরা এই ডিজাইনের জন্য একটি মাইক্রোসার্ভিস আর্কিটেকচার বেছে নিয়েছি। সাম্প্রতিক বছরগুলিতে এটি দুর্দান্ত জনপ্রিয়তা অর্জন করেছে:
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="high-level-design" width="500" />
 </div>
 
- - **Users**: book a hotel room on their phone or computer
- - **Admin**: perform administrative functions such as refunding/cancelling a payment, etc
- - **CDN**: caches static resources such as JS bundles, images, videos, etc
- - **Public API Gateway**: fully-managed service which supports rate limiting, authentication, etc.
- - **Internal APIs**: only visible to authorized personnel. Usually protected by a VPN.
- - **Hotel service**: provides detailed information about hotels and rooms. Hotel and room data is static, so it can be cached aggressively.
- - **Rate service**: provides room rates for different future dates. An interesting note about this domain is that prices depend on how full a hotel is at a given day.
- - **Reservation service**: receives reservation requests and reserves hotel rooms. Also tracks room inventory as reservations are made/cancelled.
- - **Payment service**: processes payments and updates reservation statuses on success.
- - **Hotel management service**: available to authorized personnel only. Allows certain administrative functions for managing and viewing reservations, hotels, etc.
+- **ব্যবহারকারী**: তাদের ফোন বা কম্পিউটারে একটি হোটেল রুম বুক করুন
+ - **প্রশাসক**: প্রশাসনিক কার্য সম্পাদন করে যেমন অর্থ ফেরত দেওয়া/বাতিল করা ইত্যাদি
+ - **CDN**: ক্যাশে স্ট্যাটিক রিসোর্স যেমন JS বান্ডেল, ছবি, ভিডিও ইত্যাদি
+ - **পাবলিক API গেটওয়ে**: সম্পূর্ণ-পরিচালিত পরিষেবা যা হার সীমিতকরণ, প্রমাণীকরণ ইত্যাদি সমর্থন করে।
+ - **অভ্যন্তরীণ APIs**: শুধুমাত্র অনুমোদিত কর্মীদের কাছে দৃশ্যমান। সাধারণত একটি VPN দ্বারা সুরক্ষিত।
+ - **হোটেল পরিষেবা**: হোটেল এবং রুম সম্পর্কে বিস্তারিত তথ্য প্রদান করে। হোটেল এবং রুম ডেটা স্থির, তাই এটি আক্রমণাত্মকভাবে ক্যাশে করা যেতে পারে।
+ - **রেট পরিষেবা**: ভবিষ্যতের বিভিন্ন তারিখের জন্য রুম রেট প্রদান করে। এই ডোমেন সম্পর্কে একটি আকর্ষণীয় নোট হল যে দামগুলি একটি নির্দিষ্ট দিনে হোটেল কতটা পূর্ণ হবে তার উপর নির্ভর করে৷
+ - **রিজার্ভেশন পরিষেবা**: রিজার্ভেশন অনুরোধ গ্রহণ করে এবং হোটেল রুম সংরক্ষণ করে। রিজার্ভেশন করা/বাতিল করা হয়েছে বলে রুম ইনভেন্টরিও ট্র্যাক করে।
+ - **পেমেন্ট সার্ভিস**: পেমেন্ট প্রসেস করে এবং সফলতার উপর রিজার্ভেশন স্ট্যাটাস আপডেট করে।
+ - **হোটেল ম্যানেজমেন্ট সার্ভিস**: শুধুমাত্র অনুমোদিত কর্মীদের জন্য উপলব্ধ। রিজার্ভেশন, হোটেল, ইত্যাদি পরিচালনা এবং দেখার জন্য কিছু প্রশাসনিক ফাংশনকে অনুমতি দেয়।
 
-Inter-service communication can be facilitated via a RPC framework, such as gRPC.
+আন্তঃ-পরিষেবা যোগাযোগ একটি RPC কাঠামোর মাধ্যমে সহজতর করা যেতে পারে, যেমন gRPC।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
-Let's dive deeper into:
- - Improved data model
- - Concurrency issues
- - Scalability
- - Resolving data inconsistency in microservices
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
+আসুন আরও গভীরে ডুব দেওয়া যাক:
+ - উন্নত ডেটা মডেল
+ - সমসাময়িক সমস্যা
+ - মাপযোগ্যতা
+ - মাইক্রোসার্ভিসে ডেটার অসঙ্গতি সমাধান করা
 
-### **Improved data model**
-As mentioned in a previous section, we need to amend our API and schema to enable reserving a type of room vs. a particular one.
+### **উন্নত ডেটা মডেল**
+পূর্ববর্তী বিভাগে উল্লিখিত হিসাবে, আমাদের এপিআই এবং স্কিমা সংশোধন করতে হবে যাতে একটি নির্দিষ্ট ঘর বনাম একটি নির্দিষ্ট ঘর সংরক্ষণ করা যায়৷
 
-For the reservation API, we no longer reserve a `roomID`, but we reserve a `roomTypeID`:
+রিজার্ভেশন API এর জন্য, আমরা আর একটি `roomID` সংরক্ষণ করি না, কিন্তু আমরা একটি `roomTypeID` সংরক্ষণ করি:
 
 ```
 POST /v1/reservations
@@ -164,42 +164,42 @@ POST /v1/reservations
 }
 ```
 
-Here's the updated schema:
+এখানে আপডেট করা স্কিমা আছে:
 
 <div style="margin-left:3rem">
     <img src="./images/updated-schema.png" alt="updated-schema" width="500" />
 </div>
 
- - **room**: contains information about a room
- - **room_type_rate**: contains information about prices for a given room type
- - **reservation**: records guest reservation data
- - **room_type_inventory**: stores inventory data about hotel rooms. 
+- **রুম**: একটি রুম সম্পর্কে তথ্য রয়েছে
+ - **রুম_টাইপ_রেট**: একটি প্রদত্ত রুমের প্রকারের দাম সম্পর্কে তথ্য রয়েছে
+ - **সংরক্ষণ**: গেস্ট রিজার্ভেশন ডেটা রেকর্ড করে
+ - **রুম_টাইপ_ইনভেন্টরি**: হোটেল রুম সম্পর্কে ইনভেন্টরি ডেটা সঞ্চয় করে।
 
-Let's take a look at the `room_type_inventory` columns as that table is more interesting:
- - **hotel_id**: id of hotel
- - **room_type_id**: id of a room type
- - **date**: a single date
- - **total_inventory**: total number of rooms minus those that are temporarily taken off the inventory.
- - **total_reserved**: total number of rooms booked for given (hotel_id, room_type_id, date)
+আসুন 'রুম_টাইপ_ইনভেন্টরি' কলামগুলি দেখে নেওয়া যাক কারণ সেই টেবিলটি আরও আকর্ষণীয়:
+ - **হোটেল_আইডি**: হোটেলের আইডি
+ - **রুম_টাইপ_আইডি**: রুমের প্রকারের আইডি
+ - **তারিখ**: একটি একক তারিখ
+ - **মোট_ইনভেন্টরি**: মোট কক্ষের সংখ্যা বিয়োগ করে যেগুলি সাময়িকভাবে ইনভেন্টরি থেকে সরিয়ে নেওয়া হয়েছে।
+ - **মোট_সংরক্ষিত**: প্রদত্ত কক্ষের মোট সংখ্যা (হোটেল_আইডি, রুম_টাইপ_আইডি, তারিখ)
 
-There are alternative ways to design this table, but having one room per (hotel_id, room_type_id, date) enables easy 
-reservation management and easier queries.
+এই টেবিলটি ডিজাইন করার বিকল্প উপায় রয়েছে, তবে প্রতি (হোটেল_আইডি, রুম_টাইপ_আইডি, তারিখ) একটি রুম থাকা সহজে সক্ষম করে। 
+রিজার্ভেশন ব্যবস্থাপনা এবং সহজ প্রশ্ন.
 
-The rows in the table are pre-populated using a daily CRON job.
+টেবিলের সারিগুলি একটি দৈনিক CRON কাজ ব্যবহার করে পূর্ব-পপুলেট করা হয়৷
 
-Sample data:
-| hotel_id | room_type_id | date       | total_inventory | total_reserved |
-|----------|--------------|------------|-----------------|----------------|
-| 211      | 1001         | 2021-06-01 | 100             | 80             |
-| 211      | 1001         | 2021-06-02 | 100             | 82             |
-| 211      | 1001         | 2021-06-03 | 100             | 86             |
-| 211      | 1001         | ...        | ...             |                |
-| 211      | 1001         | 2023-05-31 | 100             | 0              |
-| 211      | 1002         | 2021-06-01 | 200             | 16             |
-| 2210     | 101          | 2021-06-01 | 30              | 23             |
-| 2210     | 101          | 2021-06-02 | 30              | 25             |
+নমুনা তথ্য:
+| হোটেল_আইডি | রুম_টাইপ_আইডি | তারিখ | মোট_জয় | মোট_সংরক্ষিত |
+|------------|---------------|------------|-------------------------|
+| 211 | 1001 | 2021-06-01 | 100 | 80 |
+| 211 | 1001 | 2021-06-02 | 100 | 82 |
+| 211 | 1001 | 2021-06-03 | 100 | 86 |
+| 211 | 1001 | ... | ... |                |
+| 211 | 1001 | 2023-05-31 | 100 | 0 |
+| 211 | 1002 | 2021-06-01 | 200 | 16 |
+| 2210 | 101 | 2021-06-01 | 30 | 23 |
+| 2210 | 101 | 2021-06-02 | 30 | 25 |
 
-Sample SQL query to check the availability of a type of room:
+এক ধরনের রুমের প্রাপ্যতা পরীক্ষা করতে নমুনা এসকিউএল কোয়েরি:
 
 ```
 SELECT date, total_inventory, total_reserved
@@ -208,75 +208,75 @@ WHERE room_type_id = ${roomTypeId} AND hotel_id = ${hotelId}
 AND date between ${startDate} and ${endDate}
 ```
 
-How to check availability for a specified number of rooms using that data (note that we support overbooking):
+সেই ডেটা ব্যবহার করে একটি নির্দিষ্ট সংখ্যক রুমের প্রাপ্যতা কীভাবে পরীক্ষা করবেন (মনে রাখবেন যে আমরা ওভারবুকিং সমর্থন করি):
 
 ```
 if (total_reserved + ${numberOfRoomsToReserve}) <= 110% * total_inventory
 ```
 
-Now let's do some estimation about the storage volume.
- - We have 5000 hotels.
- - Each hotel has 20 types of rooms.
- - 5000 * 20 * 2 (years) * 365 (days) = 73mil rows
+এখন স্টোরেজ ভলিউম সম্পর্কে কিছু অনুমান করা যাক।
+ - আমাদের 5000টি হোটেল আছে।
+ - প্রতিটি হোটেলে 20 ধরনের কক্ষ রয়েছে।
+ - 5000 * 20 * 2 (বছর) * 365 (দিন) = 73 মিলিয়ন সারি
 
-73 million rows is not a lot of data and a single database server can handle it.
-It makes sense, however, to setup read replication (potentially across different zones) to enable high availability.
+73 মিলিয়ন সারি অনেক ডেটা নয় এবং একটি একক ডাটাবেস সার্ভার এটি পরিচালনা করতে পারে।
+তবে, উচ্চ প্রাপ্যতা সক্ষম করতে রিড রেপ্লিকেশন (সম্ভাব্যভাবে বিভিন্ন অঞ্চল জুড়ে) সেটআপ করা বোধগম্য।
 
-Follow-up question - if reservation data is too large for a single database, what would you do?
- - Store only current and future reservation data. Reservation history can be moved to cold storage.
- - Database sharding - we can shard our data by `hash(hotel_id) % servers_cnt` as we always select the `hotel_id` in our queries.
+ফলো-আপ প্রশ্ন - যদি একটি ডাটাবেসের জন্য রিজার্ভেশন ডেটা খুব বড় হয়, তাহলে আপনি কী করবেন?
+ - শুধুমাত্র বর্তমান এবং ভবিষ্যতের রিজার্ভেশন ডেটা সংরক্ষণ করুন। সংরক্ষণের ইতিহাস হিমাগারে সরানো যেতে পারে।
+ - ডাটাবেস শার্ডিং - আমরা আমাদের ডেটাকে `হ্যাশ(হোটেল_আইডি) % সার্ভার_সিএনটি` দ্বারা ভাগ করতে পারি কারণ আমরা সবসময় আমাদের প্রশ্নের মধ্যে `হোটেল_আইডি` নির্বাচন করি।
 
-### **Concurrency issues**
-Another important problem to address is double booking.
+### **একসঙ্গে সমস্যা**
+সমাধান করার জন্য আরেকটি গুরুত্বপূর্ণ সমস্যা হল ডাবল বুকিং।
 
-There are two issues to address:
- - Same user clicks on "book" twice
- - Multiple users try to book a room at the same time
+সমাধান করার জন্য দুটি সমস্যা আছে:
+ - একই ব্যবহারকারী "বুক" এ দুবার ক্লিক করে
+ - একাধিক ব্যবহারকারী একই সময়ে একটি রুম বুক করার চেষ্টা করেন
 
-Here's a visualization of the first problem:
+এখানে প্রথম সমস্যাটির একটি ভিজ্যুয়ালাইজেশন রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/double-booking-single-user.png" alt="double-booking-single-user" width="500" />
 </div>
 
-There are two approaches to solving this problem:
- - Client-side handling - front-end can disable the book button once clicked. If a user disabled javascript, however, they won't see the button becoming grayed out.
- - Idemptent API - Add an idempotency key to the API, which enables a user to execute an action once, regardless of how many times the endpoint is invoked:
+এই সমস্যা সমাধানের জন্য দুটি পন্থা আছে:
+ - ক্লায়েন্ট-সাইড হ্যান্ডলিং - ফ্রন্ট-এন্ড একবার ক্লিক করলে বই বোতামটি অক্ষম করতে পারে। যদি কোনো ব্যবহারকারী জাভাস্ক্রিপ্ট অক্ষম করে থাকে, তবে, তারা বোতামটি ধূসর হয়ে যেতে দেখবে না।
+ - Idemptent API - API-তে একটি idempotency কী যোগ করুন, যা একজন ব্যবহারকারীকে একবার একটি ক্রিয়া সম্পাদন করতে সক্ষম করে, তা নির্বিশেষে কতবার এন্ডপয়েন্ট আহ্বান করা হয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/idempotency.png" alt="idempotency" width="500" />
 </div>
 
-Here's how this flow works:
- - A reservation order is generated once you're in the process of filling in your details and making a booking. The reservation order is generated using a globally unique identifier.
- - Submit reservation 1 using the `reservation_id` generated in the previous step.
- - If "complete booking" is clicked a second time, the same `reservation_id` is sent and the backend detects that this is a duplicate reservation.
- - The duplication is avoided by making the `reservation_id` column have a unique constraint, preventing multiple records with that id being stored in the DB.
+এই প্রবাহ কিভাবে কাজ করে তা এখানে:
+ - আপনি আপনার বিশদ বিবরণ পূরণ করার এবং বুকিং করার প্রক্রিয়ার মধ্যে থাকলে একটি রিজার্ভেশন অর্ডার তৈরি হয়। রিজার্ভেশন অর্ডার একটি বিশ্বব্যাপী অনন্য শনাক্তকারী ব্যবহার করে তৈরি করা হয়।
+ - আগের ধাপে তৈরি করা `সংরক্ষণ_আইডি` ব্যবহার করে সংরক্ষণ ১ জমা দিন।
+ - যদি "সম্পূর্ণ বুকিং" দ্বিতীয়বার ক্লিক করা হয়, তাহলে একই `রিজার্ভেশন_আইডি` পাঠানো হয় এবং ব্যাকএন্ড সনাক্ত করে যে এটি একটি ডুপ্লিকেট রিজার্ভেশন।
+ - 'রিজার্ভেশন_আইডি' কলামে একটি অনন্য সীমাবদ্ধতা তৈরি করে ডুপ্লিকেশনটি এড়ানো হয়, যে আইডির সাথে একাধিক রেকর্ড ডিবিতে সংরক্ষণ করা প্রতিরোধ করে।
 
 <div style="margin-left:3rem">
     <img src="./images/unique-constraint-violation.png" alt="unique-constraint-violation" width="500" />
 </div>
 
-What if there are multiple users making the same reservation?
+একই রিজার্ভেশন করা একাধিক ব্যবহারকারী থাকলে কি হবে?
 
 <div style="margin-left:3rem">
     <img src="./images/double-booking-multiple-users.png" alt="double-booking-multiple-users" width="500" />
 </div>
 
- - Let's assume the transaction isolation level is not serializable
- - User 1 and 2 attempt to book the same room at the same time.
- - Transaction 1 checks if there are enough rooms - there are
- - Transaction 2 check if there are enough rooms - there are
- - Transaction 2 reserves the room and updates the inventory
- - Transaction 1 also reserves the room as it still sees there are 99 `total_reserved` rooms out of 100.
- - Both transactions successfully commit the changes
+- ধরা যাক লেনদেনের বিচ্ছিন্নতা স্তরটি ক্রমিক নয়
+ - ব্যবহারকারী 1 এবং 2 একই সময়ে একই রুম বুক করার চেষ্টা করে।
+ - লেনদেন 1 চেক পর্যাপ্ত রুম আছে কিনা - আছে
+ - লেনদেন 2 পর্যাপ্ত রুম আছে কিনা তা পরীক্ষা করুন - আছে
+ - লেনদেন 2 রুম সংরক্ষণ করে এবং ইনভেন্টরি আপডেট করে
+ - লেনদেন 1 এছাড়াও রুম সংরক্ষণ করে কারণ এটি এখনও 100টির মধ্যে 99টি `মোট_সংরক্ষিত` রুম আছে।
+ - উভয় লেনদেন সফলভাবে পরিবর্তন কমিট
 
-This problem can be solved using some form of locking mechanism:
- - Pessimistic locking
- - Optimistic locking
- - Database constraints
+এই সমস্যাটি লকিং মেকানিজমের কিছু ফর্ম ব্যবহার করে সমাধান করা যেতে পারে:
+ - হতাশাবাদী লকিং
+ - আশাবাদী লকিং
+ - ডাটাবেসের সীমাবদ্ধতা
 
-Here's the SQL we use to reserve a room:
+এখানে SQL আমরা একটি রুম রিজার্ভ করতে ব্যবহার করি:
 
 ```sql
 # step 1: check room inventory
@@ -299,55 +299,55 @@ AND date between ${startDate} and ${endDate}
 Commit
 ```
 
-#### Option 1: Pessimistic locking
-Pessimistic locking prevents simultaneous updates by putting a lock on a record while it's being updated.
+#### বিকল্প 1: নৈরাশ্যবাদী লকিং
+নৈরাশ্যবাদী লকিং আপডেট হওয়ার সময় একটি রেকর্ডে একটি লক রেখে যুগপত আপডেটগুলিকে প্রতিরোধ করে৷
 
-This can be done in MySQL by using the `SELECT... FOR UPDATE` query, which locks the rows selected by the query until the transaction is committed.
+এটি MySQL-এ `আপডেটের জন্য নির্বাচন করুন` ক্যোয়ারী ব্যবহার করে করা যেতে পারে, যা লেনদেন সম্পন্ন না হওয়া পর্যন্ত ক্যোয়ারী দ্বারা নির্বাচিত সারিগুলিকে লক করে।
 
 <div style="margin-left:3rem">
     <img src="./images/pessimistic-locking.png" alt="pessimistic-locking" width="500" />
 </div>
 
-Pros:
- - Prevents applications from updating data that is being changed
- - Easy to implement and avoids conflict by serializing updates. Useful when there is heavy data contention.
+সুবিধা:
+ - পরিবর্তন করা হচ্ছে এমন ডেটা আপডেট করা থেকে অ্যাপ্লিকেশনগুলিকে বাধা দেয়
+ - বাস্তবায়ন করা সহজ এবং আপডেটগুলিকে সিরিয়ালাইজ করে দ্বন্দ্ব এড়ায়। যখন ভারী ডেটা বিতর্ক থাকে তখন দরকারী।
 
-Cons:
- - Deadlocks may occur when multiple resources are locked.
- - This approach is not scalable - if transaction is locked for too long, this has impact on all other transactions trying to access the resource.
- - The impact is severe when the query selects a lot of resources and the transaction is long-lived.
+অসুবিধা:
+ - একাধিক সংস্থান লক করা থাকলে ডেডলক হতে পারে।
+ - এই পদ্ধতিটি স্কেলযোগ্য নয় - যদি লেনদেনটি খুব দীর্ঘ সময়ের জন্য লক করা থাকে, তবে এটি সম্পদ অ্যাক্সেস করার চেষ্টা করা অন্যান্য সমস্ত লেনদেনের উপর প্রভাব ফেলে৷
+ - প্রভাব গুরুতর হয় যখন প্রশ্নটি প্রচুর সম্পদ নির্বাচন করে এবং লেনদেন দীর্ঘস্থায়ী হয়।
 
-The author doesn't recommend this approach due to its scalability issues.
+লেখক তার স্কেলেবিলিটি সমস্যার কারণে এই পদ্ধতির সুপারিশ করেন না।
 
-#### Option 2: Optimistic locking
-Optimistic locking allows multiple users to attempt to update a record at the same time.
+#### বিকল্প 2: আশাবাদী লকিং
+আশাবাদী লকিং একাধিক ব্যবহারকারীকে একই সময়ে একটি রেকর্ড আপডেট করার চেষ্টা করতে দেয়।
 
-There are two common ways to implement it - version numbers and timestamps. Version numbers are recommended as server clocks can be inaccurate.
+এটি বাস্তবায়নের দুটি সাধারণ উপায় রয়েছে - সংস্করণ নম্বর এবং টাইমস্ট্যাম্প৷ সংস্করণ নম্বরগুলি সুপারিশ করা হয় কারণ সার্ভার ঘড়িগুলি ভুল হতে পারে৷
 
 <div style="margin-left:3rem">
     <img src="./images/optimistic-locking.png" alt="optimistic-locking" width="500" />
 </div>
 
- - A new `version` column is added to the database table
- - Before a user modifies a database row, the version number is read
- - When the user updates the row, the version number is increased by 1 and written back to the database
- - Database validation prevents the insert if the new version number doesn't exceed the previous one
+- ডাটাবেস টেবিলে একটি নতুন `সংস্করণ` কলাম যোগ করা হয়েছে
+ - একটি ব্যবহারকারী একটি ডাটাবেস সারি সংশোধন করার আগে, সংস্করণ নম্বর পড়া হয়
+ - যখন ব্যবহারকারী সারি আপডেট করে, সংস্করণ সংখ্যা 1 দ্বারা বৃদ্ধি করা হয় এবং ডাটাবেসে ফিরে লেখা হয়
+ - নতুন সংস্করণ সংখ্যা পূর্ববর্তী সংখ্যার বেশি না হলে ডাটাবেস যাচাইকরণ সন্নিবেশকে বাধা দেয়
 
-Optimistic locking is usually faster than pessimistic locking as we're not locking the database. 
-Its performance tends to degrade when concurrency is high, however, as that leads to a lot of rollbacks.
+আশাবাদী লকিং সাধারণত হতাশাবাদী লকিংয়ের চেয়ে দ্রুত হয় কারণ আমরা ডাটাবেস লক করছি না। 
+এর কার্যকারিতা হ্রাস পায় যখন একযোগে উচ্চ হয়, তবে, এটি প্রচুর রোলব্যাকের দিকে পরিচালিত করে।
 
-Pros:
- - It prevents applications from editing stale data
- - We don't need to acquire a lock in the database
- - Preferred option when data contention is low, ie rarely are there update conflicts
+সুবিধা:
+ - এটি অ্যাপ্লিকেশনগুলিকে পুরানো ডেটা সম্পাদনা করতে বাধা দেয়
+ - আমাদের ডাটাবেসে একটি লক অর্জন করতে হবে না
+ - ডেটা বিবাদ কম হলে পছন্দের বিকল্প, যেমন খুব কমই আপডেট দ্বন্দ্ব থাকে
 
-Cons:
- - Performance is poor when data contention is high
+অসুবিধা:
+ - ডেটা বিতর্ক বেশি হলে কর্মক্ষমতা খারাপ হয়
 
-Optimistic locking is a good option for our system as reservation QPS is not extremely high.
+আশাবাদী লকিং আমাদের সিস্টেমের জন্য একটি ভাল বিকল্প কারণ রিজার্ভেশন QPS খুব বেশি নয়।
 
-#### Option 3: Database constraints
-This approach is very similar to optimistic locking, but the guardrails are implemented using a database constraint:
+#### বিকল্প 3: ডাটাবেস সীমাবদ্ধতা
+এই পদ্ধতিটি আশাবাদী লকিংয়ের অনুরূপ, তবে গার্ডেলগুলি একটি ডাটাবেস সীমাবদ্ধতা ব্যবহার করে প্রয়োগ করা হয়:
 
 ```
 CONSTRAINT `check_room_count` CHECK((`total_inventory - total_reserved` >= 0))
@@ -357,108 +357,108 @@ CONSTRAINT `check_room_count` CHECK((`total_inventory - total_reserved` >= 0))
     <img src="./images/database-constraint.png" alt="database-constraint" width="500" />
 </div>
 
-Pros:
- - Easy to implement
- - Works well when data contention is small
+সুবিধা:
+ - বাস্তবায়ন করা সহজ
+ - ডেটা বিতর্ক ছোট হলে ভাল কাজ করে
 
-Cons:
- - Similar to optimistic locking, performs poorly when data contention is high
- - Database constraints cannot be easily version-controlled like application code
- - Not all databases support constraints
+অসুবিধা:
+ - আশাবাদী লকিংয়ের মতো, ডেটা বিতর্ক বেশি হলে খারাপভাবে কাজ করে
+ - ডেটাবেস সীমাবদ্ধতা অ্যাপ্লিকেশন কোডের মত সহজে সংস্করণ-নিয়ন্ত্রিত হতে পারে না
+ - সমস্ত ডাটাবেস সীমাবদ্ধতা সমর্থন করে না
 
-This is another good option for a hotel reservation system due to its ease of implementation.
+এটি বাস্তবায়নের সহজতার কারণে একটি হোটেল রিজার্ভেশন সিস্টেমের জন্য আরেকটি ভাল বিকল্প।
 
-### **Scalability**
-Usually, the load of a hotel reservation system is not high. 
+### **স্কেলযোগ্যতা**
+সাধারণত, হোটেল রিজার্ভেশন সিস্টেমের লোড বেশি হয় না।
 
-However, the interviewer might ask you how you'd handle a situation where the system gets adopted for a larger, popular travel site such as booking.com
-In that case, QPS can be 1000 times larger.
+যাইহোক, সাক্ষাত্কারকারী আপনাকে জিজ্ঞাসা করতে পারে যে আপনি এমন একটি পরিস্থিতি কীভাবে পরিচালনা করবেন যেখানে একটি বৃহত্তর, জনপ্রিয় ভ্রমণ সাইট যেমন booking.com এর জন্য সিস্টেমটি গ্রহণ করা হয়
+সেই ক্ষেত্রে, QPS 1000 গুণ বড় হতে পারে।
 
-When there is such a situation, it is important to understand where our bottlenecks are. All the services are stateless, so they can be easily scaled via replication.
+যখন এমন পরিস্থিতি হয়, তখন আমাদের বাধা কোথায় তা বোঝা গুরুত্বপূর্ণ। সমস্ত পরিষেবা রাষ্ট্রহীন, তাই প্রতিলিপির মাধ্যমে সহজেই মাপ করা যায়।
 
-The database, however, is stateful and it's not as obvious how it can get scaled.
+ডাটাবেস, তবে, রাষ্ট্রীয় এবং এটি কীভাবে স্কেল করা যেতে পারে তা স্পষ্ট নয়।
 
-One way to scale it is by implementing database sharding - we can split the data across multiple databases, where each of them contain a portion of the data.
+এটিকে স্কেল করার একটি উপায় হল ডাটাবেস শার্ডিং প্রয়োগ করা - আমরা একাধিক ডাটাবেস জুড়ে ডেটা বিভক্ত করতে পারি, যেখানে তাদের প্রতিটিতে ডেটার একটি অংশ থাকে।
 
-We can shard based on `hotel_id` as all queries filter based on it. 
-Assuming, QPS is 30,000, after sharding the database in 16 shards, each shard handles 1875 QPS, which is within a single MySQL cluster's load capacity.
+আমরা `হোটেল_আইডি` এর উপর ভিত্তি করে শার্ড করতে পারি কারণ সমস্ত ক্যোয়ারী ফিল্টার এর উপর ভিত্তি করে। 
+ধরে নিই, QPS হল 30,000, ডাটাবেসটিকে 16 টি শার্ডে ভাগ করার পর, প্রতিটি শার্ড 1875 QPS পরিচালনা করে, যা একটি একক MySQL ক্লাস্টারের লোড ক্ষমতার মধ্যে।
 
 <div style="margin-left:3rem">
     <img src="./images/database-sharding.png" alt="database-sharding" width="500" />
 </div>
 
-We can also utilize caching for room inventory and reservations via Redis. We can set TTL so that old data can expire for days which are past.
+আমরা Redis এর মাধ্যমে রুম ইনভেন্টরি এবং সংরক্ষণের জন্য ক্যাশিং ব্যবহার করতে পারি। আমরা TTL সেট করতে পারি যাতে পুরানো ডেটা অতীতের দিনগুলির জন্য মেয়াদ শেষ হতে পারে।
 
 <div style="margin-left:3rem">
     <img src="./images/inventory-cache.png" alt="inventory-cache" width="500" />
 </div>
 
-The way we store an inventory is based on the `hotel_id`, `room_type_id` and `date`:
+আমরা যেভাবে একটি ইনভেন্টরি সঞ্চয় করি তা হল `হোটেল_আইডি`, `রুম_টাইপ_আইডি` এবং `তারিখ` এর উপর ভিত্তি করে:
 
 ```
 key: hotelID_roomTypeID_{date}
 value: the number of available rooms for the given hotel ID, room type ID and date.
 ```
 
-Data consistency happens async and is managed by using a CDC streaming mechanism - database changes are read and applied to a separate system.
-Debezium is a popular option for synchronizing database changes with Redis.
+ডেটা সামঞ্জস্যতা অ্যাসিঙ্ক হয় এবং একটি CDC স্ট্রিমিং প্রক্রিয়া ব্যবহার করে পরিচালিত হয় - ডাটাবেস পরিবর্তনগুলি একটি পৃথক সিস্টেমে পড়া এবং প্রয়োগ করা হয়।
+রেডিসের সাথে ডাটাবেস পরিবর্তন সিঙ্ক্রোনাইজ করার জন্য ডেবেজিয়াম একটি জনপ্রিয় বিকল্প।
 
-Using such a mechanism, there is a possibility that the cache and database are inconsistent for some time.
-This is fine in our case because the database will prevent us from making an invalid reservation.
+এই ধরনের একটি প্রক্রিয়া ব্যবহার করে, ক্যাশে এবং ডাটাবেস কিছু সময়ের জন্য অসামঞ্জস্যপূর্ণ হওয়ার সম্ভাবনা রয়েছে।
+এটি আমাদের ক্ষেত্রে ঠিক কারণ ডাটাবেস আমাদেরকে একটি অবৈধ সংরক্ষণ করতে বাধা দেবে৷
 
-This will cause some issue on the UI as a user would have to refresh the page to see that "there are no more rooms left", 
-but that is something which can happen regardless of this issue if eg a person hesitates a lot before making a reservation.
+এটি UI-তে কিছু সমস্যা সৃষ্টি করবে কারণ একজন ব্যবহারকারীকে "আর কোনো ঘর বাকি নেই" দেখতে পৃষ্ঠাটি রিফ্রেশ করতে হবে। 
+তবে এটি এমন কিছু যা এই সমস্যাটি নির্বিশেষে ঘটতে পারে যদি উদাহরণস্বরূপ একজন ব্যক্তি রিজার্ভেশন করার আগে অনেক দ্বিধা করেন।
 
-Caching pros:
- - Reduced database load
- - High performance, as Redis manages data in-memory
+ক্যাশিং সুবিধা:
+ - ডাটাবেস লোড হ্রাস
+ - উচ্চ কার্যক্ষমতা, যেহেতু রেডিস মেমরির মধ্যে ডেটা পরিচালনা করে
 
-Caching cons:
- - Maintaining data consistency between cache and DB is hard. We need to consider how the inconsistency impacts user experience.
+ক্যাশিং কনস:
+ - ক্যাশে এবং ডিবির মধ্যে ডেটা সামঞ্জস্য বজায় রাখা কঠিন। আমাদের বিবেচনা করা দরকার যে কীভাবে অসামঞ্জস্যতা ব্যবহারকারীর অভিজ্ঞতাকে প্রভাবিত করে।
 
-### **Data consistency among services**
-A monolithic application enables us to use a shared relational database for ensuring data consistency.
+### **পরিষেবার মধ্যে ডেটা সামঞ্জস্য**
+একটি মনোলিথিক অ্যাপ্লিকেশন আমাদের ডেটা সামঞ্জস্য নিশ্চিত করার জন্য একটি ভাগ করা রিলেশনাল ডাটাবেস ব্যবহার করতে সক্ষম করে।
 
-In our microservice design, we chose a hybrid approach where some services are separate, 
-but the reservation and inventory APIs are handled by the same servicefor the reservation and inventory APIs.
+আমাদের মাইক্রোসার্ভিস ডিজাইনে, আমরা একটি হাইব্রিড পদ্ধতি বেছে নিয়েছি যেখানে কিছু পরিষেবা আলাদা, 
+কিন্তু রিজার্ভেশন এবং ইনভেন্টরি APIগুলি রিজার্ভেশন এবং ইনভেন্টরি API-এর জন্য একই পরিষেবা দ্বারা পরিচালিত হয়।
 
-This is done because we want to leverage the relational database's ACID guarantees to ensure consistency.
+এটি করা হয়েছে কারণ আমরা ধারাবাহিকতা নিশ্চিত করতে রিলেশনাল ডাটাবেসের এসিআইডি গ্যারান্টির সুবিধা নিতে চাই।
 
-However, the interviewer might challenge this approach as it's not a pure microservice architecture, where each service has a dedicated database:
+যাইহোক, ইন্টারভিউয়ার এই পদ্ধতিকে চ্যালেঞ্জ করতে পারে কারণ এটি একটি বিশুদ্ধ মাইক্রোসার্ভিস আর্কিটেকচার নয়, যেখানে প্রতিটি পরিষেবার একটি ডেডিকেটেড ডাটাবেস রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/microservices-vs-monolith.png" alt="microservices-vs-monolith" width="500" />
 </div>
 
-This can lead to consistency issues. In a monolithic server, we can leverage a relational DBs transaction capabilities to implement atomic operations:
+এটি সামঞ্জস্যের সমস্যা হতে পারে। একটি মনোলিথিক সার্ভারে, আমরা পারমাণবিক ক্রিয়াকলাপগুলি বাস্তবায়নের জন্য একটি রিলেশনাল ডিবি লেনদেনের ক্ষমতা লাভ করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/atomicity-monolith.png" alt="atomicity-monolith" width="500" />
 </div>
 
-It's more challenging, however, to guarantee this atomicity when the operation spans across multiple services:
+অপারেশনটি একাধিক পরিষেবা জুড়ে বিস্তৃত হলে এই পারমাণবিকতার গ্যারান্টি দেওয়া আরও চ্যালেঞ্জিং:
 
 <div style="margin-left:3rem">
     <img src="./images/microservice-non-atomic-operation.png" alt="microservice-non-atomic-operation" width="500" />
 </div>
 
-There are some well-known techniques to handle these data inconsistencies:
- - **Two-phase commit**: a database protocol which guarantees atomic transaction commit across multiple nodes. 
-   It's not performant, though, since a single node lag leads to all nodes blocking the operation.
- - **Saga**: a sequence of local transactions, where compensating transactions are triggered if any of the steps in a workflow fail. This is an eventually consistent approach.
+এই ডেটা অসঙ্গতিগুলি পরিচালনা করার জন্য কিছু সুপরিচিত কৌশল রয়েছে:
+ - **টু-ফেজ কমিট**: একটি ডাটাবেস প্রোটোকল যা একাধিক নোড জুড়ে পারমাণবিক লেনদেনের প্রতিশ্রুতির নিশ্চয়তা দেয়। 
+   যদিও এটি কার্যকরী নয়, যেহেতু একটি একক নোড ল্যাগ সমস্ত নোডকে অপারেশন ব্লক করে দেয়।
+ - **সাগা**: স্থানীয় লেনদেনের একটি ক্রম, যেখানে কর্মপ্রবাহের কোনো পদক্ষেপ ব্যর্থ হলে ক্ষতিপূরণমূলক লেনদেন শুরু হয়। এটি একটি শেষ পর্যন্ত সামঞ্জস্যপূর্ণ পদ্ধতির।
 
-It's worth noting that addressing data inconsistencies across microservices is a challenging problem, which raise the system complexity.
-It is good to consider whether the cost is worth it, given our more pragmatic approach of encapsulating dependent operations within the same relational database.
+এটি লক্ষণীয় যে মাইক্রোসার্ভিস জুড়ে ডেটা অসঙ্গতিগুলিকে সমাধান করা একটি চ্যালেঞ্জিং সমস্যা, যা সিস্টেমের জটিলতা বাড়ায়।
+একই রিলেশনাল ডাটাবেসের মধ্যে নির্ভরশীল ক্রিয়াকলাপগুলিকে এনক্যাপসুলেট করার জন্য আমাদের আরও বাস্তবসম্মত পদ্ধতির প্রেক্ষিতে খরচটি মূল্যবান কিনা তা বিবেচনা করা ভাল।
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
-We presented a design for a hotel reservation system.
+## ধাপ 4: মোড়ানো
+আমরা একটি হোটেল রিজার্ভেশন সিস্টেমের জন্য একটি নকশা উপস্থাপন.
 
-These are the steps we went through:
- - Gathering requirements and doing back-of-the-envelope calculations to understand the system's scale
- - We presented the API Design, Data Model and system architecture in the high-level design
- - In the deep dive, we explored alternative database schema designs as requirements changed
- - We discussed race conditions and proposed solutions - pessimistic/optimistic locking, database constraints
- - Ways to scale the system via database sharding and caching
- - Finally we addressed how to handle data consistency issues across multiple microservices
+এই ধাপগুলো আমরা মধ্য দিয়ে গেছি:
+ - সিস্টেমের স্কেল বোঝার জন্য প্রয়োজনীয়তা সংগ্রহ করা এবং খামের পিছনের গণনা করা
+ - আমরা উচ্চ-স্তরের ডিজাইনে API ডিজাইন, ডেটা মডেল এবং সিস্টেম আর্কিটেকচার উপস্থাপন করেছি
+ - গভীর ডুবে, প্রয়োজনীয়তা পরিবর্তিত হওয়ায় আমরা বিকল্প ডাটাবেস স্কিমা ডিজাইন অন্বেষণ করেছি
+ - আমরা রেসের অবস্থা এবং প্রস্তাবিত সমাধান নিয়ে আলোচনা করেছি - হতাশাবাদী/আশাবাদী লকিং, ডাটাবেস সীমাবদ্ধতা
+ - ডাটাবেস শার্ডিং এবং ক্যাশিংয়ের মাধ্যমে সিস্টেম স্কেল করার উপায়
+ - অবশেষে আমরা একাধিক মাইক্রোসার্ভিসে ডেটা সামঞ্জস্যের সমস্যাগুলি কীভাবে পরিচালনা করতে হয় তা সম্বোধন করেছি

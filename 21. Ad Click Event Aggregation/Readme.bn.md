@@ -1,204 +1,204 @@
-# অধ্যায় 21: অ্যাড ক্লিক ইভেন্ট এগ্রিগেশন
+# অধ্যায় 21: বিজ্ঞাপন ক্লিক ইভেন্ট সমষ্টি
 
-## ভূমিকা (Introduction)
-**Digital advertising** is a big industry with the rise of Facebook, YouTube, TikTok, etc.
+## ভূমিকা
+**ডিজিটাল বিজ্ঞাপন** Facebook, YouTube, TikTok, ইত্যাদির উত্থানের সাথে একটি বড় শিল্প।
 
-Hence, tracking ad click events is important. In this chapter, we explore how to design an **ad click event aggregation** system at Facebook/Google scale.
+অতএব, বিজ্ঞাপন ক্লিক ইভেন্ট ট্র্যাকিং গুরুত্বপূর্ণ. এই অধ্যায়ে, আমরা কিভাবে Facebook/Google স্কেলে একটি **বিজ্ঞাপন ক্লিক ইভেন্ট এগ্রিগেশন** সিস্টেম ডিজাইন করতে হয় তা অন্বেষণ করি।
 
-Digital advertising has a process called **real-time bidding (RTB)**, where digital advertising inventory is bought and sold:
+ডিজিটাল বিজ্ঞাপনের **রিয়েল-টাইম বিডিং (RTB)** নামে একটি প্রক্রিয়া রয়েছে, যেখানে ডিজিটাল বিজ্ঞাপনের ইনভেন্টরি কেনা এবং বিক্রি করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/digital-advertising-example.png" alt="digital-advertising-example" width="500" />
 </div>
 
-Speed of RTB is important as it usually occurs within a second.
-Data accuracy is also very important as it impacts how much money advertisers pay.
+RTB এর গতি গুরুত্বপূর্ণ কারণ এটি সাধারণত এক সেকেন্ডের মধ্যে ঘটে।
+ডেটা নির্ভুলতাও খুব গুরুত্বপূর্ণ কারণ এটি বিজ্ঞাপনদাতাদের কত টাকা প্রদান করে তা প্রভাবিত করে।
 
-Based on ad click event aggregations, advertisers can make decisions such as adjust target audience and keywords.
-
----
-
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
- - C: What is the format of the input data?
- - I: 1bil ad clicks per day and 2mil ads in total. Number of ad-click events grows 30% year-over-year.
- - C: What are some of the most important queries our system needs to support?
- - I: Top queries to take into consideration:
-   - Return number of click events for ad X in last Y minutes
-   - Return top 100 most clicked ads in the past 1min. Both parameters should be configurable. Aggregation occurs every minute.
-   - Support data filtering by `ip`, `user_id`, `country` for the above queries
- - C: Do we need to worry about edge cases? Some of the ones I can think of:
-   - There might be events that arrive later than expected
-   - There might be duplicate events
-   - Different parts of the system might be down, so we need to consider system recovery
- - I: That's a good list, take those into consideration
- - C: What is the latency requirement?
- - I: A few minutes of e2e latency for ad click aggregation. For RTB, it is less than a second. It is ok to have that latency for ad click aggregation as those are usually used for billing and reporting.
-
-### **Functional requirements**
- - Aggregate the number of clicks of `ad_id` in the last Y minutes
- - Return top 100 most clicked `ad_id` every minute
- - Support aggregation filtering by different attributes
- - Dataset volume is at Facebook or Google scale
-
-### **Non-functional requirements**
- - Correctness of the aggregation result is important as it's used for RTB and ads billing
- - Properly handle delayed or duplicate events
- - Robustness - system should be resilient to partial failures
- - Latency - a few minutes of e2e latency at most
-
-### **Back-of-the-envelope estimation**
- - 1bil DAU
- - Assuming user clicks 1 ad per day -> 1bil ad clicks per day
- - Ad click QPS = 10,000
- - Peak QPS is 5 times the number = 50,000
- - A single ad click occupies 0.1KB storage. Daily storage requirement is 100gb
- - Monthly storage = 3tb
+বিজ্ঞাপন ক্লিক ইভেন্ট একত্রিতকরণের উপর ভিত্তি করে, বিজ্ঞাপনদাতারা লক্ষ্য দর্শক এবং কীওয়ার্ড সামঞ্জস্য করার মতো সিদ্ধান্ত নিতে পারে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
-In this section, we discuss query API design, data model and high-level design.
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
+- C: ইনপুট ডেটার বিন্যাস কী?
+ - আমি: প্রতিদিন 1 বিলিয়ন বিজ্ঞাপন ক্লিক এবং মোট 2 মিলিয়ন বিজ্ঞাপন। বিজ্ঞাপন-ক্লিক ইভেন্টের সংখ্যা বছরে 30% বৃদ্ধি পায়।
+ - C: আমাদের সিস্টেমের সমর্থন করার জন্য সবচেয়ে গুরুত্বপূর্ণ কিছু প্রশ্ন কি কি?
+ - আমি: বিবেচনায় নেওয়া শীর্ষ প্রশ্ন:
+   - শেষ Y মিনিটে বিজ্ঞাপন X-এর জন্য ক্লিক ইভেন্টের সংখ্যা রিটার্ন করুন
+   - বিগত 1 মিনিটে শীর্ষ 100টি সর্বাধিক ক্লিক করা বিজ্ঞাপন ফেরত দিন৷ উভয় পরামিতি কনফিগারযোগ্য হওয়া উচিত। একত্রিতকরণ প্রতি মিনিটে ঘটে।
+   - উপরের প্রশ্নের জন্য `ip`, `user_id`, `দেশ` দ্বারা ডেটা ফিল্টারিং সমর্থন করে
+ - সি: আমাদের কি এজ কেস নিয়ে চিন্তা করতে হবে? কিছু যা আমি ভাবতে পারি:
+   - এমন ঘটনা হতে পারে যা প্রত্যাশার চেয়ে দেরিতে আসে
+   - ডুপ্লিকেট ইভেন্ট হতে পারে
+   - সিস্টেমের বিভিন্ন অংশ ডাউন হতে পারে, তাই আমাদের সিস্টেম পুনরুদ্ধার বিবেচনা করতে হবে
+ - আমি: এটা একটা ভালো তালিকা, সেগুলো বিবেচনায় নিন
+ - সি: লেটেন্সি প্রয়োজন কি?
+ - আমি: বিজ্ঞাপন ক্লিক একত্রিতকরণের জন্য e2e বিলম্বের কয়েক মিনিট। RTB এর জন্য, এটি এক সেকেন্ডেরও কম। বিজ্ঞাপন ক্লিক একত্রিতকরণের জন্য সেই লেটেন্সি থাকা ঠিক কারণ সেগুলি সাধারণত বিলিং এবং রিপোর্টিংয়ের জন্য ব্যবহৃত হয়৷
 
-### **Query API Design**
-The API is a contract between the client and the server. In our case, the client is the dashboard user - data scientist/analyst, advertiser, etc.
+### **কার্যকর প্রয়োজনীয়তা**
+- শেষ Y মিনিটে `ad_id`-এর ক্লিকের সংখ্যা একত্রিত করুন
+ - প্রতি মিনিটে শীর্ষ 100টি সর্বাধিক ক্লিক করা `ad_id` ফেরত দিন
+ - বিভিন্ন বৈশিষ্ট্য দ্বারা সমষ্টি ফিল্টারিং সমর্থন করে
+ - ডেটাসেট ভলিউম ফেসবুক বা গুগল স্কেলে
 
-Here's our functional requirements:
- - Aggregate the number of clicks of `ad_id` in the last Y minutes
- - Return top N most clicked `ad_id` in the last M minutes
- - Support aggregation filtering by different attributes
+### **অকার্যকর প্রয়োজনীয়তা**
+- একত্রিত ফলাফলের সঠিকতা গুরুত্বপূর্ণ কারণ এটি RTB এবং বিজ্ঞাপন বিলিংয়ের জন্য ব্যবহৃত হয়
+ - বিলম্বিত বা সদৃশ ঘটনাগুলি সঠিকভাবে পরিচালনা করুন
+ - দৃঢ়তা - সিস্টেমটি আংশিক ব্যর্থতার জন্য স্থিতিস্থাপক হওয়া উচিত
+ - লেটেন্সি - e2e লেটেন্সির কয়েক মিনিট সর্বাধিক
 
-We need two endpoints to achieve those requirements. Filtering can be done via query parameters on one of them.
+### **খামের পিছনের অনুমান**
+- 1 বিল DAU
+ - ধরে নেওয়া হচ্ছে ব্যবহারকারী প্রতিদিন 1টি বিজ্ঞাপনে ক্লিক করেন -> প্রতি দিন 1 বিলিয়ন বিজ্ঞাপন ক্লিক৷
+ - বিজ্ঞাপন ক্লিক QPS = 10,000
+ - পিক QPS হল সংখ্যার 5 গুণ = 50,000৷
+ - একটি একক বিজ্ঞাপন ক্লিক 0.1KB সঞ্চয়স্থান দখল করে। দৈনিক স্টোরেজ প্রয়োজন 100gb
+ - মাসিক স্টোরেজ = 3 tb
 
-**Aggregate number of clicks of ad_id in the last M minutes**:
+---
+
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
+এই বিভাগে, আমরা ক্যোয়ারী API ডিজাইন, ডেটা মডেল এবং উচ্চ-স্তরের নকশা নিয়ে আলোচনা করি।
+
+### **ক্যোয়ারী API ডিজাইন**
+API হল ক্লায়েন্ট এবং সার্ভারের মধ্যে একটি চুক্তি। আমাদের ক্ষেত্রে, ক্লায়েন্ট হল ড্যাশবোর্ড ব্যবহারকারী - ডেটা সায়েন্টিস্ট/বিশ্লেষক, বিজ্ঞাপনদাতা ইত্যাদি।
+
+এখানে আমাদের কার্যকরী প্রয়োজনীয়তা আছে:
+ - শেষ Y মিনিটে `ad_id`-এর ক্লিকের সংখ্যা একত্রিত করুন
+ - শেষ M মিনিটে সবচেয়ে বেশি ক্লিক করা 'ad_id' শীর্ষে ফিরে যান
+ - বিভিন্ন বৈশিষ্ট্য দ্বারা সমষ্টি ফিল্টারিং সমর্থন করে
+
+এই প্রয়োজনীয়তাগুলি অর্জন করার জন্য আমাদের দুটি শেষ পয়েন্ট দরকার। ফিল্টারিং তাদের একটিতে ক্যোয়ারী প্যারামিটারের মাধ্যমে করা যেতে পারে।
+
+**শেষ M মিনিটে ad_id-এর ক্লিকের মোট সংখ্যা**:
 
 ```
 GET /v1/ads/{:ad_id}/aggregated_count
 ```
 
-Query parameters:
- - from - start minute. Default is now - 1 min
- - to - end minute. Default is now
- - filter - identifier for different filtering strategies. Eg 001 means "non-US clicks".
+ক্যোয়ারী প্যারামিটার:
+ - থেকে - শুরু মিনিট। ডিফল্ট এখন - 1 মিনিট
+ - থেকে - শেষ মিনিট। ডিফল্ট এখন
+ - ফিল্টার - বিভিন্ন ফিল্টারিং কৌশলগুলির জন্য শনাক্তকারী। যেমন 001 মানে "অ-মার্কিন ক্লিক"।
 
-Response:
- - ad_id - ad identifier
- - count - aggregated count between start and end minutes
+প্রতিক্রিয়া:
+ - ad_id - বিজ্ঞাপন শনাক্তকারী
+ - গণনা - শুরু এবং শেষ মিনিটের মধ্যে একত্রিত গণনা
 
-**Return top N most clicked ad_ids in the last M minutes**
+**শেষ M মিনিটে শীর্ষ N সর্বাধিক ক্লিক করা বিজ্ঞাপন_আইডি ফেরত দিন**
 
 ```
 GET /v1/ads/popular_ads
 ```
 
-Query parameters:
- - count - top N most clicked ads
- - window - aggregation window size in minutes
- - filter - identifier for different filtering strategies
+ক্যোয়ারী প্যারামিটার:
+ - গণনা - শীর্ষ এন সর্বাধিক ক্লিক করা বিজ্ঞাপন৷
+ - উইন্ডো - মিনিটের মধ্যে একত্রিত উইন্ডোর আকার
+ - ফিল্টার - বিভিন্ন ফিল্টারিং কৌশলগুলির জন্য শনাক্তকারী
 
-Response:
- - list of ad_ids
+প্রতিক্রিয়া:
+ - বিজ্ঞাপন_আইডির তালিকা
 
-### **Data model**
-In our system, we have raw and aggregated data.
+### **ডেটা মডেল**
+আমাদের সিস্টেমে, আমাদের কাছে কাঁচা এবং সমষ্টিগত ডেটা রয়েছে।
 
-Raw data looks like this:
+কাঁচা তথ্য এই মত দেখায়:
 
 ```
 [AdClickEvent] ad001, 2021-01-01 00:00:01, user 1, 207.148.22.22, USA
 ```
 
-Here's an example in a structured format:
-| ad_id | click_timestamp     | user  | ip            | country |
-|-------|---------------------|-------|---------------|---------|
-| ad001 | 2021-01-01 00:00:01 | user1 | 207.148.22.22 | USA     |
-| ad001 | 2021-01-01 00:00:02 | user1 | 207.148.22.22 | USA     |
-| ad002 | 2021-01-01 00:00:02 | user2 | 209.153.56.11 | USA     |
+এখানে একটি কাঠামোগত বিন্যাসে একটি উদাহরণ:
+| ad_id | ক্লিক_টাইমস্ট্যাম্প | ব্যবহারকারী | আইপি | দেশ |
+|---------|------------|---------|---------------|---------|
+| ad001 | 2021-01-01 00:00:01 | ব্যবহারকারী1 | 207.148.22.22 | মার্কিন যুক্তরাষ্ট্র |
+| ad001 | 2021-01-01 00:00:02 | ব্যবহারকারী1 | 207.148.22.22 | মার্কিন যুক্তরাষ্ট্র |
+| ad002 | 2021-01-01 00:00:02 | ব্যবহারকারী2 | 209.153.56.11 | মার্কিন যুক্তরাষ্ট্র |
 
-Here's the aggregated version:
-| ad_id | click_minute | filter_id | count |
-|-------|--------------|-----------|-------|
-| ad001 | 202101010000 | 0012      | 2     |
-| ad001 | 202101010000 | 0023      | 3     |
-| ad001 | 202101010001 | 0012      | 1     |
-| ad001 | 202101010001 | 0023      | 6     |
+এখানে একত্রিত সংস্করণ:
+| ad_id | ক্লিক_মিনিট | filter_id | গণনা |
+|---------|---------------|------------|-------|
+| ad001 | 202101010000 | 0012 | 2 |
+| ad001 | 202101010000 | 0023 | 3 |
+| ad001 | 202101010001 | 0012 | 1 |
+| ad001 | 202101010001 | 0023 | 6 |
 
-The `filter_id` helps us achieve our filtering requirements.
-| filter_id | region | IP        | user_id |
-|-----------|--------|-----------|---------|
-| 0012      | US     | *         | *       |
-| 0013      | *      | 123.1.2.3 | *       |
+`filter_id` আমাদের ফিল্টারিং প্রয়োজনীয়তা অর্জন করতে সাহায্য করে।
+| filter_id | অঞ্চল | আইপি | user_id |
+|------------|---------|------------|---------|
+| 0012 | মার্কিন | * | * |
+| 0013 | * | 123.1.2.3 | * |
 
-To support quickly returning top N most clicked ads in the last M minutes, we'll also maintain this structure:
-| most_clicked_ads   |           |                                                  |
-|--------------------|-----------|--------------------------------------------------|
-| window_size        | integer   | The aggregation window size (M) in minutes       |
-| update_time_minute | timestamp | Last updated timestamp (in 1-minute granularity) |
-| most_clicked_ads   | array     | List of ad IDs in JSON format.                   |
+শেষ M মিনিটে সর্বাধিক ক্লিক করা শীর্ষ N বিজ্ঞাপনগুলিকে দ্রুত ফেরত দেওয়ার জন্য, আমরা এই কাঠামোটিও বজায় রাখব:
+| সর্বাধিক_ক্লিক করা_বিজ্ঞাপন |           |                                                  |
+|----------------------|------------|---------------------------------------------------|
+| window_size | পূর্ণসংখ্যা | একত্রিত উইন্ডোর আকার (M) মিনিটে |
+| আপডেট_সময়_মিনিট | টাইমস্ট্যাম্প | সর্বশেষ আপডেট করা টাইমস্ট্যাম্প (1-মিনিট গ্রানুলারিটিতে) |
+| সর্বাধিক_ক্লিক করা_বিজ্ঞাপন | অ্যারে | JSON ফর্ম্যাটে বিজ্ঞাপন আইডিগুলির তালিকা৷                   |
 
-What are some pros and cons between storing raw data and storing aggregated data?
- - Raw data enables using the full data set and supports data filtering and recalculation
- - On the other hand, aggregated data allows us to have a smaller data set and a faster query
- - Raw data means having a larger data store and a slower query
- - Aggregated data, however, is derived data, hence there is some data loss.
+কাঁচা ডেটা সংরক্ষণ এবং সমষ্টিগত ডেটা সংরক্ষণের মধ্যে কিছু সুবিধা এবং অসুবিধাগুলি কী কী?
+ - কাঁচা ডেটা সম্পূর্ণ ডেটা সেট ব্যবহার করে সক্ষম করে এবং ডেটা ফিল্টারিং এবং পুনঃগণনা সমর্থন করে
+ - অন্যদিকে, একত্রিত ডেটা আমাদের একটি ছোট ডেটা সেট এবং একটি দ্রুত ক্যোয়ারী করার অনুমতি দেয়
+ - অপরিশোধিত ডেটা মানে একটি বৃহত্তর ডেটা সঞ্চয় এবং একটি ধীরগতির অনুসন্ধান
+ - সমষ্টিগত ডেটা, তবে, প্রাপ্ত ডেটা, তাই কিছু ডেটা ক্ষতি হয়।
 
-In our design, we'll use a combination of both approaches:
- - It's a good idea to keep the raw data around for debugging. If there is some bug in aggregation, we can discover the bug and backfill.
- - Aggregated data should be stored as well for faster query performance.
- - Raw data can be stored in cold storage to avoid extra storage costs.
+আমাদের ডিজাইনে, আমরা উভয় পদ্ধতির সংমিশ্রণ ব্যবহার করব:
+ - ডিবাগিংয়ের জন্য কাঁচা ডেটা রাখা ভাল ধারণা। যদি সমষ্টিতে কিছু বাগ থাকে, আমরা বাগ এবং ব্যাকফিল আবিষ্কার করতে পারি।
+ - দ্রুত ক্যোয়ারী পারফরম্যান্সের জন্য সমষ্টিগত ডেটাও সংরক্ষণ করা উচিত।
+ - অতিরিক্ত স্টোরেজ খরচ এড়াতে কাঁচা ডেটা কোল্ড স্টোরেজে সংরক্ষণ করা যেতে পারে।
 
-When it comes to the database, there are several factors to take into consideration:
- - What does the data look like? Is it relational, document or blob?
- - Is the workload read-heavy, write-heavy or both?
- - Are transactions needed?
- - Do the queries rely on OLAP functions like SUM and COUNT?
+যখন ডাটাবেসের কথা আসে, তখন বিবেচনায় নেওয়ার জন্য বেশ কয়েকটি কারণ রয়েছে:
+ - ডেটা দেখতে কেমন? এটা কি রিলেশনাল, ডকুমেন্ট বা ব্লব?
+ - কাজের চাপ কি পড়া-ভারী, লেখা-ভারী নাকি উভয়ই?
+ - লেনদেন প্রয়োজন?
+ - প্রশ্নগুলি কি SUM এবং COUNT এর মত OLAP ফাংশনের উপর নির্ভর করে?
 
-For the raw data, we can see that the average QPS is 10k and peak QPS is 50k, so the system is write-heavy.
-On the other hand, read traffic is low as raw data is mostly used as backup if anything goes wrong.
+কাঁচা ডেটার জন্য, আমরা দেখতে পাচ্ছি যে গড় QPS হল 10k এবং সর্বোচ্চ QPS হল 50k, তাই সিস্টেমটি লেখা-ভারী৷
+অন্যদিকে, রিড ট্র্যাফিক কম কারণ কিছু ভুল হলে কাঁচা ডেটা বেশিরভাগ ব্যাকআপ হিসাবে ব্যবহৃত হয়।
 
-Relational databases can do the job, but it can be challenging to scale the writes. 
-Alternatively, we can use Cassandra or InfluxDB which have better native support for heavy write loads.
+রিলেশনাল ডাটাবেস কাজ করতে পারে, কিন্তু লেখাগুলোকে স্কেল করা চ্যালেঞ্জিং হতে পারে। 
+বিকল্পভাবে, আমরা ক্যাসান্ড্রা বা ইনফ্লাক্সডিবি ব্যবহার করতে পারি যেগুলি ভারী লেখার লোডের জন্য ভাল স্থানীয় সমর্থন রয়েছে।
 
-Another option is to use Amazon S3 with a columnar data format like ORC, Parquet or AVRO. Since this setup is unfamiliar, we'll stick to Cassandra.
+আরেকটি বিকল্প হল ORC, Parquet বা AVRO এর মত কলামার ডেটা ফরম্যাটের সাথে Amazon S3 ব্যবহার করা। যেহেতু এই সেটআপটি অপরিচিত, আমরা ক্যাসান্দ্রার সাথে থাকব।
 
-For aggregated data, the workload is both read and write heavy as aggregated data is constantly queried for dashboards and alerts.
-It is also write-heavy as data is aggregated and written every minute by the aggregation service. 
-Hence, we'll use the same data store (Cassandra) here as well.
+একত্রিত ডেটার জন্য, ওয়ার্কলোড পড়া এবং লেখা উভয়ই ভারী কারণ সমষ্টিগত ডেটা ড্যাশবোর্ড এবং সতর্কতার জন্য ক্রমাগত জিজ্ঞাসা করা হয়।
+এটি লেখা-ভারী কারণ ডেটা একত্রিত হয় এবং প্রতি মিনিটে একত্রিতকরণ পরিষেবা দ্বারা লেখা হয়। 
+তাই, আমরা এখানেও একই ডেটা স্টোর (Cassandra) ব্যবহার করব।
 
-### **High-level design**
-Here's how our system looks like:
+### **উচ্চ-স্তরের নকশা**
+আমাদের সিস্টেমটি কেমন দেখাচ্ছে তা এখানে:
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design-1.png" alt="high-level-design-1" width="500" />
 </div>
 
-Data flows as an unbounded data stream on both inputs and outputs.
+ইনপুট এবং আউটপুট উভয় ক্ষেত্রেই ডেটা সীমাহীন ডেটা স্ট্রিম হিসাবে প্রবাহিত হয়।
 
-In order to avoid having a synchronous sink, where a consumer crashing can cause the whole system to stall, 
-we'll leverage asynchronous processing using message queues (Kafka) to decouple consumers and producers.
+একটি সিঙ্ক্রোনাস সিঙ্ক থাকা এড়াতে, যেখানে একটি ভোক্তা ক্র্যাশ পুরো সিস্টেমকে স্থবির করে দিতে পারে, 
+ভোক্তা এবং প্রযোজকদের দ্বিগুণ করতে আমরা বার্তা সারি (কাফকা) ব্যবহার করে অ্যাসিঙ্ক্রোনাস প্রক্রিয়াকরণের সুবিধা দেব।
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design-2.png" alt="high-level-design-2" width="500" />
 </div>
 
-The first message queue stores ad click event data:
-| ad_id | click_timestamp | user_id | ip | country |
-|-------|-----------------|---------|----|---------|
+প্রথম বার্তা সারি বিজ্ঞাপন ক্লিক ইভেন্ট ডেটা সঞ্চয় করে:
+| ad_id | ক্লিক_টাইমস্ট্যাম্প | user_id | আইপি | দেশ |
+|---------|-------|---------|----|---------|
 
-The second message queue contains ad click counts, aggregated per-minute:
-| ad_id | click_minute | count |
-|-------|--------------|-------|
+দ্বিতীয় বার্তা সারিতে বিজ্ঞাপন ক্লিকের সংখ্যা রয়েছে, প্রতি মিনিটে একত্রিত:
+| ad_id | ক্লিক_মিনিট | গণনা |
+|---------|---------------|-------|
 
-As well as top N clicked ads aggregated per minute:
-| update_time_minute | most_clicked_ads |
-|--------------------|------------------|
+পাশাপাশি প্রতি মিনিটে একত্রিত শীর্ষ N ক্লিক করা বিজ্ঞাপনগুলি:
+| আপডেট_সময়_মিনিট | সর্বাধিক_ক্লিক করা_বিজ্ঞাপন |
+|----------------------|-------------------|
 
-The second message queue is there in order to achieve end to end exactly-once atomic commit semantics:
+দ্বিতীয় বার্তার সারিটি ঠিক-একবার পারমাণবিক কমিট শব্দার্থে শেষ থেকে শেষ অর্জনের জন্য রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/atomic-commit.png" alt="atomic-commit" width="500" />
 </div>
 
-For the aggregation service, using the MapReduce framework is a good option:
+একত্রীকরণ পরিষেবার জন্য, MapReduce ফ্রেমওয়ার্ক ব্যবহার করা একটি ভাল বিকল্প:
 
 <div style="margin-left:3rem">
     <img src="./images/ad-count-map-reduce.png" alt="ad-count-map-reduce" width="500" />
@@ -208,322 +208,322 @@ For the aggregation service, using the MapReduce framework is a good option:
     <img src="./images/top-100-map-reduce.png" alt="top-100-map-reduce" width="500" />
 </div>
 
-Each node is responsible for one single task and it sends the processing result to the downstream node.
+প্রতিটি নোড একটি একক কাজের জন্য দায়ী এবং এটি প্রসেসিং ফলাফল ডাউনস্ট্রিম নোডে পাঠায়।
 
-The map node is responsible for reading from the data source, then filtering and transforming the data.
+মানচিত্র নোড ডেটা উত্স থেকে পড়ার জন্য, তারপর ফিল্টারিং এবং ডেটা রূপান্তর করার জন্য দায়ী।
 
-For example, the map node can allocate data across different aggregation nodes based on the `ad_id`:
+উদাহরণস্বরূপ, মানচিত্র নোড `ad_id` এর উপর ভিত্তি করে বিভিন্ন সমষ্টি নোড জুড়ে ডেটা বরাদ্দ করতে পারে:
 
 <div style="margin-left:3rem">
     <img src="./images/map-node.png" alt="map-node" width="500" />
 </div>
 
-Alternatively, we can distribute ads across Kafka partitions and let the aggregation nodes subscribe directly within a consumer group.
-However, the mapping node enables us to sanitize or transform the data before subsequent processing.
+বিকল্পভাবে, আমরা কাফকা পার্টিশন জুড়ে বিজ্ঞাপন বিতরণ করতে পারি এবং একত্রিত নোডগুলিকে সরাসরি একটি ভোক্তা গোষ্ঠীর মধ্যে সাবস্ক্রাইব করতে দিতে পারি।
+যাইহোক, ম্যাপিং নোড আমাদের পরবর্তী প্রক্রিয়াকরণের আগে ডেটা স্যানিটাইজ বা রূপান্তর করতে সক্ষম করে।
 
-Another reason might be that we don't have control over how data is produced, 
-so events related to the same `ad_id` might go on different partitions.
+আরেকটি কারণ হতে পারে যে কীভাবে ডেটা উত্পাদিত হয় তার উপর আমাদের নিয়ন্ত্রণ নেই, 
+তাই একই `ad_id` সম্পর্কিত ইভেন্টগুলি বিভিন্ন পার্টিশনে যেতে পারে।
 
-The aggregate node counts ad click events by `ad_id` in-memory every minute.
+সমষ্টিগত নোড প্রতি মিনিটে `ad_id` ইন-মেমরি দ্বারা বিজ্ঞাপন ক্লিক ইভেন্ট গণনা করে।
 
-The reduce node collects aggregated results from aggregate node and produces the final result:
+হ্রাস নোড সমষ্টি নোড থেকে সমষ্টিগত ফলাফল সংগ্রহ করে এবং চূড়ান্ত ফলাফল তৈরি করে:
 
 <div style="margin-left:3rem">
     <img src="./images/reduce-node.png" alt="reduce-node" width="500" />
 </div>
 
-This DAG model uses the MapReduce paradigm. It takes big data and leverages parallel distributed computing to turn it into regular-sized data.
+এই DAG মডেলটি MapReduce প্যারাডাইম ব্যবহার করে। এটি বড় ডেটা নেয় এবং এটিকে নিয়মিত আকারের ডেটাতে পরিণত করার জন্য সমান্তরাল বিতরণ করা কম্পিউটিং ব্যবহার করে।
 
-In the DAG model, intermediate data is stored in-memory and different nodes communicate with each other using TCP or shared memory.
+ডিএজি মডেলে, মধ্যবর্তী ডেটা মেমরিতে সংরক্ষণ করা হয় এবং বিভিন্ন নোড টিসিপি বা শেয়ার্ড মেমরি ব্যবহার করে একে অপরের সাথে যোগাযোগ করে।
 
-Let's explore how this model can now help us to achieve our various use-cases.
+চলুন অন্বেষণ করা যাক কিভাবে এই মডেলটি এখন আমাদের বিভিন্ন ব্যবহারের ক্ষেত্রে আমাদের সাহায্য করতে পারে।
 
-**Use-case 1 - aggregate the number of clicks**:
+**ব্যবহার-কেস 1 - ক্লিকের সংখ্যা একত্রিত করুন**:
 
 <div style="margin-left:3rem">
     <img src="./images/use-case-1.png" alt="use-case-1" width="500" />
 </div>
 
- - Ads are partitioned using `ad_id % 3`
+- বিজ্ঞাপনগুলিকে `ad_id % 3` ব্যবহার করে বিভক্ত করা হয়েছে
 
-**Use-case 2 - return top N most clicked ads**:
+**ব্যবহার-কেস 2 - শীর্ষ N সর্বাধিক ক্লিক করা বিজ্ঞাপনগুলি ফেরত দিন**:
 
 <div style="margin-left:3rem">
     <img src="./images/use-case-2.png" alt="use-case-2" width="500" />
 </div>
 
- - In this case, we're aggregating the top 3 ads, but this can be extended to top N ads easily
- - Each node maintains a heap data structure for fast retrieval of top N ads
+- এই ক্ষেত্রে, আমরা শীর্ষ 3 বিজ্ঞাপনগুলিকে একত্রিত করছি, তবে এটি সহজেই শীর্ষ N বিজ্ঞাপনগুলিতে প্রসারিত করা যেতে পারে
+ - প্রতিটি নোড শীর্ষ এন বিজ্ঞাপনগুলি দ্রুত পুনরুদ্ধারের জন্য একটি হিপ ডেটা কাঠামো বজায় রাখে৷
 
-**Use-case 3 - data filtering**:
-To support fast data filtering, we can predefine filtering criterias and pre-aggregate based on it:
-| ad_id | click_minute | country | count |
-|-------|--------------|---------|-------|
-| ad001 | 202101010001 | USA     | 100   |
-| ad001 | 202101010001 | GPB     | 200   |
-| ad001 | 202101010001 | others  | 3000  |
-| ad002 | 202101010001 | USA     | 10    |
-| ad002 | 202101010001 | GPB     | 25    |
-| ad002 | 202101010001 | others  | 12    |
+**ব্যবহার-কেস 3 - ডেটা ফিল্টারিং**:
+দ্রুত ডেটা ফিল্টারিং সমর্থন করার জন্য, আমরা ফিল্টারিং মানদণ্ড এবং এর উপর ভিত্তি করে প্রাক-সমষ্টি নির্ধারণ করতে পারি:
+| ad_id | ক্লিক_মিনিট | দেশ | গণনা |
+|-------|---------------|---------|-------|
+| ad001 | 202101010001 | মার্কিন যুক্তরাষ্ট্র | 100 |
+| ad001 | 202101010001 | জিপিবি | 200 |
+| ad001 | 202101010001 | অন্যদের | 3000 |
+| ad002 | 202101010001 | মার্কিন যুক্তরাষ্ট্র | 10 |
+| ad002 | 202101010001 | জিপিবি | 25 |
+| ad002 | 202101010001 | অন্যদের | 12 |
 
-This technique is called the **star schema** and is widely used in data warehouses.
-The filtering fields are called **dimensions**.
+এই কৌশলটিকে **স্টার স্কিমা** বলা হয় এবং ডেটা গুদামগুলিতে ব্যাপকভাবে ব্যবহৃত হয়।
+ফিল্টারিং ক্ষেত্রগুলিকে বলা হয় **মাত্রা**।
 
-This approach has the following benefits:
- - Simple to undertand and build
- - Current aggregation service can be reused to create more dimensions in the star schema.
- - Accessing data based on filtering criteria is fast as results are pre-calculated
+এই পদ্ধতির নিম্নলিখিত সুবিধা রয়েছে:
+ - বোঝা এবং তৈরি করা সহজ
+ - স্টার স্কিমাতে আরও মাত্রা তৈরি করতে বর্তমান একত্রীকরণ পরিষেবা পুনরায় ব্যবহার করা যেতে পারে।
+ - ফিল্টারিং মানদণ্ডের উপর ভিত্তি করে ডেটা অ্যাক্সেস করা দ্রুত কারণ ফলাফলগুলি প্রাক-গণনা করা হয়
 
-A limitation of this approach is that it creates many more buckets and records, especially when we have lots of filtering criterias.
+এই পদ্ধতির একটি সীমাবদ্ধতা হল এটি আরও অনেক বালতি এবং রেকর্ড তৈরি করে, বিশেষ করে যখন আমাদের প্রচুর ফিল্টারিং মানদণ্ড থাকে।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
-Let's dive deeper into some of the more interesting topics.
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
+আসুন আরও কিছু আকর্ষণীয় বিষয়ের গভীরে ডুব দেওয়া যাক।
 
-### **Streaming vs. Batching**
-The high-level architecture we proposed is a type of stream processing system. 
-Here's a comparison between three types of systems:
-|                         | Services (Online system)      | Batch system (offline system)                          | Streaming system (near real-time system)     |
-|-------------------------|-------------------------------|--------------------------------------------------------|----------------------------------------------|
-| Responsiveness          | Respond to the client quickly | No response to the client needed                       | No response to the client needed             |
-| Input                   | User requests                 | Bounded input with finite size. A large amount of data | Input has no boundary (infinite streams)     |
-| Output                  | Responses to clients          | Materialized views, aggregated metrics, etc.           | Materialized views, aggregated metrics, etc. |
-| Performance measurement | Availability, latency         | Throughput                                             | Throughput, latency                          |
-| Example                 | Online shopping               | MapReduce                                              | Flink [13]                                   |
+### **স্ট্রিমিং বনাম ব্যাচিং**
+আমরা যে উচ্চ-স্তরের আর্কিটেকচারটি প্রস্তাব করেছি তা হল এক ধরনের স্ট্রিম প্রসেসিং সিস্টেম। 
+এখানে তিন ধরনের সিস্টেমের মধ্যে তুলনা করা হল:
+|                         | সেবা (অনলাইন সিস্টেম) | ব্যাচ সিস্টেম (অফলাইন সিস্টেম) | স্ট্রিমিং সিস্টেম (রিয়েল-টাইম সিস্টেমের কাছাকাছি) |
+|---------------|--------------------------------------------|---------------------------------------------------------|
+| প্রতিক্রিয়াশীলতা | ক্লায়েন্টকে দ্রুত উত্তর দিন | ক্লায়েন্টের কোন প্রতিক্রিয়া প্রয়োজন নেই | ক্লায়েন্টের কোন প্রতিক্রিয়া প্রয়োজন নেই |
+| ইনপুট | ব্যবহারকারীর অনুরোধ | সীমিত আকারের সাথে আবদ্ধ ইনপুট। বিপুল পরিমাণ ডেটা | ইনপুটের কোন সীমানা নেই (অসীম প্রবাহ) |
+| আউটপুট | ক্লায়েন্টদের প্রতিক্রিয়া | ম্যাটেরিয়ালাইজড ভিউ, অ্যাগ্রিগেটেড মেট্রিক্স, ইত্যাদি | ম্যাটেরিয়ালাইজড ভিউ, অ্যাগ্রিগেটেড মেট্রিক্স, ইত্যাদি |
+| কর্মক্ষমতা পরিমাপ | প্রাপ্যতা, বিলম্ব | থ্রুপুট | থ্রুপুট, লেটেন্সি |
+| উদাহরণ | অনলাইন শপিং | MapReduce | ফ্লিঙ্ক [13] |
 
-In our design, we used a mixture of batching and streaming. 
+আমাদের ডিজাইনে, আমরা ব্যাচিং এবং স্ট্রিমিং এর মিশ্রণ ব্যবহার করেছি।
 
-We used streaming for processing data as it arrives and generates aggregated results in near real-time.
-We used batching, on the other hand, for historical data backup.
+ডেটা আসার সাথে সাথে আমরা প্রসেসিং করার জন্য স্ট্রিমিং ব্যবহার করেছি এবং কাছাকাছি রিয়েল-টাইমে সমষ্টিগত ফলাফল তৈরি করে।
+আমরা ব্যাচিং ব্যবহার করেছি, অন্যদিকে, ঐতিহাসিক ডেটা ব্যাকআপের জন্য।
 
-A system which contains two processing paths - batch and streaming, simultaneously, this architecture is called lambda.
-A disadvantage is that you have two processing paths with two different codebases to maintain.
+একটি সিস্টেম যা দুটি প্রক্রিয়াকরণ পাথ ধারণ করে - ব্যাচ এবং স্ট্রিমিং, একই সাথে, এই আর্কিটেকচারটিকে ল্যাম্বডা বলা হয়।
+একটি অসুবিধা হল যে আপনার কাছে দুটি ভিন্ন কোডবেস সহ দুটি প্রক্রিয়াকরণ পাথ বজায় রাখার জন্য রয়েছে।
 
-Kappa is an alternative architecture, which combines batch and stream processing in one processing path.
-The key idea is to use a single stream processing engine.
+কাপা একটি বিকল্প স্থাপত্য, যা একটি প্রক্রিয়াকরণ পথে ব্যাচ এবং স্ট্রিম প্রক্রিয়াকরণকে একত্রিত করে।
+মূল ধারণা হল একটি একক স্ট্রিম প্রসেসিং ইঞ্জিন ব্যবহার করা।
 
-Lambda architecture:
+ল্যাম্বডা স্থাপত্য:
 
 <div style="margin-left:3rem">
     <img src="./images/lambda-architecture.png" alt="lambda-architecture" width="500" />
 </div>
 
-Kappa architecture:
+কাপা স্থাপত্য:
 
 <div style="margin-left:3rem">
     <img src="./images/kappa-architecture.png" alt="kappa-architecture" width="500" />
 </div>
 
-Our high-level design uses Kappa architecture as reprocessing of historical data also goes through the aggregation service.
+আমাদের উচ্চ-স্তরের নকশা কাপা আর্কিটেকচার ব্যবহার করে কারণ ঐতিহাসিক ডেটার পুনঃপ্রক্রিয়াকরণও একত্রিতকরণ পরিষেবার মাধ্যমে যায়।
 
-Whenever we have to recalculate aggregated data due to eg a major bug in aggregation logic, we can recalculate the aggregation from the raw data we store.
- - Recalculation service retrieves data from raw storage. This is a batch job.
- - Retrieved data is sent to a dedicated aggregation service, so that the real-time processing aggregation service is not impacted.
- - Aggregated results are sent to the second message queue, after which we update the results in the aggregation database.
+যখনই আমাদের একত্রিত তথ্য পুনঃগণনা করতে হয় যেমন একত্রীকরণ যুক্তিতে একটি বড় বাগ, আমরা আমাদের সঞ্চয় করা কাঁচা ডেটা থেকে একত্রিতকরণ পুনরায় গণনা করতে পারি।
+ - পুনঃগণনা পরিষেবা কাঁচা সঞ্চয়স্থান থেকে ডেটা পুনরুদ্ধার করে। এটি একটি ব্যাচের কাজ।
+ - পুনরুদ্ধার করা ডেটা একটি ডেডিকেটেড অ্যাগ্রিগেশন সার্ভিসে পাঠানো হয়, যাতে রিয়েল-টাইম প্রসেসিং অ্যাগ্রিগেশন পরিষেবা প্রভাবিত না হয়।
+ - একত্রিত ফলাফল দ্বিতীয় বার্তা সারিতে পাঠানো হয়, তারপরে আমরা সমষ্টি ডাটাবেসে ফলাফল আপডেট করি।
 
 <div style="margin-left:3rem">
     <img src="./images/recalculation-example.png" alt="recalculation-example" width="500" />
 </div>
 
-### **Time**
-We need a timestamp to perform aggregation. It can be generated in two places:
- - event time - when ad click occurs
- - Processing time - system time when the server processes the event
+### **সময়**
+সমষ্টি সঞ্চালনের জন্য আমাদের একটি টাইমস্ট্যাম্প প্রয়োজন। এটি দুটি জায়গায় তৈরি করা যেতে পারে:
+ - ইভেন্টের সময় - যখন বিজ্ঞাপনে ক্লিক হয়
+ - প্রক্রিয়াকরণ সময় - সিস্টেম সময় যখন সার্ভার ইভেন্ট প্রক্রিয়া করে
 
-Due to the usage of async processing (message queues) and network delays, there can be significant difference between event time and processing time.
- - If we use processing time, aggregation results can be inaccurate
- - If we use event time, we have to deal with delayed events
+অ্যাসিঙ্ক প্রক্রিয়াকরণের ব্যবহার (বার্তা সারি) এবং নেটওয়ার্ক বিলম্বের কারণে, ইভেন্ট সময় এবং প্রক্রিয়াকরণ সময়ের মধ্যে উল্লেখযোগ্য পার্থক্য থাকতে পারে।
+ - যদি আমরা প্রক্রিয়াকরণের সময় ব্যবহার করি, তাহলে সমষ্টির ফলাফল ভুল হতে পারে
+ - যদি আমরা ইভেন্টের সময় ব্যবহার করি তবে আমাদের বিলম্বিত ঘটনাগুলি মোকাবেলা করতে হবে
 
-There is no perfect solution, we need to consider trade-offs:
-|                 | Pros                                  | Cons                                                                                 |
-|-----------------|---------------------------------------|--------------------------------------------------------------------------------------|
-| Event time      | Aggregation results are more accurate | Clients might have the wrong time or timestamp might be generated by malicious users |
-| Processing time | Server timestamp is more reliable     | The timestamp is not accurate if event is late                                       |
+কোন নিখুঁত সমাধান নেই, আমাদের ট্রেড-অফ বিবেচনা করতে হবে:
+|                 | পেশাদার | কনস |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------
+| ইভেন্ট সময় | সমষ্টির ফলাফল আরও সঠিক | ক্লায়েন্টদের ভুল সময় থাকতে পারে বা দূষিত ব্যবহারকারীদের দ্বারা টাইমস্ট্যাম্প তৈরি হতে পারে |
+| প্রক্রিয়াকরণ সময় | সার্ভার টাইমস্ট্যাম্প আরো নির্ভরযোগ্য | ইভেন্ট দেরী হলে টাইমস্ট্যাম্প সঠিক নয় |
 
-Since data accuracy is important, we'll use the event time for aggregation.
+যেহেতু ডেটার যথার্থতা গুরুত্বপূর্ণ, তাই আমরা ইভেন্টের সময়টি একত্রিত করার জন্য ব্যবহার করব।
 
-To mitigate the issue of delayed events, a technique called "watermark" can be leveraged.
+বিলম্বিত ঘটনাগুলির সমস্যা প্রশমিত করতে, "ওয়াটারমার্ক" নামক একটি কৌশল ব্যবহার করা যেতে পারে।
 
-In the example below, event 2 misses the window where it needs to be aggregated:
+নীচের উদাহরণে, ইভেন্ট 2 উইন্ডোটি মিস করে যেখানে এটি একত্রিত করা প্রয়োজন:
 
 <div style="margin-left:3rem">
     <img src="./images/watermark-technique.png" alt="watermark-technique" width="500" />
 </div>
 
-However, if we purposefully extend the aggregation window, we can reduce the likelihood of missed events.
-The extended part of a window is called a "watermark":
+যাইহোক, যদি আমরা উদ্দেশ্যমূলকভাবে একত্রিতকরণ উইন্ডোকে প্রসারিত করি, তাহলে আমরা মিস হওয়ার সম্ভাবনা কমাতে পারি।
+একটি উইন্ডোর বর্ধিত অংশকে "ওয়াটারমার্ক" বলা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/watermark-2.png" alt="watermark-2" width="500" />
 </div>
 
- - Short watermark increases likelihood of missed events, but reduces latency
- - Longer watermark reduces likelihood of missed events, but increases latency
+- সংক্ষিপ্ত ওয়াটারমার্ক মিস ইভেন্টের সম্ভাবনা বাড়ায়, কিন্তু বিলম্ব কমায়
+ - লম্বা ওয়াটারমার্ক মিস ইভেন্টের সম্ভাবনা কমায়, কিন্তু লেটেন্সি বাড়ায়
 
-There is always likelihood of missed events, regardless of the watermark's size. But there is no use in optimizing for such low-probability events.
+ওয়াটারমার্কের আকার নির্বিশেষে সবসময় মিস ইভেন্ট হওয়ার সম্ভাবনা থাকে। কিন্তু এই ধরনের কম-সম্ভাব্যতা ইভেন্টের জন্য অপ্টিমাইজ করে কোন লাভ নেই।
 
-We can instead resolve such inconsistencies by doing end-of-day reconciliation.
+আমরা এর পরিবর্তে দিনের শেষে পুনর্মিলন করে এই ধরনের অসঙ্গতিগুলি সমাধান করতে পারি।
 
-### **Aggregation window**
-There are four types of window functions:
- - Tumbling (fixed) window
- - Hopping window
- - Sliding window
- - Session window
+### **একত্রীকরণ উইন্ডো**
+উইন্ডো ফাংশন চার ধরনের আছে:
+ - টাম্বলিং (স্থির) জানালা
+ - হপিং উইন্ডো
+ - স্লাইডিং উইন্ডো
+ - সেশন উইন্ডো
 
-In our design, we leverage a tumbling window for ad click aggregations:
+আমাদের ডিজাইনে, আমরা বিজ্ঞাপন ক্লিকের সমষ্টির জন্য একটি টাম্বলিং উইন্ডো ব্যবহার করি:
 
 <div style="margin-left:3rem">
     <img src="./images/tumbling-window.png" alt="tumbling-window" width="500" />
 </div>
 
-As well as a sliding window for the top N clicked ads in M minutes aggregation:
+পাশাপাশি M মিনিটের সমষ্টিতে শীর্ষ N ক্লিক করা বিজ্ঞাপনগুলির জন্য একটি স্লাইডিং উইন্ডো:
 
 <div style="margin-left:3rem">
     <img src="./images/sliding-window.png" alt="sliding-window" width="500" />
 </div>
 
-### **Delivery guarantees**
-Since the data we're aggregating is going to be used for billing, data accuracy is a priority.
+### **ডেলিভারির গ্যারান্টি**
+যেহেতু আমরা যে ডেটা একত্রিত করছি তা বিলিং-এর জন্য ব্যবহার করা হবে, তাই ডেটার যথার্থতা একটি অগ্রাধিকার৷
 
-Hence, we need to discuss:
- - How to avoid processing duplicate events
- - How to ensure all events are processed
+অতএব, আমাদের আলোচনা করা দরকার:
+ - ডুপ্লিকেট ইভেন্ট প্রক্রিয়াকরণ এড়াতে কিভাবে
+ - কিভাবে নিশ্চিত করা যায় যে সমস্ত ইভেন্ট প্রক্রিয়া করা হয়েছে
 
-There are three delivery guarantees we can use - at-most-once, at-least-once and exactly once.
+তিনটি ডেলিভারি গ্যারান্টি রয়েছে যা আমরা ব্যবহার করতে পারি - সর্বাধিক-একবার, অন্তত-একবার এবং ঠিক একবার।
 
-In most circumstances, at-least-once is sufficient when a small amount of duplicates is acceptable.
-This is not the case for our system, though, as a difference in small percent can result in millions of dollars of discrepancy.
-Hence, we'll need to use exactly-once delivery semantics.
+বেশিরভাগ পরিস্থিতিতে, অল্প পরিমাণে ডুপ্লিকেট গ্রহণযোগ্য হলে অন্তত-একবারই যথেষ্ট।
+এটি আমাদের সিস্টেমের ক্ষেত্রে নয়, যদিও, ছোট শতাংশের পার্থক্যের ফলে মিলিয়ন ডলারের অমিল হতে পারে।
+তাই, আমাদের ঠিক-একবার ডেলিভারি শব্দার্থ ব্যবহার করতে হবে।
 
-### **Data deduplication**
-One of the most common data quality issues is duplicated data.
+### **ডেটা ডিডপ্লিকেশন**
+সবচেয়ে সাধারণ ডেটা মানের সমস্যাগুলির মধ্যে একটি হল ডুপ্লিকেট ডেটা।
 
-It can come from a wide range of sources:
- - Client-side - a client might resend the same event multiple times. Duplicated events sent with malicious intent are best handled by a risk engine.
- - Server outage - An aggregation service node goes down in the middle of aggregation and the upstream service hasn't received an acknowledgment so event is resent.
+এটি বিস্তৃত উত্স থেকে আসতে পারে:
+ - ক্লায়েন্ট-সাইড - একজন ক্লায়েন্ট একই ইভেন্ট একাধিকবার পুনরায় পাঠাতে পারে। দূষিত অভিপ্রায়ে প্রেরিত সদৃশ ইভেন্টগুলি একটি ঝুঁকি ইঞ্জিন দ্বারা সর্বোত্তমভাবে পরিচালনা করা হয়।
+ - সার্ভার বিভ্রাট - একটি একত্রিতকরণ পরিষেবা নোড একত্রিতকরণের মাঝখানে নিচে চলে যায় এবং আপস্ট্রিম পরিষেবাটি একটি স্বীকৃতি পায়নি তাই ইভেন্টটি পুনরায় পাঠানো হয়৷
 
-Here's an example of data duplication occurring due to failure to acknowledge an event on the last hop:
+শেষ হপে একটি ইভেন্ট স্বীকার করতে ব্যর্থতার কারণে ডেটা ডুপ্লিকেশনের একটি উদাহরণ এখানে দেওয়া হল:
 
 <div style="margin-left:3rem">
     <img src="./images/data-duplication-example.png" alt="data-duplication-example" width="500" />
 </div>
 
-In this example, offset 100 will be processed and sent downstream multiple times.
+এই উদাহরণে, অফসেট 100 প্রক্রিয়া করা হবে এবং একাধিকবার ডাউনস্ট্রিম পাঠানো হবে।
 
-One option to try and mitigate this is to store the last seen offset in HDFS/S3, but this risks the result never reaching downstream:
+এটি চেষ্টা করার এবং প্রশমিত করার একটি বিকল্প হল HDFS/S3 তে শেষ দেখা অফসেট সংরক্ষণ করা, তবে এটি ফলাফলটি কখনই নিচের দিকে না পৌঁছানোর ঝুঁকি রাখে:
 
 <div style="margin-left:3rem">
     <img src="./images/data-duplication-example-2.png" alt="data-duplication-example-2" width="500" />
 </div>
 
-Finally, we can store the offset while interacting with downstream atomically. To achieve this, we need to implement a distributed transaction:
+অবশেষে, আমরা ডাউনস্ট্রিমের সাথে পারমাণবিকভাবে ইন্টারঅ্যাক্ট করার সময় অফসেট সংরক্ষণ করতে পারি। এটি অর্জন করতে, আমাদের একটি বিতরণকৃত লেনদেন বাস্তবায়ন করতে হবে:
 
 <div style="margin-left:3rem">
     <img src="./images/data-duplication-example-3.png" alt="data-duplication-example-3" width="500" />
 </div>
 
-**Personal side-note**: Alternatively, if the downstream system handles the aggregation result idempotently, there is no need for a distributed transaction.
+**ব্যক্তিগত সাইড-নোট**: বিকল্পভাবে, যদি ডাউনস্ট্রীম সিস্টেম একত্রিতকরণের ফলাফলকে অদম্যভাবে পরিচালনা করে, তাহলে বিতরণ করা লেনদেনের প্রয়োজন নেই।
 
-### **Scale the system**
-Let's discuss how we scale the system as it grows.
+### ** সিস্টেম স্কেল করুন**
+চলুন আলোচনা করা যাক কিভাবে আমরা সিস্টেমটি বাড়ার সাথে সাথে স্কেল করি।
 
-We have three independent components - message queue, aggregation service and database.
-Since they are decoupled, we can scale them independently.
+আমাদের তিনটি স্বাধীন উপাদান রয়েছে - বার্তা সারি, একত্রীকরণ পরিষেবা এবং ডেটাবেস।
+যেহেতু সেগুলি ডিকপল করা হয়েছে, আমরা সেগুলিকে স্বাধীনভাবে স্কেল করতে পারি৷
 
-How do we scale the message queue:
- - We don't put a limit on producers, so they can be scaled easily
- - Consumers can be scaled by assigning them to consumer groups and increasing the number of consumers.
- - For this to work, we also need to ensure there are enough partitions created preemptively
- - Also, consumer rebalancing can take a while when there are thousands of consumers so it is recommended to do it off peak hours
- - We could also consider partitioning the topic by geography, eg `topic_na`, `topic_eu`, etc.
+আমরা কিভাবে বার্তা সারি স্কেল করব:
+ - আমরা প্রযোজকদের উপর একটি সীমা রাখি না, তাই তাদের সহজেই স্কেল করা যেতে পারে
+ - ভোক্তাদেরকে ভোক্তা গোষ্ঠীতে বরাদ্দ করে এবং ভোক্তাদের সংখ্যা বৃদ্ধি করে স্কেল করা যেতে পারে।
+ - এটি কাজ করার জন্য, আমাদের এটি নিশ্চিত করতে হবে যে সেখানে পর্যাপ্ত পার্টিশন তৈরি করা হয়েছে
+ - এছাড়াও, হাজার হাজার ভোক্তা থাকাকালীন ভোক্তা পুনঃব্যালেন্সিংয়ে কিছুটা সময় লাগতে পারে তাই পিক আওয়ারের বাইরে এটি করার পরামর্শ দেওয়া হচ্ছে
+ - আমরা ভূগোল অনুসারে বিষয়কে ভাগ করার কথাও বিবেচনা করতে পারি, যেমন `topic_na`, `topic_eu`, ইত্যাদি।
 
 <div style="margin-left:3rem">
     <img src="./images/scale-consumers.png" alt="scale-consumers" width="500" />
 </div>
 
-How do we scale the aggregation service:
+আমরা কিভাবে একত্রীকরণ পরিষেবা স্কেল করব:
 
 <div style="margin-left:3rem">
     <img src="./images/aggregation-service-scaling.png" alt="aggregation-service-scaling" width="500" />
 </div>
 
- - The map-reduce nodes can easily be scaled by adding more nodes
- - The throughput of the aggregation service can be scaled by by utilising multi-threading
- - Alternatively, we can leverage resource providers such as Apache YARN to utilize multi-processing
- - Option 1 is easier, but option 2 is more widely used in practice as it's more scalable
- - Here's the multi-threading example:
+- ম্যাপ-রিডুস নোডগুলি আরও নোড যোগ করে সহজেই স্কেল করা যেতে পারে
+ - মাল্টি-থ্রেডিং ব্যবহার করে অ্যাগ্রিগেশন সার্ভিসের থ্রুপুট মাপানো যেতে পারে
+ - বিকল্পভাবে, আমরা মাল্টি-প্রসেসিং ব্যবহার করার জন্য Apache YARN-এর মতো রিসোর্স প্রদানকারীদের সুবিধা নিতে পারি
+ - বিকল্প 1 সহজ, কিন্তু বিকল্প 2 অনুশীলনে আরও ব্যাপকভাবে ব্যবহৃত হয় কারণ এটি আরও মাপযোগ্য
+ - এখানে মাল্টি-থ্রেডিং উদাহরণ:
 
 <div style="margin-left:3rem">
     <img src="./images/multi-threading-example.png" alt="multi-threading-example" width="500" />
 </div>
 
-How do we scale the database:
- - If we use Cassandra, it natively supports horizontal scaling utilizing consistent hashing
- - If a new node is added to the cluster, data automatically gets rebalanced across all (virtual) nodes
- - With this approach, no manual (re)sharding is required
+আমরা কিভাবে ডাটাবেস স্কেল করব:
+ - যদি আমরা ক্যাসান্ড্রা ব্যবহার করি, এটি স্থানীয়ভাবে সামঞ্জস্যপূর্ণ হ্যাশিং ব্যবহার করে অনুভূমিক স্কেলিং সমর্থন করে
+ - ক্লাস্টারে একটি নতুন নোড যোগ করা হলে, সমস্ত (ভার্চুয়াল) নোড জুড়ে ডেটা স্বয়ংক্রিয়ভাবে ভারসাম্যপূর্ণ হয়ে যায়
+ - এই পদ্ধতির সাথে, কোন ম্যানুয়াল (পুনরায়) ভাগ করার প্রয়োজন নেই
 
 <div style="margin-left:3rem">
     <img src="./images/cassandra-scalability.png" alt="cassandra-scalability" width="500" />
 </div>
 
-Another scalability issue to consider is the hotspot issue - what if an ad is more popular and gets more attention than others?
+বিবেচনা করার জন্য আরেকটি স্কেলেবিলিটি সমস্যা হল হটস্পট সমস্যা - যদি একটি বিজ্ঞাপন বেশি জনপ্রিয় হয় এবং অন্যদের চেয়ে বেশি মনোযোগ পায়?
 
 <div style="margin-left:3rem">
     <img src="./images/hotspot-issue.png" alt="hotspot-issue" width="500" />
 </div>
 
- - In the above example, aggregation service nodes can apply for extra resources via the resource manager
- - The resource manager allocates more resources, so the original node isn't overloaded
- - The original node splits the events into 3 groups and each of the aggregation nodes handles 100 events
- - Result is written back to the original aggregation node
+- উপরের উদাহরণে, অ্যাগ্রিগেশন সার্ভিস নোডগুলি রিসোর্স ম্যানেজারের মাধ্যমে অতিরিক্ত সম্পদের জন্য আবেদন করতে পারে
+ - রিসোর্স ম্যানেজার আরও রিসোর্স বরাদ্দ করে, তাই আসল নোড ওভারলোড হয় না
+ - আসল নোড ইভেন্টগুলিকে 3টি গ্রুপে বিভক্ত করে এবং প্রতিটি একত্রিত নোড 100টি ইভেন্ট পরিচালনা করে
+ - ফলাফল মূল সমষ্টি নোডে লেখা হয়
 
-Alternative, more sophisticated ways to handle the hotspot problem:
- - Global-Local Aggregation
- - Split Distinct Aggregation
+হটস্পট সমস্যা হ্যান্ডেল করার জন্য বিকল্প, আরও পরিশীলিত উপায়:
+ - গ্লোবাল-লোকাল অ্যাগ্রিগেশন
+ - বিভক্ত স্বতন্ত্র সমষ্টি
 
-### **Fault Tolerance**
-Within the aggregation nodes, we are processing data in-memory. If a node goes down, the processed data is lost.
+### **দোষ সহনশীলতা**
+একত্রিতকরণ নোডের মধ্যে, আমরা মেমরিতে ডেটা প্রক্রিয়া করছি। যদি একটি নোড নিচে যায়, প্রক্রিয়াকৃত ডেটা হারিয়ে যায়।
 
-We can leverage consumer offsets in kafka to continue from where we left off once another node picks up the slack.
-However, there is additional intermediary state we need to maintain, as we're aggregating the top N ads in M minutes.
+আমরা কাফকাতে ভোক্তা অফসেটগুলির সুবিধা নিতে পারি যেখান থেকে আমরা চলে গিয়েছিলাম যখন অন্য নোড স্ল্যাক করে।
+যাইহোক, অতিরিক্ত মধ্যস্থতাকারী অবস্থা আছে যা আমাদের বজায় রাখতে হবে, কারণ আমরা M মিনিটে শীর্ষ N বিজ্ঞাপনগুলিকে একত্রিত করছি।
 
-We can make snapshots at a particular minute for the on-going aggregation:
+আমরা চলমান সমষ্টির জন্য একটি নির্দিষ্ট মিনিটে স্ন্যাপশট তৈরি করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/fault-tolerance-example.png" alt="fault-tolerance-example" width="500" />
 </div>
 
-If a node goes down, the new node can read the latest committed consumer offset, as well as the latest snapshot to continue the job:
+যদি একটি নোড নিচে চলে যায়, নতুন নোড সর্বশেষ প্রতিশ্রুতিবদ্ধ ভোক্তা অফসেট, সেইসাথে কাজটি চালিয়ে যাওয়ার জন্য সর্বশেষ স্ন্যাপশট পড়তে পারে:
 
 <div style="margin-left:3rem">
     <img src="./images/fault-tolerance-recovery-example.png" alt="fault-tolerance-recovery-example" width="500" />
 </div>
 
-### **Data monitoring and correctness**
-As the data we're aggregating is critical as it's used for billing, it is very important to have rigorous monitoring in place in order to ensure correctness.
+### **ডেটা পর্যবেক্ষণ এবং সঠিকতা**
+আমরা যে ডেটা একত্রিত করছি তা অত্যন্ত গুরুত্বপূর্ণ কারণ এটি বিলিং-এর জন্য ব্যবহৃত হয়, তাই সঠিকতা নিশ্চিত করার জন্য কঠোর পর্যবেক্ষণ করা খুবই গুরুত্বপূর্ণ৷
 
-Some metrics we might want to monitor:
- - **Latency**: Timestamps of different events can be tracked in order to understand the e2e latency of the system
- - **Message queue size**: If there is a sudden increase in queue size, we need to add more aggregation nodes. As Kafka is implemented via a distributed commit log, we need to keep track of records-lag metrics instead.
- - **System resources on aggregation nodes**: CPU, disk, JVM, etc.
+কিছু মেট্রিক যা আমরা নিরীক্ষণ করতে চাই:
+ - **লেটেন্সি**: সিস্টেমের e2e লেটেন্সি বোঝার জন্য বিভিন্ন ইভেন্টের টাইমস্ট্যাম্প ট্র্যাক করা যেতে পারে
+ - **বার্তা সারির আকার**: যদি সারির আকার হঠাৎ বৃদ্ধি পায়, তাহলে আমাদের আরও একত্রিতকরণ নোড যোগ করতে হবে। যেহেতু কাফকা একটি বিতরণ করা কমিট লগের মাধ্যমে প্রয়োগ করা হয়েছে, আমাদের পরিবর্তে রেকর্ড-ল্যাগ মেট্রিক্সের ট্র্যাক রাখতে হবে।
+ - **একত্রীকরণ নোডগুলিতে সিস্টেম সম্পদ**: CPU, ডিস্ক, JVM, ইত্যাদি।
 
-We also need to implement a reconciliation flow which is a batch job, running at the end of the day. 
-It calculates the aggregated results from the raw data and compares them against the actual data stored in the aggregation database:
+আমাদের একটি পুনর্মিলন প্রবাহ বাস্তবায়ন করতে হবে যা একটি ব্যাচের কাজ, দিনের শেষে চলছে। 
+এটি কাঁচা ডেটা থেকে সমষ্টিগত ফলাফল গণনা করে এবং সমষ্টি ডেটাবেসে সংরক্ষিত প্রকৃত ডেটার সাথে তুলনা করে:
 
 <div style="margin-left:3rem">
     <img src="./images/reconciliation-flow.png" alt="reconciliation-flow" width="500" />
 </div>
 
-### **Alternative design**
-In a generalist system design interview, you are not expected to know the internals of specialized software used in big data processing.
+### **বিকল্প নকশা**
+একটি সাধারণ সিস্টেম ডিজাইনের সাক্ষাত্কারে, আপনি বড় ডেটা প্রক্রিয়াকরণে ব্যবহৃত বিশেষ সফ্টওয়্যারগুলির অভ্যন্তরীণগুলি জানেন বলে আশা করা হয় না।
 
-Explaining the thought process and discussing trade-offs is more important than knowing specific tools, which is why the chapter covers a generic solution.
+চিন্তা প্রক্রিয়া ব্যাখ্যা করা এবং ট্রেড-অফ নিয়ে আলোচনা করা নির্দিষ্ট সরঞ্জামগুলি জানার চেয়ে বেশি গুরুত্বপূর্ণ, যে কারণে অধ্যায়টি একটি সাধারণ সমাধান কভার করে।
 
-An alternative design, which leverages off-the-shelf tooling, is to store ad click data in Hive with an ElasticSearch layer on top built for faster queries.
+একটি বিকল্প ডিজাইন, যা অফ-দ্য-শেল্ফ টুলিংয়ের সুবিধা দেয়, দ্রুত প্রশ্নের জন্য তৈরি ইলাস্টিক সার্চ স্তরের সাথে Hive-এ বিজ্ঞাপন ক্লিক ডেটা সংরক্ষণ করা।
 
-Aggregation is typically done in OLAP databases such as ClickHouse or Druid.
+একত্রীকরণ সাধারণত OLAP ডাটাবেস যেমন ক্লিকহাউস বা ড্রুইডে করা হয়।
 
 <div style="margin-left:3rem">
     <img src="./images/alternative-design.png" alt="alternative-design" width="500" />
@@ -531,19 +531,19 @@ Aggregation is typically done in OLAP databases such as ClickHouse or Druid.
 
 ---
 
-## ধাপ 4: Wrap up
-Things we covered:
- - Data model and API Design
- - Using MapReduce to aggregate ad click events
- - Scaling the message queue, aggregation service and database
- - Mitigating the hotspot issue
- - Monitoring the system continuously
- - Using reconciliation to ensure correctness
- - Fault tolerance
+## ধাপ 4: মোড়ানো
+আমরা যে জিনিসগুলি কভার করেছি:
+ - ডেটা মডেল এবং API ডিজাইন
+ - বিজ্ঞাপন ক্লিক ইভেন্টগুলিকে সামগ্রিক করতে MapReduce ব্যবহার করে৷
+ - বার্তা সারি, একত্রীকরণ পরিষেবা এবং ডাটাবেস স্কেলিং
+ - হটস্পট সমস্যা প্রশমিত করা
+ - সিস্টেম ক্রমাগত পর্যবেক্ষণ
+ - সঠিকতা নিশ্চিত করতে পুনর্মিলন ব্যবহার করা
+ - দোষ সহনশীলতা
 
-The ad click event aggregation is a typical big data processing system.
+বিজ্ঞাপন ক্লিক ইভেন্ট একত্রীকরণ একটি সাধারণ বড় ডেটা প্রসেসিং সিস্টেম।
 
-It would be easier to understand and design it if you have prior knowledge of related technologies:
- - Apache Kafka
- - Apache Spark
- - Apache Flink
+আপনার যদি সংশ্লিষ্ট প্রযুক্তি সম্পর্কে পূর্ব জ্ঞান থাকে তবে এটি বোঝা এবং ডিজাইন করা সহজ হবে:
+ - অ্যাপাচি কাফকা
+ - অ্যাপাচি স্পার্ক
+ - অ্যাপাচি ফ্লিঙ্ক

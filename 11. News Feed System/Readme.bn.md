@@ -1,131 +1,131 @@
-# অধ্যায় 11: নিউজ ফিড সিস্টেম ডিজাইন
+# অধ্যায় 11: একটি নিউজ ফিড সিস্টেম ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-A **news feed system** displays a constantly updating list of posts (status updates, photos, videos, and links) from a user’s connections. Examples include Facebook’s news feed, Instagram’s feed, and Twitter’s timeline. This chapter explores the design of a scalable news feed system.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-
-### রিকোয়ারমেন্টস (Requirements)
-1. **Platform:** The system supports both web and mobile apps.
-2. **Features:**
-   - Users can publish posts.
-   - Users can view posts from friends in their news feed.
-3. **Sorting:** Feeds are sorted in **reverse chronological order** for simplicity.
-4. **Scale:**
-   - Users can have up to 5,000 friends.
-   - 10 million daily active users (DAU).
-   - Feeds may include text, images, and videos.
+## ভূমিকা
+একটি **নিউজ ফিড সিস্টেম** একটি ব্যবহারকারীর সংযোগ থেকে পোস্টগুলির একটি ক্রমাগত আপডেট করা তালিকা (স্ট্যাটাস আপডেট, ফটো, ভিডিও এবং লিঙ্ক) প্রদর্শন করে। উদাহরণের মধ্যে রয়েছে Facebook এর নিউজ ফিড, Instagram এর ফিড এবং টুইটারের টাইমলাইন। এই অধ্যায়টি একটি পরিমাপযোগ্য নিউজ ফিড সিস্টেমের নকশা অন্বেষণ করে।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
+## ধাপ 1: সমস্যা বোঝা
 
-### Overview
-The design includes two main flows:
-1. **Feed Publishing:** A user publishes a post, which is written to the database and propagated to their friends’ feeds.
-2. **News Feed Building:** A user retrieves their news feed by aggregating posts from friends in reverse chronological order.
-
----
-
-### News Feed APIs
-1. **Feed Publishing API:**
-   - **Endpoint:** `POST /v1/me/feed`
-   - **Params:** `content` (post text) and `auth_token` (authentication).
-
-2. **News Feed Retrieval API:**
-   - **Endpoint:** `GET /v1/me/feed`
-   - **Params:** `auth_token` (authentication).
+### প্রয়োজনীয়তা
+1. **প্ল্যাটফর্ম:** সিস্টেমটি ওয়েব এবং মোবাইল উভয় অ্যাপকে সমর্থন করে।
+2. **বৈশিষ্ট্য:**
+   - ব্যবহারকারীরা পোস্ট প্রকাশ করতে পারেন.
+   - ব্যবহারকারীরা তাদের নিউজ ফিডে বন্ধুদের পোস্ট দেখতে পারেন।
+3. **বাছাই:** সরলতার জন্য ফিডগুলিকে **বিপরীত কালানুক্রমিক ক্রমে** সাজানো হয়েছে।
+4. **স্কেল:**
+   - ব্যবহারকারীদের 5,000 পর্যন্ত বন্ধু থাকতে পারে।
+   - 10 মিলিয়ন দৈনিক সক্রিয় ব্যবহারকারী (DAU)।
+   - ফিডে পাঠ্য, ছবি এবং ভিডিও অন্তর্ভুক্ত থাকতে পারে।
 
 ---
 
-### Feed Publishing
+## ধাপ 2: উচ্চ-স্তরের নকশা
+
+### ওভারভিউ
+নকশা দুটি প্রধান প্রবাহ অন্তর্ভুক্ত:
+1. **ফিড পাবলিশিং:** একজন ব্যবহারকারী একটি পোস্ট প্রকাশ করেন, যা ডাটাবেসে লেখা হয় এবং তাদের বন্ধুদের ফিডে প্রচার করা হয়।
+2. **নিউজ ফিড বিল্ডিং:** একজন ব্যবহারকারী বিপরীত কালানুক্রমিক ক্রমে বন্ধুদের কাছ থেকে পোস্টগুলি একত্রিত করে তাদের নিউজ ফিড পুনরুদ্ধার করে।
+
+---
+
+### নিউজ ফিড API
+1. **ফিড পাবলিশিং API:**
+   - **এন্ডপয়েন্ট:** `POST/v1/me/feed`
+   - **পরামর্শ:** `কন্টেন্ট` (পোস্ট টেক্সট) এবং `auth_token` (প্রমাণিকরণ)।
+
+2. **সংবাদ ফিড পুনরুদ্ধার API:**
+   - **এন্ডপয়েন্ট:** `GET /v1/me/feed`
+   - **পরামর্শ:** `auth_token` (প্রমাণিকরণ)।
+
+---
+
+### ফিড পাবলিশিং
 
    <div style="margin-left:3rem">
       <img src="./images/feed-publishing.png" alt="Feed Publishing" width="400">
    </div>
 
-1. **User Interaction:** The user publishes a post via the feed publishing API.
-2. **Load Balancer:** Distributes traffic to web servers.
-3. **Web Servers:** Authenticate requests and redirect to services.
-4. **Post Service:** Stores the post in the database and cache.
-5. **Fanout Service:** Propagates the post to friends’ news feeds in the cache.
-6. **Notification Service:** Sends notifications to friends.
+1. **ব্যবহারকারীর মিথস্ক্রিয়া:** ব্যবহারকারী ফিড প্রকাশনা API এর মাধ্যমে একটি পোস্ট প্রকাশ করে।
+2. **লোড ব্যালেন্সার:** ওয়েব সার্ভারে ট্রাফিক বিতরণ করে।
+3. **ওয়েব সার্ভার:** অনুরোধগুলি প্রমাণীকরণ করুন এবং পরিষেবাগুলিতে পুনঃনির্দেশ করুন৷
+4. **পোস্ট সার্ভিস:** পোস্টটিকে ডাটাবেস এবং ক্যাশে সংরক্ষণ করে।
+5. **ফ্যানআউট পরিষেবা:** ক্যাশে বন্ধুদের নিউজ ফিডে পোস্টটি প্রচার করে।
+6. **বিজ্ঞপ্তি পরিষেবা:** বন্ধুদের বিজ্ঞপ্তি পাঠায়।
 
 ---
 
-### News Feed Building
+### নিউজ ফিড বিল্ডিং
 
    <div style="margin-left:3rem">
       <img src="./images/news-feed-building.png" alt="News Feed Building" width="400">
    </div>
 
-1. **User Interaction:** The user requests their news feed via the retrieval API.
-2. **Load Balancer:** Distributes traffic to web servers.
-3. **Web Servers:** Forward requests to the news feed service.
-4. **News Feed Service:** Fetches post IDs from the news feed cache and retrieves complete post details from the database or cache.
+1. **ব্যবহারকারীর মিথস্ক্রিয়া:** ব্যবহারকারী পুনরুদ্ধার API এর মাধ্যমে তাদের নিউজ ফিডের জন্য অনুরোধ করে।
+2. **লোড ব্যালেন্সার:** ওয়েব সার্ভারে ট্রাফিক বিতরণ করে।
+3. **ওয়েব সার্ভার:** নিউজ ফিড সার্ভিসে অনুরোধ ফরোয়ার্ড করুন।
+4. **নিউজ ফিড পরিষেবা:** নিউজ ফিড ক্যাশে থেকে পোস্ট আইডি নিয়ে আসে এবং ডাটাবেস বা ক্যাশে থেকে সম্পূর্ণ পোস্টের বিবরণ পুনরুদ্ধার করে।
 
    
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Feed Publishing Deep Dive
-1. **Web Servers:**
-   - Authenticate users using `auth_token`.
-   - Enforce rate limits to prevent spam.
+### ফিড পাবলিশিং ডিপ ডাইভ
+1. **ওয়েব সার্ভার:**
+   - `auth_token` ব্যবহার করে ব্যবহারকারীদের প্রমাণীকরণ করুন।
+   - স্প্যাম প্রতিরোধ করার জন্য হার সীমা প্রয়োগ করুন।
 
-2. **Fanout Service:**
-   - **Fanout on Write:** Push posts to friends’ feeds at write time.
-     - **Pros:** Real-time updates, fast feed retrieval.
-     - **Cons:** Resource-intensive for users with many friends.
-   - **Fanout on Read:** Pull posts at read time.
-     - **Pros:** Efficient for inactive users.
-     - **Cons:** Slower feed retrieval.
-   - **Hybrid Approach:** Use a push model for most users and a pull model for high-connection users (e.g., celebrities).
+2. **ফ্যানআউট পরিষেবা:**
+   - **Fanout on Write:** লেখার সময় বন্ধুদের ফিডে পোস্টগুলি পুশ করুন।
+     - **সুবিধা:** রিয়েল-টাইম আপডেট, দ্রুত ফিড পুনরুদ্ধার।
+     - **কনস:** অনেক বন্ধুর সাথে ব্যবহারকারীদের জন্য সম্পদ-নিবিড়।
+   - **পড়তে ফ্যানআউট:** পড়ার সময় পোস্টগুলি টানুন।
+     - **সুবিধা:** নিষ্ক্রিয় ব্যবহারকারীদের জন্য দক্ষ।
+     - **অপরাধ:** ধীরে ধীরে ফিড পুনরুদ্ধার।
+   - **হাইব্রিড অ্যাপ্রোচ:** বেশিরভাগ ব্যবহারকারীর জন্য একটি পুশ মডেল এবং উচ্চ-সংযোগ ব্যবহারকারীদের জন্য একটি পুল মডেল ব্যবহার করুন (যেমন, সেলিব্রিটি)৷
 
         <img src="./images/feed-publishing-deep-dive.png" alt="Feed Publishing Deep Dive" width="500">
 
-    The **fanout service** works as following:
+**ফ্যানআউট পরিষেবা** নিম্নলিখিত হিসাবে কাজ করে:
 
-    1. **Fetch Friend IDs:** Retrieve the friend list from a graph database.
-    2. **Filter Friends from Cache:** Access user settings in the cache to exclude certain friends (e.g., muted friends or selective sharing preferences).
-    3. **Send to Message Queue:** Send the filtered friend list along with the new post ID to a message queue for processing.
-    4. **Fanout Workers:** Workers retrieve data from the message queue and update the news feed cache. The cache stores `<post_id, user_id>` mappings instead of full user and post objects to save memory.
-    5. **Store in News Feed Cache:** Append new post IDs to the friends’ news feed cache. A configurable limit ensures that only recent posts are stored, as most users focus on the latest content, keeping cache memory consumption manageable.
+1. **Fetch Friend IDs:** একটি গ্রাফ ডাটাবেস থেকে বন্ধু তালিকা পুনরুদ্ধার করুন।
+    2. **ক্যাশে থেকে বন্ধুদের ফিল্টার করুন:** নির্দিষ্ট বন্ধুদের বাদ দিতে ক্যাশে ব্যবহারকারী সেটিংস অ্যাক্সেস করুন (যেমন, নিঃশব্দ বন্ধু বা নির্বাচনী শেয়ারিং পছন্দ)।
+    3. **মেসেজ কিউতে পাঠান:** নতুন পোস্ট আইডি সহ ফিল্টার করা ফ্রেন্ড লিস্টকে প্রসেসিংয়ের জন্য মেসেজ কিউতে পাঠান।
+    4. **ফ্যানআউট কর্মী:** কর্মীরা বার্তা সারি থেকে ডেটা পুনরুদ্ধার করে এবং নিউজ ফিড ক্যাশে আপডেট করে। ক্যাশে সম্পূর্ণ ব্যবহারকারীর পরিবর্তে `<post_id, user_id>` ম্যাপিং সঞ্চয় করে এবং মেমরি সংরক্ষণ করতে বস্তু পোস্ট করে।
+    5. **নিউজ ফিড ক্যাশে স্টোর করুন:** বন্ধুদের নিউজ ফিড ক্যাশে নতুন পোস্ট আইডি যোগ করুন। একটি কনফিগারযোগ্য সীমা নিশ্চিত করে যে শুধুমাত্র সাম্প্রতিক পোস্টগুলি সংরক্ষণ করা হয়েছে, কারণ বেশিরভাগ ব্যবহারকারীই ক্যাশে মেমরি খরচ পরিচালনাযোগ্য রেখে সাম্প্রতিক বিষয়বস্তুর উপর ফোকাস করেন।
 
         <img src="./images/fanout-service.png" alt="Fanout Service" width="500">
 
-## News Feed Retrieval Deep Dive
+## নিউজ ফিড পুনরুদ্ধার গভীর ডুব
 
-### Cache Architecture
-The cache is divided into five layers:
-1. **News Feed Cache:** Stores post IDs for quick retrieval.
-2. **Content Cache:** Stores post details (popular posts in hot cache).
-3. **Social Graph Cache:** Stores user relationship data.
-4. **Action Cache:** Tracks user actions (likes, replies, shares).
-5. **Counter Cache:** Maintains counts for likes, replies, followers, etc.
+### ক্যাশে আর্কিটেকচার
+ক্যাশে পাঁচটি স্তরে বিভক্ত:
+1. **নিউজ ফিড ক্যাশে:** দ্রুত পুনরুদ্ধারের জন্য পোস্ট আইডি সংরক্ষণ করে।
+2. **কন্টেন্ট ক্যাশে:** পোস্টের বিবরণ সঞ্চয় করে (হট ক্যাশে জনপ্রিয় পোস্ট)।
+3. **সামাজিক গ্রাফ ক্যাশে:** ব্যবহারকারীর সম্পর্ক ডেটা সঞ্চয় করে।
+4. **অ্যাকশন ক্যাশে:** ব্যবহারকারীর অ্যাকশন ট্র্যাক করে (লাইক, উত্তর, শেয়ার)।
+5. **কাউন্টার ক্যাশে:** লাইক, রিপ্লাই, ফলোয়ার ইত্যাদির সংখ্যা বজায় রাখে।
 
     <img src="./images/cache-architecture.png" alt="Cache Architecture" width="500">
 ---
 
-## Key Optimizations
+## কী অপ্টিমাইজেশান
 
-### Scaling
-1. **Database Scaling:**
-   - Horizontal scaling and sharding.
-   - Use of read replicas for high-traffic queries.
-2. **Stateless Web Tier:** Keep web servers stateless to enable horizontal scaling.
+### স্কেলিং
+1. **ডাটাবেস স্কেলিং:**
+   - অনুভূমিক স্কেলিং এবং শার্ডিং।
+   - উচ্চ-ট্রাফিক প্রশ্নের জন্য পঠিত প্রতিলিপি ব্যবহার করুন।
+2. **স্টেটলেস ওয়েব টিয়ার:** অনুভূমিক স্কেলিং সক্ষম করতে ওয়েব সার্ভারগুলিকে স্টেটলেস রাখুন।
 
-### Caching
-1. Store frequently accessed data in memory.
-2. Use cache layers to reduce latency and database load.
+### ক্যাশিং
+1. মেমরিতে ঘন ঘন অ্যাক্সেস করা ডেটা সংরক্ষণ করুন।
+2. লেটেন্সি এবং ডাটাবেস লোড কমাতে ক্যাশে স্তরগুলি ব্যবহার করুন৷
 
-### Reliability
-1. **Consistent Hashing:** Distribute requests evenly across servers.
-2. **Message Queues:** Decouple system components and buffer traffic.
+### নির্ভরযোগ্যতা
+1. **সংগত হ্যাশিং:** সার্ভার জুড়ে সমানভাবে অনুরোধগুলি বিতরণ করুন।
+2. **বার্তা সারি:** সিস্টেম উপাদান এবং বাফার ট্র্যাফিক ডিকপল করুন।
 
-### Monitoring
-1. Track key metrics like QPS (queries per second) and latency.
-2. Monitor cache hit rates and adjust configurations accordingly.
+### মনিটরিং
+1. QPS (প্রতি সেকেন্ডে প্রশ্ন) এবং লেটেন্সির মতো কী মেট্রিক্স ট্র্যাক করুন।
+2. ক্যাশে হিট রেট নিরীক্ষণ করুন এবং সেই অনুযায়ী কনফিগারেশন সামঞ্জস্য করুন।

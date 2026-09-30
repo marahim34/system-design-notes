@@ -1,11 +1,11 @@
-# অধ্যায় 28: স্টক এক্সচেঞ্জ ট্রেডিং সিস্টেম
+# অধ্যায় 28: স্টক এক্সচেঞ্জ
 
-## ভূমিকা (Introduction)
-We'll design an **electronic stock exchange** in this chapter.
+## ভূমিকা
+আমরা এই অধ্যায়ে একটি **ইলেক্ট্রনিক স্টক এক্সচেঞ্জ** ডিজাইন করব।
 
-Its basic function is to efficiently match buyers and sellers.
+এর মৌলিক ফাংশন হল ক্রেতা এবং বিক্রেতাদের মধ্যে দক্ষতার সাথে মেলানো।
 
-Major stock exchanges are **NYSE**, **NASDAQ**, among others.
+প্রধান স্টক এক্সচেঞ্জ হল **NYSE**, **NASDAQ**, অন্যদের মধ্যে।
 
 <div style="margin-left:3rem">
     <img src="./images/world-stock-exchanges.png" alt="world-stock-exchanges" width="500" />
@@ -13,302 +13,302 @@ Major stock exchanges are **NYSE**, **NASDAQ**, among others.
 
 ---
 
-## ধাপ 1: Understand the Problem and Establish Design scope
- * C: Which securities are we going to trade? Stocks, options or futures?
- * I: Only stocks for simplicity
- * C: Which order types are supported - place, cancel, replace? What about limit, market, conditional orders?
- * I: We need to support placing and canceling an order. We need to only consider limit orders for the order type.
- * C: Does the system need to support after hours trading?
- * I: No, just normal trading hours
- * C: Could you describe the exchange's basic functions?
- * I: Clients can place or cancel limit orders and receive matched trades in real-time. They should be able to see the order book in real time.
- * C: What's the scale of the exchange?
- * I: Tens of thousands of users trading at the same time and ~100 symbols. Billions of orders per day. We need to also support risk checks for compliance.
- * C: What kind of risk checks?
- * I: Let's do simple risk checks - eg limiting a user to trade only 1mil apple stocks in a day
- * C: How about user wallet engagement?
- * I: We need to ensure clients have sufficient funds before placing orders. Funds meant for pending orders need to be withheld until order is finalized.
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ তৈরি করুন
+* সি: আমরা কোন সিকিউরিটিজ ট্রেড করতে যাচ্ছি? স্টক, বিকল্প বা ফিউচার?
+ * আমি: সরলতার জন্য শুধুমাত্র স্টক
+ * সি: কোন ধরনের অর্ডার সমর্থিত - স্থান, বাতিল, প্রতিস্থাপন? সীমা, বাজার, শর্তাধীন আদেশ সম্পর্কে কি?
+ * আমি: আমাদের একটি অর্ডার স্থাপন এবং বাতিল করা সমর্থন করতে হবে। আমাদের শুধুমাত্র অর্ডার টাইপের জন্য সীমা অর্ডার বিবেচনা করতে হবে।
+ * সি: ঘন্টার ট্রেডিং এর পরে সিস্টেমকে কি সমর্থন করতে হবে?
+ * আমি: না, শুধু স্বাভাবিক ট্রেডিং ঘন্টা
+ * C: আপনি কি এক্সচেঞ্জের মৌলিক কার্যাবলী বর্ণনা করতে পারেন?
+ I তারা রিয়েল টাইমে অর্ডার বই দেখতে সক্ষম হওয়া উচিত।
+ * C: বিনিময়ের স্কেল কি?
+ * আমি: হাজার হাজার ব্যবহারকারী একই সময়ে ট্রেড করছে এবং ~100 চিহ্ন। প্রতিদিন কোটি কোটি অর্ডার। সম্মতির জন্য আমাদের ঝুঁকি পরীক্ষাকেও সমর্থন করতে হবে।
+ * সি: কি ধরনের ঝুঁকি পরীক্ষা?
+ * আমি: আসুন সহজ ঝুঁকি পরীক্ষা করি - যেমন একজন ব্যবহারকারীকে দিনে মাত্র 1 মিলিয়ন আপেল স্টক ট্রেড করতে সীমাবদ্ধ করা
+ * সি: ব্যবহারকারীর ওয়ালেট ব্যস্ততা সম্পর্কে কেমন?
+ * আমি: অর্ডার দেওয়ার আগে আমাদের নিশ্চিত করতে হবে ক্লায়েন্টদের পর্যাপ্ত তহবিল আছে। আদেশ চূড়ান্ত না হওয়া পর্যন্ত মুলতুবি আদেশের জন্য অর্থ আটকে রাখা প্রয়োজন।
 
-### **Non-functional requirements**
-The scale mentioned by the interviewer hints that we are to design a small to medium scale exchange.
-We need to also ensure flexibility to support more symbols and users in the future.
+### **অকার্যকর প্রয়োজনীয়তা**
+ইন্টারভিউয়ার দ্বারা উল্লিখিত স্কেল ইঙ্গিত দেয় যে আমরা একটি ছোট থেকে মাঝারি স্কেল এক্সচেঞ্জ ডিজাইন করতে চাই।
+ভবিষ্যতে আরও চিহ্ন এবং ব্যবহারকারীদের সমর্থন করার জন্য আমাদের নমনীয়তা নিশ্চিত করতে হবে।
 
-Other non-functional requirements:
- * Availability - At least 99.99%. Downtime can harm reputation
- * Fault tolerance - fault tolerance and a fast recovery mechanism are needed to limit the impact of a production incident
- * Latency - Round-trip latency should be in the ms level with focus on 99th percentile. Persistently high 99p latency causes bad experience for a handful or users.
- * Security - We should have an account management system. For legal compliance, we need to support KYC to verify user identity. We should also protect against DDoS for public resources.
+অন্যান্য অ-কার্যকর প্রয়োজনীয়তা:
+ * উপলব্ধতা - কমপক্ষে 99.99%। ডাউনটাইম খ্যাতি ক্ষতি করতে পারে
+ * ত্রুটি সহনশীলতা - একটি উত্পাদন ঘটনার প্রভাব সীমিত করার জন্য দোষ সহনশীলতা এবং দ্রুত পুনরুদ্ধারের প্রক্রিয়া প্রয়োজন
+ * লেটেন্সি - রাউন্ড-ট্রিপ লেটেন্সি এমএস লেভেলে থাকা উচিত এবং 99তম পার্সেন্টাইলের উপর ফোকাস করা উচিত। ক্রমাগত উচ্চ 99p লেটেন্সি মুষ্টিমেয় বা ব্যবহারকারীদের জন্য খারাপ অভিজ্ঞতার কারণ হয়।
+ * নিরাপত্তা - আমাদের একটি অ্যাকাউন্ট ম্যানেজমেন্ট সিস্টেম থাকা উচিত। আইনি সম্মতির জন্য, ব্যবহারকারীর পরিচয় যাচাই করতে আমাদের কেওয়াইসি সমর্থন করতে হবে। আমাদের পাবলিক রিসোর্সের জন্য DDoS থেকেও রক্ষা করা উচিত।
 
-### **Back-of-the-envelope estimation**
- * 100 symbols, 1bil orders per day
- * Normal trading hours are from 09:30 to 16:00 (6.5h)
+### **খামের পিছনের অনুমান**
+* 100টি প্রতীক, প্রতিদিন 1 বিল অর্ডার
+ * সাধারণ ট্রেডিং ঘন্টা 09:30 থেকে 16:00 (6.5 ঘন্টা)
  * QPS = 1bil / 6.5 / 3600 = 43000
- * Peak QPS = 5*QPS = 215000
- * Trading volume is significantly higher when the market opens
+ * পিক QPS = 5*QPS = 215000
+ * মার্কেট খোলার সময় ট্রেডিং ভলিউম উল্লেখযোগ্যভাবে বেশি হয়
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
 
-### **Business Knowledge 101**
-Let's discuss some basic concepts, related to an exchange.
+### **ব্যবসায়িক জ্ঞান 101**
+আসুন কিছু মৌলিক ধারণা নিয়ে আলোচনা করি, একটি বিনিময় সম্পর্কিত।
 
-A broker mediates interactions between an exchange and end users - Robinhood, Fidelity, etc.
+একটি ব্রোকার একটি বিনিময় এবং শেষ ব্যবহারকারীদের মধ্যে মিথস্ক্রিয়া মধ্যস্থতা করে - রবিনহুড, ফিডেলিটি, ইত্যাদি।
 
-Institutional clients trade in large quantities using specialized trading software. They need specialized treatment.
-Eg order splitting when trading in large volumes to avoid impacting the market.
+প্রাতিষ্ঠানিক ক্লায়েন্টরা বিশেষ ট্রেডিং সফ্টওয়্যার ব্যবহার করে প্রচুর পরিমাণে বাণিজ্য করে। তাদের বিশেষ চিকিৎসা প্রয়োজন।
+যেমন বাজারের প্রভাব এড়াতে বড় পরিমাণে ট্রেড করার সময় অর্ডার বিভক্ত করা।
 
-Types of orders:
- * Limit - buy or sell at a fixed price. It might not find a match immediately or it might be partially matched.
- * Market - doesn't specify a price. Executed at the current market price immediately.
+অর্ডারের ধরন:
+ * সীমা - একটি নির্দিষ্ট মূল্যে ক্রয় বা বিক্রয়। এটি অবিলম্বে একটি মিল খুঁজে নাও হতে পারে বা এটি আংশিকভাবে মিলে যেতে পারে৷
+ * বাজার - একটি মূল্য নির্দিষ্ট করে না। বর্তমান বাজার মূল্যে অবিলম্বে কার্যকর করা হয়েছে।
 
-Prices:
- * Bid - highest price a buyer is willing to buy a stock
- * Ask - lowest price a seller is willing to sell a stock
+দাম:
+ * বিড - সর্বোচ্চ দাম একজন ক্রেতা একটি স্টক কিনতে ইচ্ছুক
+ * জিজ্ঞাসা করুন - সর্বনিম্ন মূল্য একজন বিক্রেতা একটি স্টক বিক্রি করতে ইচ্ছুক
 
-The US market has three tiers of price quotes - L1, L2, L3.
+মার্কিন বাজারে মূল্য উদ্ধৃতির তিনটি স্তর রয়েছে - L1, L2, L3।
 
-L1 market data contains best bid/ask prices and quantities:
+L1 বাজারের ডেটাতে সেরা বিড/আস্ক মূল্য এবং পরিমাণ রয়েছে:
 
 <div style="margin-left:3rem">
     <img src="./images/l1-price.png" alt="l1-price" width="500" />
 </div>
 
-L2 includes more price levels:
+L2 আরও দামের স্তর অন্তর্ভুক্ত করে:
 
 <div style="margin-left:3rem">
     <img src="./images/l2-price.png" alt="l2-price" width="500" />
 </div>
 
-L3 shows levels and queued quantity at each level:
+L3 প্রতিটি স্তরে স্তর এবং সারিবদ্ধ পরিমাণ দেখায়:
 
 <div style="margin-left:3rem">
     <img src="./images/l3-price.png" alt="l3-price" width="500" />
 </div>
 
-A candlestick shows the market open and close price, as well as the highest and lowest prices in the given interval:
+একটি ক্যান্ডেলস্টিক বাজারের খোলা এবং বন্ধের দাম, সেইসাথে প্রদত্ত ব্যবধানে সর্বোচ্চ এবং সর্বনিম্ন দাম দেখায়:
 
 <div style="margin-left:3rem">
     <img src="./images/candlestick.png" alt="candlestick" width="500" />
 </div>
 
-FIX is a protocol for exchanging securities transaction information, used by most vendors. Example securities transaction:
+FIX হল সিকিউরিটিজ লেনদেনের তথ্য বিনিময়ের জন্য একটি প্রোটোকল, যা বেশিরভাগ বিক্রেতাদের দ্বারা ব্যবহৃত হয়। সিকিউরিটিজ লেনদেনের উদাহরণ:
 ```
 8=FIX.4.2 | 9=176 | 35=8 | 49=PHLX | 56=PERS | 52=20071123-05:30:00.000 | 11=ATOMNOCCC9990900 | 20=3 | 150=E | 39=E | 55=MSFT | 167=CS | 54=1 | 38=15 | 40=2 | 44=15 | 58=PHLX EQUITY TESTING | 59=0 | 47=C | 32=0 | 31=0 | 151=15 | 14=0 | 6=0 | 10=128 |
 ```
 
-### **High-level design**
+### **উচ্চ-স্তরের নকশা**
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-design.png" alt="high-level-design" width="500" />
 </div>
 
-Trade flow:
- * Client places order via trading interface
- * Broker sends the order to the exchange
- * Order enters exchange through client gateway, which validates, rate limits, authenticates, etc. Order is forwarded to order manager.
- * Order manager performs risk checks based on rules set by the risk manager
- * After passing risk checks, order manager verifies there are sufficient funds in the wallet for the order
- * Order is sent to matching engine. When match is found, matching engine emits two executions (called fills) for buy and sell. Both orders are sequenced so that they're deterministic.
- * Executions are returned to the client.
+বাণিজ্য প্রবাহ:
+ * ক্লায়েন্ট ট্রেডিং ইন্টারফেসের মাধ্যমে অর্ডার দেয়
+ * ব্রোকার এক্সচেঞ্জে অর্ডার পাঠায়
+ * অর্ডার ক্লায়েন্ট গেটওয়ের মাধ্যমে বিনিময়ে প্রবেশ করে, যা যাচাই করে, হারের সীমা, প্রমাণীকরণ ইত্যাদি। অর্ডার ম্যানেজারকে ফরোয়ার্ড করা হয়।
+ * অর্ডার ম্যানেজার রিস্ক ম্যানেজার দ্বারা নির্ধারিত নিয়মের উপর ভিত্তি করে ঝুঁকি পরীক্ষা করে
+ * ঝুঁকি পরীক্ষা পাস করার পর, অর্ডার ম্যানেজার যাচাই করে যে অর্ডারের জন্য ওয়ালেটে পর্যাপ্ত তহবিল আছে
+ * অর্ডার ম্যাচিং ইঞ্জিন পাঠানো হয়. যখন মিল পাওয়া যায়, ম্যাচিং ইঞ্জিন ক্রয়-বিক্রয়ের জন্য দুটি এক্সিকিউশন (যাকে ফিল বলা হয়) নির্গত করে। উভয় আদেশ ক্রমানুসারে করা হয় যাতে তারা নির্ধারক হয়।
+ * মৃত্যুদন্ড ক্লায়েন্টের কাছে ফেরত দেওয়া হয়।
 
-Market data flow (M1-M3):
- * matching engine generates a stream of executions, sent to the market data publisher
- * Market data publisher constructs the candlestick charts and sends them to the data service
- * Market data is stored in specialized storage for real-time analytics. Brokers connect to the data service for timely market data.
+বাজার তথ্য প্রবাহ (M1-M3):
+ * ম্যাচিং ইঞ্জিন এক্সিকিউশনের একটি স্ট্রীম তৈরি করে, যা বাজারের ডেটা প্রকাশককে পাঠানো হয়
+ * মার্কেট ডেটা প্রকাশক ক্যান্ডেলস্টিক চার্ট তৈরি করে এবং ডেটা পরিষেবাতে পাঠায়
+ * বাজারের ডেটা রিয়েল-টাইম বিশ্লেষণের জন্য বিশেষ স্টোরেজে সংরক্ষণ করা হয়। ব্রোকাররা সময়মত বাজারের ডেটার জন্য ডেটা পরিষেবার সাথে সংযোগ স্থাপন করে।
 
-Reporter flow (R1-R2):
- * reporter collects all necessary reporting fields from orders and executions and writes them to DB
- * reporting fields - client_id, price, quantity, order_type, filled_quantity, remaining_quantity
+রিপোর্টার ফ্লো (R1-R2):
+ * রিপোর্টার আদেশ এবং মৃত্যুদন্ড থেকে সমস্ত প্রয়োজনীয় রিপোর্টিং ক্ষেত্র সংগ্রহ করে এবং সেগুলি ডিবিতে লেখে
+ * রিপোর্টিং ক্ষেত্র - ক্লায়েন্ট_আইডি, মূল্য, পরিমাণ, অর্ডার_টাইপ, পূরণ_পরিমাণ, অবশিষ্ট_ পরিমাণ
 
-Trading flow is on the critical path, whereas the rest of the flows are not, hence, latency requirements differ between them.
+ট্রেডিং প্রবাহ সমালোচনামূলক পথে রয়েছে, যেখানে বাকি প্রবাহগুলি নয়, তাই, তাদের মধ্যে লেটেন্সি প্রয়োজনীয়তাগুলি আলাদা।
 
-#### Trading flow
-The trading flow is on the critical path, hence, it should be highly optimized for low latency.
+#### ট্রেডিং প্রবাহ
+ট্রেডিং ফ্লো ক্রিটিক্যাল পাথে আছে, তাই, কম লেটেন্সির জন্য এটিকে অত্যন্ত অপ্টিমাইজ করা উচিত।
 
-The matching engine is at its heart, also called the cross engine. Primary responsibilities:
- * Maintain the order book for each symbol - a list of buy/sell orders for a symbol.
- * Match buy and sell orders - a match results in two executions (fills), with one each for the buy and sell sides. This function must be fast and accurate
- * Distribute the execution stream as market data
- * Matches must be produced in a deterministic order. Foundational for high availability
+ম্যাচিং ইঞ্জিনটি এর হৃদয়ে রয়েছে, একে ক্রস ইঞ্জিনও বলা হয়। প্রাথমিক দায়িত্ব:
+ * প্রতিটি প্রতীকের জন্য অর্ডার বই বজায় রাখুন - একটি প্রতীকের জন্য ক্রয়/বিক্রয় আদেশের একটি তালিকা।
+ * ক্রয়-বিক্রয়ের অর্ডার মিলান - একটি ম্যাচের ফলে দুটি সম্পাদন (পূর্ণ) হয়, প্রতিটি ক্রয়-বিক্রয় পক্ষের জন্য একটি করে। এই ফাংশন দ্রুত এবং সঠিক হতে হবে
+ * এক্সিকিউশন স্ট্রীমকে মার্কেট ডেটা হিসাবে বিতরণ করুন
+ * ম্যাচগুলি অবশ্যই একটি নির্ধারক ক্রমে উত্পাদিত হতে হবে। উচ্চ প্রাপ্যতা জন্য ভিত্তি
 
-Next is the sequencer - it is the key component making the matching engine deterministic by stamping each inbound order and outbound fill with a sequence ID.
+এরপরে রয়েছে সিকোয়েন্সার - এটি হল মূল উপাদান যা প্রতিটি ইনবাউন্ড অর্ডার এবং আউটবাউন্ড ফিলকে একটি সিকোয়েন্স আইডি দিয়ে স্ট্যাম্পিং করে ম্যাচিং ইঞ্জিনকে নির্ধারক করে তোলে।
 
 <div style="margin-left:3rem">
     <img src="./images/sequencer.png" alt="sequencer" width="500" />
 </div>
 
-We stamp inbound orders and outbound fills for several reasons:
- * timeliness and fairness
- * fast recovery/replay
- * exactly-once guarantee
+আমরা বিভিন্ন কারণে ইনবাউন্ড অর্ডার এবং আউটবাউন্ড ফিল স্ট্যাম্প করি:
+ * সময়োপযোগীতা এবং ন্যায্যতা
+ * দ্রুত পুনরুদ্ধার/রিপ্লে
+ * ঠিক একবার গ্যারান্টি
 
-Conceptually, we could use Kafka as our sequencer since it's effectively an inbound and outbound message queue. However, we're going to implement it ourselves in order to achieve lower latency.
+ধারণাগতভাবে, আমরা কাফকাকে আমাদের সিকোয়েন্সার হিসাবে ব্যবহার করতে পারি কারণ এটি কার্যকরভাবে একটি অন্তর্মুখী এবং বহির্মুখী বার্তা সারি। যাইহোক, কম লেটেন্সি অর্জনের জন্য আমরা নিজেরাই এটি বাস্তবায়ন করতে যাচ্ছি।
 
-The order manager manages the orders state. It also interacts with the matching engine - sending orders and receiving fills.
+অর্ডার ম্যানেজার অর্ডারের অবস্থা পরিচালনা করে। এটি ম্যাচিং ইঞ্জিনের সাথেও যোগাযোগ করে - অর্ডার পাঠানো এবং পূরণ করা।
 
-The order manager's responsibilities:
- * Sends orders for risk checks - eg verifying user's trade volume is less than 1mil
- * Checks the order against the user wallet and verifies there are sufficient funds to execute it
- * It sends the order to the sequencer and on to the matching engine. To reduce bandwidth, only necessary order information is passed to the matching engine
- * Executions (fills) are received back from the sequencer, where they are then send to the brokers via the client gateway
+অর্ডার ম্যানেজারের দায়িত্ব:
+ * ঝুঁকি যাচাইয়ের জন্য অর্ডার পাঠায় - যেমন ব্যবহারকারীর ট্রেড ভলিউম 1 মিলিয়নের কম যাচাই করা
+ * ব্যবহারকারীর ওয়ালেটের বিরুদ্ধে অর্ডারটি পরীক্ষা করে এবং এটি কার্যকর করার জন্য পর্যাপ্ত তহবিল রয়েছে তা যাচাই করে
+ * এটি সিকোয়েন্সার এবং ম্যাচিং ইঞ্জিনে অর্ডার পাঠায়। ব্যান্ডউইথ কমাতে, শুধুমাত্র প্রয়োজনীয় অর্ডার তথ্য মিলে যাওয়া ইঞ্জিনে পাঠানো হয়
+ * এক্সিকিউশন (ফিল) সিকোয়েন্সার থেকে ফেরত দেওয়া হয়, যেখানে সেগুলি ক্লায়েন্ট গেটওয়ের মাধ্যমে দালালদের কাছে পাঠানো হয়
 
-The main challenge with implementing the order manager is the state transition management. Event sourcing is one viable solution (discussed in deep dive).
+আদেশ ব্যবস্থাপক বাস্তবায়নের সাথে প্রধান চ্যালেঞ্জ হল রাষ্ট্রীয় রূপান্তর ব্যবস্থাপনা। ইভেন্ট সোর্সিং হল একটি কার্যকর সমাধান (গভীর ডুবে আলোচনা করা হয়েছে)।
 
-Finally, the client gateway receives orders from users and sends them to the order manager. Its responsibilities:
+অবশেষে, ক্লায়েন্ট গেটওয়ে ব্যবহারকারীদের কাছ থেকে অর্ডার গ্রহণ করে এবং অর্ডার ম্যানেজারের কাছে পাঠায়। এর দায়িত্ব:
 
 <div style="margin-left:3rem">
     <img src="./images/client-gateway.png" alt="client-gateway" width="500" />
 </div>
 
-Since the client gateway is on the critical path, it should stay lightweight.
+যেহেতু ক্লায়েন্ট গেটওয়ে জটিল পথে রয়েছে, তাই এটি হালকা হওয়া উচিত।
 
-There can be multiple client gateways for different clients. Eg a colo engine is a trading engine server, rented by the broker in the exchange's data center:
+বিভিন্ন ক্লায়েন্টের জন্য একাধিক ক্লায়েন্ট গেটওয়ে থাকতে পারে। যেমন একটি কোলো ইঞ্জিন হল একটি ট্রেডিং ইঞ্জিন সার্ভার, যা এক্সচেঞ্জের ডেটা সেন্টারে ব্রোকার দ্বারা ভাড়া করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/client-gateways.png" alt="client-gateways" width="500" />
 </div>
 
-#### Market data flow
-The market data publisher receives executions from the matching engine and builds the order book/candlestick charts from the execution stream.
+#### বাজার তথ্য প্রবাহ
+মার্কেট ডেটা প্রকাশক ম্যাচিং ইঞ্জিন থেকে এক্সিকিউশন গ্রহণ করে এবং এক্সিকিউশন স্ট্রীম থেকে অর্ডার বুক/ক্যান্ডেলস্টিক চার্ট তৈরি করে।
 
-That data is sent to the data service, which is responsible for showing the aggregated data to subscribers:
+সেই ডেটা ডেটা পরিষেবাতে পাঠানো হয়, যা গ্রাহকদের একত্রিত ডেটা দেখানোর জন্য দায়ী:
 
 <div style="margin-left:3rem">
     <img src="./images/market-data.png" alt="market-data" width="500" />
 </div>
 
-#### Reporting flow
-The reporter is not on the critical path, but it is an important component nevertheless.
+#### রিপোর্টিং প্রবাহ
+প্রতিবেদক সমালোচনামূলক পথে নয়, তবে তা সত্ত্বেও এটি একটি গুরুত্বপূর্ণ উপাদান।
 
 <div style="margin-left:3rem">
     <img src="./images/reporting-flow.png" alt="reporting-flow" width="500" />
 </div>
 
-It is responsible for trading history, tax reporting, compliance reporting, settlements, etc.
-Latency is not a critical requirement for the reporting flow. Accuracy and compliance are more important.
+এটি ট্রেডিং ইতিহাস, ট্যাক্স রিপোর্টিং, কমপ্লায়েন্স রিপোর্টিং, সেটেলমেন্ট ইত্যাদির জন্য দায়ী।
+রিপোর্টিং প্রবাহের জন্য লেটেন্সি একটি গুরুত্বপূর্ণ প্রয়োজন নয়। নির্ভুলতা এবং সম্মতি আরো গুরুত্বপূর্ণ.
 
-### **API Design**
-Clients interact with the stock exchange via the brokers to place orders, view executions, market data, download historical data for analysis, etc.
+### **এপিআই ডিজাইন**
+ক্লায়েন্ট দালালদের মাধ্যমে স্টক এক্সচেঞ্জের সাথে যোগাযোগ করে অর্ডার দেওয়ার জন্য, মৃত্যুদন্ড দেখতে, বাজারের ডেটা, বিশ্লেষণের জন্য ঐতিহাসিক ডেটা ডাউনলোড করতে ইত্যাদি।
 
-We use a RESTful API for communication between the client gateway and the brokers.
+ক্লায়েন্ট গেটওয়ে এবং ব্রোকারদের মধ্যে যোগাযোগের জন্য আমরা একটি RESTful API ব্যবহার করি।
 
-For institutional clients, a proprietary protocol is used to satisfy their low-latency requirements.
+প্রাতিষ্ঠানিক ক্লায়েন্টদের জন্য, একটি মালিকানা প্রোটোকল ব্যবহার করা হয় তাদের স্বল্প-বিলম্বতার প্রয়োজনীয়তাগুলি পূরণ করতে।
 
-Create order:
+অর্ডার তৈরি করুন:
 ```
 POST /v1/order
 ```
 
-Parameters:
- * symbol - the stock symbol. String
- * side - buy or sell. String
- * price - the price of the limit order. Long
- * orderType - limit or market (we only support limit orders in our design). String
- * quantity - the quantity of the order. Long
+পরামিতি:
+ * প্রতীক - স্টক প্রতীক। স্ট্রিং
+ * পার্শ্ব - ক্রয় বা বিক্রয়। স্ট্রিং
+ * মূল্য - সীমা অর্ডারের মূল্য। দীর্ঘ
+ * অর্ডার টাইপ - সীমা বা বাজার (আমরা শুধুমাত্র আমাদের ডিজাইনে সীমা অর্ডার সমর্থন করি)। স্ট্রিং
+ * পরিমাণ - অর্ডারের পরিমাণ। দীর্ঘ
 
-Response:
- * id - the ID of the order. Long
- * creationTime - the system creation time of the order. Long
- * filledQuantity - the quantity that has been successfully executed. Long
- * remainingQuantity - the quantity still to be executed. Long
- * status - new/canceled/filled. String
- * rest of the attributes are the same as the input parameters
+প্রতিক্রিয়া:
+ * আইডি - অর্ডারের আইডি। দীর্ঘ
+ * সৃষ্টির সময় - অর্ডারের সিস্টেম তৈরির সময়। দীর্ঘ
+ * পূরণকৃত পরিমাণ - যে পরিমাণ সফলভাবে কার্যকর করা হয়েছে। দীর্ঘ
+ * অবশিষ্ট পরিমাণ - পরিমাণ এখনও কার্যকর করা হবে। দীর্ঘ
+ * অবস্থা - নতুন/বাতিল/ভরা। স্ট্রিং
+ * বাকি বৈশিষ্ট্যগুলি ইনপুট পরামিতিগুলির মতোই
 
-Get execution:
+মৃত্যুদন্ড পান:
 ```
 GET /execution?symbol={:symbol}&orderId={:orderId}&startTime={:startTime}&endTime={:endTime}
 ```
 
-Parameters:
- * symbol - the stock symbol. String
- * orderId - the ID of the order. Optional. String
- * startTime - query start time in epoch \[11\]. Long
- * endTime - query end time in epoch. Long
+পরামিতি:
+ * প্রতীক - স্টক প্রতীক। স্ট্রিং
+ * অর্ডার আইডি - অর্ডারের আইডি। ঐচ্ছিক। স্ট্রিং
+ * স্টার্ট টাইম - ক্যোয়ারী প্রারম্ভিক যুগে সময় \[11\]। দীর্ঘ
+ * শেষ সময় - যুগে শেষ সময় জিজ্ঞাসা করুন। দীর্ঘ
 
-Response:
- * executions - array with each execution in scope (see attributes below). Array
- * id - the ID of the execution. Long
- * orderId - the ID of the order. Long
- * symbol - the stock symbol. String
- * side - buy or sell. String
- * price - the price of the execution. Long
- * orderType - limit or market. String
- * quantity - the filled quantity. Long
+প্রতিক্রিয়া:
+ * মৃত্যুদন্ড - সুযোগে প্রতিটি এক্সিকিউশন সহ অ্যারে (নীচের বৈশিষ্ট্যগুলি দেখুন)। অ্যারে
+ * আইডি - মৃত্যুদন্ডের আইডি। দীর্ঘ
+ * অর্ডার আইডি - অর্ডারের আইডি। দীর্ঘ
+ * প্রতীক - স্টক প্রতীক। স্ট্রিং
+ * পার্শ্ব - ক্রয় বা বিক্রয়। স্ট্রিং
+ * মূল্য - মৃত্যুদন্ড কার্যকর করার মূল্য। দীর্ঘ
+ * অর্ডার টাইপ - সীমা বা বাজার। স্ট্রিং
+ * পরিমাণ - পূর্ণ পরিমাণ। দীর্ঘ
 
-Get order book:
+অর্ডার বই পান:
 ```
 GET /marketdata/orderBook/L2?symbol={:symbol}&depth={:depth}
 ```
 
-Parameters:
- * symbol - the stock symbol. String
- * depth - order book depth per side. Int
+পরামিতি:
+ * প্রতীক - স্টক প্রতীক। স্ট্রিং
+ * গভীরতা - অর্ডার বুকের গভীরতা প্রতি পাশে। int
 
-Response:
- * bids - array with price and size. Array
- * asks - array with price and size. Array
+প্রতিক্রিয়া:
+ * বিড - মূল্য এবং আকার সহ অ্যারে। অ্যারে
+ * জিজ্ঞাসা করে - মূল্য এবং আকার সহ অ্যারে। অ্যারে
 
-get candlesticks:
+মোমবাতি পান:
 ```
 GET /marketdata/candles?symbol={:symbol}&resolution={:resolution}&startTime={:startTime}&endTime={:endTime}
 ```
 
-Parameters:
- * symbol - the stock symbol. String
- * resolution - window length of the candlestick chart in seconds. Long
- * startTime - start time of the window in epoch. Long
- * endTime - end time of the window in epoch. Long
+পরামিতি:
+ * প্রতীক - স্টক প্রতীক। স্ট্রিং
+ * রেজোলিউশন - সেকেন্ডে ক্যান্ডেলস্টিক চার্টের উইন্ডো দৈর্ঘ্য। দীর্ঘ
+ * শুরুর সময় - যুগে উইন্ডোর শুরুর সময়। দীর্ঘ
+ * শেষ সময় - যুগে উইন্ডোর শেষ সময়। দীর্ঘ
 
-Response:
- * candles - array with each candlestick data (attributes listed below). Array
- * open - open price of each candlestick. Double
- * close - close price of each candlestick. Double
- * high - high price of each candlestick. Double
- * low - low price of each candlestick. Double
+প্রতিক্রিয়া:
+ * মোমবাতি - প্রতিটি ক্যান্ডেলস্টিক ডেটা সহ অ্যারে (নীচে তালিকাভুক্ত বৈশিষ্ট্য)। অ্যারে
+ * খোলা - প্রতিটি ক্যান্ডেলস্টিকের খোলা মূল্য। ডাবল
+ * বন্ধ - প্রতিটি ক্যান্ডেলস্টিকের ক্লোজ দাম। ডাবল
+ * উচ্চ - প্রতিটি ক্যান্ডেলস্টিকের উচ্চ মূল্য। ডাবল
+ * কম - প্রতিটি ক্যান্ডেলস্টিকের কম দাম। ডাবল
 
-### **Data models**
-There are three main types of data in our exchange:
- * Product, order, execution
- * order book
- * candlestick chart
+### **ডেটা মডেল**
+আমাদের বিনিময়ে তিনটি প্রধান ধরণের ডেটা রয়েছে:
+ * পণ্য, আদেশ, নির্বাহ
+ * অর্ডার বই
+ * ক্যান্ডেলস্টিক চার্ট
 
-#### Product, order, execution
-Products describe the attributes of a traded symbol - product type, trading symbol, UI display symbol, etc.
+#### পণ্য, আদেশ, নির্বাহ
+পণ্যগুলি একটি ট্রেড করা প্রতীকের বৈশিষ্ট্যগুলি বর্ণনা করে - পণ্যের ধরন, ট্রেডিং প্রতীক, UI প্রদর্শন প্রতীক, ইত্যাদি।
 
-This data doesn't change frequently, it is primarily used for rendering in a UI.
+এই ডেটা ঘন ঘন পরিবর্তন হয় না, এটি প্রাথমিকভাবে একটি UI-তে রেন্ডারিংয়ের জন্য ব্যবহৃত হয়।
 
-An order represents an instruction for a buy/sell order. Executions are outbound matched result.
+একটি অর্ডার একটি ক্রয়/বিক্রয় আদেশের জন্য একটি নির্দেশ উপস্থাপন করে। মৃত্যুদন্ড বহির্গামী মিলেছে ফলাফল.
 
-Here's the data model:
+এখানে ডেটা মডেল:
 
 <div style="margin-left:3rem">
     <img src="./images/product-order-execution-data-model.png" alt="product-order-execution-data-model" width="500" />
 </div>
 
-We encounter orders and executions in all of our three flows:
- * in the critical path, they are processed in-memory for high performance. They are stored and recovered from the sequencer.
- * The reporter writes orders and executions to the database for reporting use-cases
- * Executions are forwarded to market data to reconstruct the order book and candlestick chart
+আমরা আমাদের তিনটি প্রবাহে আদেশ এবং মৃত্যুদণ্ডের সম্মুখীন হই:
+ * সমালোচনামূলক পথে, তারা উচ্চ কর্মক্ষমতা জন্য মেমরি মধ্যে প্রক্রিয়া করা হয়. এগুলি সিকোয়েন্সার থেকে সংরক্ষণ এবং পুনরুদ্ধার করা হয়।
+ * রিপোর্টার ব্যবহারের ক্ষেত্রে রিপোর্ট করার জন্য ডাটাবেসে আদেশ এবং মৃত্যুদন্ড লেখেন
+ * অর্ডার বই এবং ক্যান্ডেলস্টিক চার্ট পুনর্গঠনের জন্য এক্সিকিউশনগুলি বাজারের ডেটাতে পাঠানো হয়
 
-#### Order book
-The order book is a list of buy/sell orders for an instrument, organized by price level.
+#### অর্ডার বই
+অর্ডার বই হল একটি যন্ত্রের ক্রয়/বিক্রয় আদেশের একটি তালিকা, মূল্য স্তর দ্বারা সংগঠিত।
 
-An efficient data structure for this model, needs to satisfy:
- * constant lookup time - getting volume at price level or between price levels
- * fast add/execute/cancel operations
- * query best bid/ask price
- * iterate through price levels
+এই মডেলের জন্য একটি দক্ষ ডেটা কাঠামো, সন্তুষ্ট করা প্রয়োজন:
+ * ধ্রুবক খোঁজার সময় - মূল্য স্তরে বা মূল্য স্তরের মধ্যে ভলিউম পাওয়া
+ * দ্রুত যোগ/চালনা/বাতিল অপারেশন
+ * সেরা বিড/আস্ক মূল্য জিজ্ঞাসা করুন
+ * মূল্য স্তরের মাধ্যমে পুনরাবৃত্তি
 
-Example order book execution:
+অর্ডার বই সম্পাদনের উদাহরণ:
 
 <div style="margin-left:3rem">
     <img src="./images/order-book-execution.png" alt="order-book-execution" width="500" />
 </div>
 
-After fulfilling this large order, the price increases as the bid/ask spread widens.
+এই বৃহৎ অর্ডারটি পূরণ করার পর, বিড/আস্ক ছড়িয়ে পড়ার সাথে সাথে দাম বৃদ্ধি পায়।
 
-Example order book implementation in pseudo code:
+সিউডো কোডে অর্ডার বুক বাস্তবায়নের উদাহরণ:
 ```
 class PriceLevel{
     private Price limitPrice;
@@ -330,19 +330,19 @@ class OrderBook {
 }
 ```
 
-For a more efficient implementation, we can use a doubly-linked list instead of a standard list:
- * Placing a new order is O(1), because we're adding an order to the tail of the list.
- * Matching an order is O(1), because we are deleting an order from the head
- * Canceling an order means deleting an order from the order book. We utilize `orderMap` for O(1) lookup and O(1) delete (due to the `Order` having a reference to the previous element in the list).
+আরও দক্ষ বাস্তবায়নের জন্য, আমরা একটি আদর্শ তালিকার পরিবর্তে একটি দ্বিগুণ-সংযুক্ত তালিকা ব্যবহার করতে পারি:
+ * একটি নতুন অর্ডার দেওয়া হল O(1), কারণ আমরা তালিকার লেজে একটি অর্ডার যোগ করছি।
+ * একটি অর্ডারের সাথে মিল করা হল O(1), কারণ আমরা মাথা থেকে একটি অর্ডার মুছে ফেলছি
+ * অর্ডার বাতিল করা মানে অর্ডার বুক থেকে অর্ডার মুছে ফেলা। আমরা O(1) লুকআপ এবং O(1) মুছে ফেলার জন্য `orderMap` ব্যবহার করি (তালিকার পূর্ববর্তী উপাদানটির উল্লেখ থাকার কারণে)।
 
 <div style="margin-left:3rem">
     <img src="./images/order-book-impl.png" alt="order-book-impl" width="500" />
 </div>
 
-This data structure is also used in the market data services to reconstruct the order book.
+অর্ডার বই পুনর্গঠনের জন্য এই ডেটা কাঠামোটি বাজারের ডেটা পরিষেবাগুলিতেও ব্যবহৃত হয়।
 
-#### Candlestick chart
-The candlestick data is calcualated within the market data services based on processing orders in a time interval:
+#### ক্যান্ডেলস্টিক চার্ট
+একটি সময়ের ব্যবধানে অর্ডার প্রক্রিয়াকরণের উপর ভিত্তি করে বাজারের ডেটা পরিষেবার মধ্যে ক্যান্ডেলস্টিক ডেটা গণনা করা হয়:
 ```
 class Candlestick {
     private long openPrice;
@@ -359,140 +359,140 @@ class CandlestickChart {
 }
 ```
 
-Some optimizations to avoid consuming too much memory:
- * Use pre-allocated ring buffers to hold sticks to reduce the allocation number
- * Limit the number of sticks in memory and persist the rest to disk
+অত্যধিক মেমরি গ্রাস এড়াতে কিছু অপ্টিমাইজেশন:
+ * বরাদ্দ নম্বর কমাতে লাঠি ধরে রাখতে পূর্ব-বরাদ্দকৃত রিং বাফার ব্যবহার করুন
+ * মেমরিতে স্টিকের সংখ্যা সীমিত করুন এবং বাকিগুলিকে ডিস্কে ধরে রাখুন
 
-We'll use an in-memory columnar database (eg KDB) for real-time analytics. After market close, data is persisted in historical database.
+আমরা রিয়েল-টাইম বিশ্লেষণের জন্য একটি ইন-মেমরি কলামার ডাটাবেস (যেমন KDB) ব্যবহার করব। বাজার বন্ধের পর, ডেটা ঐতিহাসিক ডাটাবেসে টিকে থাকে।
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
-One interesting thing to be aware of about modern exchanges is that unlike most other software, they typically run everything on one gigantic server.
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
+আধুনিক এক্সচেঞ্জ সম্পর্কে সচেতন হওয়া একটি আকর্ষণীয় বিষয় হল যে অন্যান্য সফ্টওয়্যার থেকে ভিন্ন, তারা সাধারণত একটি বিশাল সার্ভারে সবকিছু চালায়।
 
-Let's explore the details.
+এর বিস্তারিত অন্বেষণ করা যাক.
 
-### **Performance**
-For an exchange, it is very important to have good overall latency for all percentiles.
+### **পারফরম্যান্স**
+একটি বিনিময়ের জন্য, সমস্ত শতাংশের জন্য ভাল সামগ্রিক লেটেন্সি থাকা খুবই গুরুত্বপূর্ণ৷
 
-How can we reduce latency?
- * Reduce the number of tasks on the critical path
- * Shorten the time spent on each task by reducing network/disk usage and/or reducing task execution time
+আমরা কিভাবে বিলম্ব কমাতে পারি?
+ * সমালোচনামূলক পথে কাজের সংখ্যা হ্রাস করুন
+ * নেটওয়ার্ক/ডিস্ক ব্যবহার কমিয়ে এবং/অথবা টাস্ক এক্সিকিউশনের সময় কমিয়ে প্রতিটি কাজে ব্যয় করা সময়কে ছোট করুন
 
-To achieve the first goal, we're stripped the critical path from all extraneous responsibility, even logging is removed to achieve optimal latency.
+প্রথম লক্ষ্য অর্জনের জন্য, আমরা সমস্ত বহিরাগত দায়িত্ব থেকে সমালোচনামূলক পথটি ছিনিয়ে নিয়েছি, এমনকি সর্বোত্তম লেটেন্সি অর্জনের জন্য লগিংও সরানো হয়েছে।
 
-If we follow the original design, there are several bottlenecks - network latency between services and disk usage of the sequencer.
+যদি আমরা মূল নকশা অনুসরণ করি, সেখানে বেশ কিছু বাধা রয়েছে - পরিষেবা এবং সিকোয়েন্সারের ডিস্ক ব্যবহারের মধ্যে নেটওয়ার্ক লেটেন্সি।
 
-With such a design we can achieve tens of milliseconds end to end latency. We want to achieve tens of microseconds instead.
+এই ধরনের একটি ডিজাইনের মাধ্যমে আমরা দশ হাজার মিলিসেকেন্ড এন্ড টু এন্ড লেটেন্সি অর্জন করতে পারি। আমরা পরিবর্তে দশ মাইক্রোসেকেন্ড অর্জন করতে চাই।
 
-Hence, we'll put everything on one server and processes are going to communicate via mmap as an event store:
+সুতরাং, আমরা একটি সার্ভারে সবকিছু রাখব এবং প্রক্রিয়াগুলি একটি ইভেন্ট স্টোর হিসাবে mmap এর মাধ্যমে যোগাযোগ করতে চলেছে:
 
 <div style="margin-left:3rem">
     <img src="./images/mmap-bus.png" alt="mmap-bus" width="500" />
 </div>
 
-Another optimization is using an application loop (while loop executing mission-critical tasks), pinned to the same CPU to avoid context switching:
+আরেকটি অপ্টিমাইজেশান হল একটি অ্যাপ্লিকেশন লুপ ব্যবহার করা (যখন লুপ মিশন-সমালোচনামূলক কাজগুলি সম্পাদন করে), প্রসঙ্গ স্যুইচিং এড়াতে একই CPU-তে পিন করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/application-loop.png" alt="application-loop" width="500" />
 </div>
 
-Another side effect of using an application loop is that there is no lock contention - multiple threads fighting for the same resource.
+একটি অ্যাপ্লিকেশন লুপ ব্যবহার করার আরেকটি পার্শ্ব প্রতিক্রিয়া হল কোন লক বিরোধ নেই - একাধিক থ্রেড একই সম্পদের জন্য লড়াই করে।
 
-Let's now explore how mmap works - it is a UNIX syscall, which maps a file on disk to an application's memory.
+mmap কিভাবে কাজ করে তা এখন অন্বেষণ করা যাক - এটি একটি UNIX syscall, যা একটি অ্যাপ্লিকেশনের মেমরিতে ডিস্কের একটি ফাইলকে ম্যাপ করে।
 
-One trick we can use is creating the file in `/dev/shm`, which stands for "shared memory". Hence, we have no disk access at all.
+একটি কৌশল যা আমরা ব্যবহার করতে পারি তা হল `/dev/shm`-এ ফাইল তৈরি করা, যার অর্থ "শেয়ারড মেমরি"। অতএব, আমাদের কোনো ডিস্ক অ্যাক্সেস নেই।
 
-### **Event sourcing**
-Event sourcing is discussed in-depth in the [digital wallet chapter](../chapter28). Reference it for all the details.
+### **ইভেন্ট সোর্সিং**
+ইভেন্ট সোর্সিং নিয়ে [ডিজিটাল ওয়ালেট অধ্যায়](../অধ্যায়28) গভীরভাবে আলোচনা করা হয়েছে। সমস্ত বিবরণের জন্য এটি উল্লেখ করুন.
 
-In a nutshell, instead of storing current states, we store immutable state transitions:
+সংক্ষেপে, বর্তমান অবস্থা সংরক্ষণ করার পরিবর্তে, আমরা অপরিবর্তনীয় অবস্থার রূপান্তর সংরক্ষণ করি:
 
 <div style="margin-left:3rem">
     <img src="./images/event-sourcing.png" alt="event-sourcing" width="500" />
 </div>
 
- * On the left - traditional schema
- * On the right - event source schema
+* বাম দিকে - ঐতিহ্যগত স্কিমা
+ * ডানদিকে - ইভেন্ট সোর্স স্কিমা
 
-Here's how our design looks like thus far:
+আমাদের নকশা এখন পর্যন্ত কেমন দেখাচ্ছে তা এখানে:
 
 <div style="margin-left:3rem">
     <img src="./images/design-so-far.png" alt="design-so-far" width="500" />
 </div>
 
- * external domain interacts with our client gateway using the FIX protocol
- * Order manager receives the new order event, validates it and adds it to its internal state. Order is then sent to matching core
- * If order is matched, the `OrderFilledEvent` is generated and sent over mmap
- * Other components subscribe to the event store and do their part of the processing
+* বহিরাগত ডোমেন FIX প্রোটোকল ব্যবহার করে আমাদের ক্লায়েন্ট গেটওয়ের সাথে যোগাযোগ করে
+ * অর্ডার ম্যানেজার নতুন অর্ডার ইভেন্টটি গ্রহণ করে, এটি যাচাই করে এবং এটিকে তার অভ্যন্তরীণ অবস্থায় যুক্ত করে। অর্ডার তারপর ম্যাচিং কোরে পাঠানো হয়
+ * অর্ডার মিলে গেলে, `OrderFilledEvent` তৈরি হয় এবং mmap-এ পাঠানো হয়
+ * অন্যান্য উপাদানগুলি ইভেন্ট স্টোরে সদস্যতা নেয় এবং তাদের প্রক্রিয়াকরণের অংশটি করে
 
-One additional optimizations - all components hold a copy of the order manager, which is packaged as a library to avoid extra calls for managing orders
+একটি অতিরিক্ত অপ্টিমাইজেশন - সমস্ত উপাদান অর্ডার ম্যানেজারের একটি অনুলিপি ধারণ করে, যা অর্ডার পরিচালনার জন্য অতিরিক্ত কল এড়াতে একটি লাইব্রেরি হিসাবে প্যাকেজ করা হয়
 
-The sequencer in this design, changes to not be an event store, but be a single writer, sequencing events before forwarding them to the event store:
+এই ডিজাইনের সিকোয়েন্সার, ইভেন্ট স্টোরে পরিণত হয় না, কিন্তু একজন একক লেখক হতে, ইভেন্ট স্টোরে ফরওয়ার্ড করার আগে ইভেন্টগুলিকে সিকোয়েন্স করে:
 
 <div style="margin-left:3rem">
     <img src="./images/sequencer-deep-dive.png" alt="sequencer-deep-dive" width="500" />
 </div>
 
-### **High availability**
-We aim for 99.99% availability - only 8.64s of downtime per day.
+### **উচ্চ প্রাপ্যতা**
+আমরা 99.99% প্রাপ্যতার লক্ষ্য রাখি - প্রতিদিন মাত্র 8.64 সেকেন্ড ডাউনটাইম।
 
-To achieve that, we have to identify single-point-of-failures in the exchange architecture:
- * setup backup instances of critical services (eg matching engine) which are on stand-by
- * aggressively automate failure detection and failover to the backup instance
+এটি অর্জন করতে, আমাদের এক্সচেঞ্জ আর্কিটেকচারে একক-পয়েন্ট-অফ-ব্যর্থতা চিহ্নিত করতে হবে:
+ * গুরুত্বপূর্ণ পরিষেবাগুলির ব্যাকআপ দৃষ্টান্তগুলি (যেমন ম্যাচিং ইঞ্জিন) যা স্ট্যান্ড-বাইতে রয়েছে
+ * ব্যাকআপ দৃষ্টান্তে ব্যর্থতা সনাক্তকরণ এবং ব্যর্থতাকে আক্রমনাত্মকভাবে স্বয়ংক্রিয় করে
 
-Stateless services such as the client gateway can easily be horizontally scaled by adding more servers.
+ক্লায়েন্ট গেটওয়ের মতো রাষ্ট্রহীন পরিষেবাগুলি আরও সার্ভার যোগ করে সহজেই অনুভূমিকভাবে স্কেল করা যেতে পারে।
 
-For stateful components, we can process inbound events, but not publish outbound events if we're not the leader:
+রাষ্ট্রীয় উপাদানগুলির জন্য, আমরা অন্তর্মুখী ইভেন্টগুলি প্রক্রিয়া করতে পারি, কিন্তু যদি আমরা নেতা না হই তবে বহির্গামী ইভেন্টগুলি প্রকাশ করতে পারি না:
 
 <div style="margin-left:3rem">
     <img src="./images/leader-election.png" alt="leader-election" width="500" />
 </div>
 
-To detect the primary replica being down, we can send heartbeats to detect that its non-functional.
+প্রাথমিক রেপ্লিকা ডাউন হচ্ছে তা শনাক্ত করতে, আমরা হার্টবিট পাঠাতে পারি যে এটি অকার্যকর।
 
-This mechanism only works within the boundary of a single server. 
-If we want to extend it, we can setup an entire server as hot/warm replica and failover in case of failure.
+এই প্রক্রিয়া শুধুমাত্র একটি একক সার্ভারের সীমানার মধ্যে কাজ করে। 
+যদি আমরা এটিকে প্রসারিত করতে চাই, আমরা একটি সম্পূর্ণ সার্ভারকে গরম/উষ্ণ প্রতিরূপ হিসাবে সেটআপ করতে পারি এবং ব্যর্থতার ক্ষেত্রে ব্যর্থতার ক্ষেত্রে ব্যর্থ হতে পারি।
 
-To replicate the event store across the replicas, we can use reliable UDP for faster communication.
+প্রতিলিপি জুড়ে ইভেন্ট স্টোরের প্রতিলিপি করতে, আমরা দ্রুত যোগাযোগের জন্য নির্ভরযোগ্য UDP ব্যবহার করতে পারি।
 
-### **Fault tolerance**
-What if even the warm instances go down? It is a low probability event but we should be ready for it.
+### **দোষ সহনশীলতা**
+এমনকি যদি উষ্ণ দৃষ্টান্ত নিচে যেতে? এটি একটি কম সম্ভাবনার ঘটনা কিন্তু আমাদের এটির জন্য প্রস্তুত থাকা উচিত।
 
-Large tech companies tackle this problem by replicating core data to data centers in multiple cities to mitigate eg natural disasters.
+বড় প্রযুক্তি কোম্পানিগুলি প্রাকৃতিক দুর্যোগ প্রশমিত করার জন্য একাধিক শহরের ডেটা সেন্টারে মূল ডেটা প্রতিলিপি করে এই সমস্যাটি মোকাবেলা করে।
 
-Questions to consider:
- * If the primary instance is down, how and when do we failover to the backup instance?
- * How do we choose the leader among the backup instances?
- * What is the recovery time needed (RTO - recovery time objective)?
- * What functionalities need to be recovered? Can our system operate under degraded conditions?
+বিবেচনা করার জন্য প্রশ্ন:
+ * যদি প্রাইমারি ইন্সট্যান্স ডাউন হয়, আমরা কিভাবে এবং কখন ব্যাকআপ ইনস্ট্যান্সে ফেইলওভার করব?
+ * ব্যাকআপ উদাহরণগুলির মধ্যে আমরা কীভাবে নেতা নির্বাচন করব?
+ * পুনরুদ্ধারের সময় কী প্রয়োজন (আরটিও - পুনরুদ্ধারের সময় উদ্দেশ্য)?
+ * কি কার্যকারিতা পুনরুদ্ধার করা প্রয়োজন? আমাদের সিস্টেম অধঃপতন অবস্থার অধীনে কাজ করতে পারেন?
 
-How to address these:
- * System can be down due to a bug (affecting primary and replicas), we can use chaos engineering to surface edge-cases and disastrous outcomes like these
- * Initially though, we could perform failovers manually until we gather sufficient knowledge about the system's failure modes
- * leader-election can be used (eg Raft) to determine which replica becomes the leader in the event of the primary going down
+কিভাবে এগুলি মোকাবেলা করবেন:
+ * একটি বাগ (প্রাথমিক এবং প্রতিলিপিগুলিকে প্রভাবিত করে) এর কারণে সিস্টেমটি ডাউন হতে পারে, আমরা এজ-কেস এবং এই জাতীয় বিপর্যয়কর ফলাফলগুলিকে পৃষ্ঠের জন্য বিশৃঙ্খলা প্রকৌশল ব্যবহার করতে পারি
+ * যদিও প্রাথমিকভাবে, আমরা সিস্টেমের ব্যর্থতার মোড সম্পর্কে যথেষ্ট জ্ঞান সংগ্রহ না করা পর্যন্ত আমরা ম্যানুয়ালি ব্যর্থতা সম্পাদন করতে পারতাম
+ * নেতা-নির্বাচন ব্যবহার করা যেতে পারে (যেমন ভেলা) প্রাথমিকভাবে পড়ে যাওয়ার ক্ষেত্রে কোন প্রতিরূপ নেতা হয়ে উঠবে তা নির্ধারণ করতে
 
-Example of how replication works across different servers:
+বিভিন্ন সার্ভার জুড়ে প্রতিলিপি কিভাবে কাজ করে তার উদাহরণ:
 
 <div style="margin-left:3rem">
     <img src="./images/replication-across-servers.png" alt="replication-across-servers" width="500" />
 </div>
 
-Example leader-election terms:
+নেতা-নির্বাচন পদের উদাহরণ:
 
 <div style="margin-left:3rem">
     <img src="./images/leader-election-terms.png" alt="leader-election-terms" width="500" />
 </div>
 
-For details on how Raft works, [check this out](https://thesecretlivesofdata.com/raft/)
+Raft কিভাবে কাজ করে তার বিস্তারিত জানার জন্য, [এটি পরীক্ষা করে দেখুন](https://thesecretlivesofdata.com/raft/)
 
-Finally, we need to also consider loss tolerance - how much data can we lose before things get critical?
-This will determine how often we backup our data.
+অবশেষে, আমাদের ক্ষতি সহনশীলতাও বিবেচনা করতে হবে - জিনিসগুলি জটিল হওয়ার আগে আমরা কতটা ডেটা হারাতে পারি?
+এটি নির্ধারণ করবে যে আমরা কত ঘন ঘন আমাদের ডেটা ব্যাকআপ করি।
 
-For a stock exchange, data loss is unacceptable, so we have to backup data often and rely on raft's replication to reduce probability of data loss.
+একটি স্টক এক্সচেঞ্জের জন্য, ডেটা হারানো অগ্রহণযোগ্য, তাই আমাদের প্রায়শই ডেটা ব্যাকআপ করতে হবে এবং ডেটা ক্ষতির সম্ভাবনা কমাতে রাফ্টের প্রতিলিপির উপর নির্ভর করতে হবে।
 
-### **Matching algorithms**
-Slight detour on how matching works via pseudo code:
+### **ম্যাচিং অ্যালগরিদম**
+ছদ্ম কোডের মাধ্যমে মিল কীভাবে কাজ করে তার উপর সামান্য পথচলা:
 ```
 Context handleOrder(OrderBook orderBook, OrderEvent orderEvent) {
     if (orderEvent.getSequenceId() != nextSequence) {
@@ -546,64 +546,64 @@ Context match(OrderBook book, Order order) {
 }
 ```
 
-This matching algorithm uses the FIFO algorithm for determining which orders at a price level to match.
+এই ম্যাচিং অ্যালগরিদমটি FIFO অ্যালগরিদম ব্যবহার করে মূল্য স্তরে কোন অর্ডারগুলি মিলবে তা নির্ধারণ করতে।
 
-### **Determinism**
-Functional determinism is guaranteed via the sequencer technique we used.
+### **নিশ্চয়তাবাদ**
+আমরা যে সিকোয়েন্সার কৌশলটি ব্যবহার করেছি তার মাধ্যমে কার্যকরী নির্ণয়বাদ নিশ্চিত করা হয়েছে।
 
-The actual time when the event happens doesn't matter:
+ঘটনাটি ঘটলে প্রকৃত সময় কোন ব্যাপার না:
 
 <div style="margin-left:3rem">
     <img src="./images/determinism.png" alt="determinism" width="500" />
 </div>
 
-Latency determinism is something we have to track. We can calculate it based on monitoring 99 or 99.99 percentile latency.
+লেটেন্সি ডিটারমিনিজম এমন কিছু যা আমাদের ট্র্যাক করতে হবে। আমরা 99 বা 99.99 শতাংশ লেটেন্সি পর্যবেক্ষণের ভিত্তিতে এটি গণনা করতে পারি।
 
-Things which can cause latency spikes are garbage collector events in eg Java.
+লেটেন্সি স্পাইক হতে পারে এমন জিনিসগুলি হল আবর্জনা সংগ্রহকারী ইভেন্ট যেমন জাভাতে।
 
-### **Market data publisher optimizations**
-The market data publisher receives matched results from the matching engine and rebuilds the order book and candlestick charts based on them.
+### **মার্কেট ডেটা প্রকাশক অপ্টিমাইজেশান**
+বাজারের তথ্য প্রকাশক ম্যাচিং ইঞ্জিন থেকে মিলে যাওয়া ফলাফলগুলি পায় এবং সেগুলির উপর ভিত্তি করে অর্ডার বই এবং ক্যান্ডেলস্টিক চার্টগুলি পুনর্নির্মাণ করে৷
 
-We only keep part of the candlesticks as we don't have infinite memory. Clients can choose how much granular info they want. More granular info might require a higher price:
+আমরা কেবল মোমবাতির কিছু অংশ রাখি কারণ আমাদের অসীম স্মৃতি নেই। ক্লায়েন্টরা কতটা দানাদার তথ্য চান তা বেছে নিতে পারেন। আরও দানাদার তথ্যের জন্য উচ্চ মূল্যের প্রয়োজন হতে পারে:
 
 <div style="margin-left:3rem">
     <img src="./images/market-data-publisher.png" alt="market-data-publisher" width="500" />
 </div>
 
-A ring buffer (aka circular buffer) is a fixed-size queue with the head connected to the tail. The space is preallocated to avoid allocations. The data structure is also lock-free.
+একটি রিং বাফার (ওরফে বৃত্তাকার বাফার) হল একটি নির্দিষ্ট আকারের সারি যার মাথাটি লেজের সাথে সংযুক্ত থাকে। বরাদ্দ এড়াতে স্থানটি আগে থেকেই বরাদ্দ করা হয়েছে। ডাটা স্ট্রাকচারও লক-মুক্ত।
 
-Another technique to optimize the ring buffer is padding, which ensures the sequence number is never in a cache line with anything else.
+রিং বাফার অপ্টিমাইজ করার আরেকটি কৌশল হল প্যাডিং, যা নিশ্চিত করে যে সিকোয়েন্স নম্বর অন্য কিছুর সাথে ক্যাশে লাইনে থাকবে না।
 
-### **Distribution fairness of market data and multicast**
-We need to ensure subscribers receive the data at the same time since if one receives data before another, that gives them crucial market insight, which they can use to manipulate the market.
+### **বাজার ডেটা এবং মাল্টিকাস্টের বিতরণ ন্যায্যতা**
+আমাদের নিশ্চিত করতে হবে যে গ্রাহকরা একই সময়ে ডেটা গ্রহণ করে যেহেতু কেউ যদি অন্যের আগে ডেটা গ্রহণ করে, এটি তাদের বাজারের গুরুত্বপূর্ণ অন্তর্দৃষ্টি দেয়, যা তারা বাজারকে পরিচালনা করতে ব্যবহার করতে পারে।
 
-To achieve this, we can use multicast using reliable UDP when publishing data to subscribers.
+এটি অর্জন করতে, গ্রাহকদের কাছে ডেটা প্রকাশ করার সময় আমরা নির্ভরযোগ্য UDP ব্যবহার করে মাল্টিকাস্ট ব্যবহার করতে পারি।
 
-Data can be transported via the internet in three ways:
- * Unicast - one source, one destination
- * Broadcast - one source to entire subnetwork
- * Multicast - one source to a set of hosts on different subnetworks
+ইন্টারনেটের মাধ্যমে তিনটি উপায়ে ডেটা পরিবহন করা যেতে পারে:
+ * ইউনিকাস্ট - একটি উৎস, একটি গন্তব্য
+ * সম্প্রচার - সমগ্র সাবনেটওয়ার্কের একটি উৎস
+ * মাল্টিকাস্ট - বিভিন্ন সাবনেটওয়ার্কের হোস্টের একটি সেটের একটি উৎস
 
-In theory, by using multicast, all subscribers should receive the data at the same time.
+তাত্ত্বিকভাবে, মাল্টিকাস্ট ব্যবহার করে, সমস্ত গ্রাহকদের একই সময়ে ডেটা গ্রহণ করা উচিত।
 
-UDP, however, is unreliable and the data might not reach everyone. It can be enhanced with retransmissions, however.
+UDP, তবে, অবিশ্বস্ত এবং ডেটা সবার কাছে নাও পৌঁছতে পারে। তবে এটি পুনরায় প্রেরণের মাধ্যমে উন্নত করা যেতে পারে।
 
-### **Colocation**
-Exchanges offer brokers the ability to colocate their servers in the same data center as the exchange.
+### **সংস্থান**
+এক্সচেঞ্জগুলি ব্রোকারদেরকে তাদের সার্ভারগুলিকে এক্সচেঞ্জের মতো একই ডেটা সেন্টারে সংযোজন করার ক্ষমতা দেয়৷
 
-This reduces the latency drastically and can be considered a VIP service.
+এটি লেটেন্সি মারাত্মকভাবে হ্রাস করে এবং এটি একটি ভিআইপি পরিষেবা হিসাবে বিবেচিত হতে পারে৷
 
-### **Network Security**
-DDoS is a challenge for exchanges as there are some internet-facing services. Here's our options:
- * Isolate public services and data from private services, so DDoS attacks don't impact the most important clients
- * Use a caching layer to store data which is infrequently updated
- * Harden URLs against DDoS, eg prefer `https://my.website.com/data/recent` vs. `https://my.website.com/data?from=123&to=456`, because the former is more cacheable
- * Effective allowlist/blocklist mechanism is needed.
- * Rate limiting can be used to mitigate DDoS
+### **নেটওয়ার্ক নিরাপত্তা**
+DDoS এক্সচেঞ্জের জন্য একটি চ্যালেঞ্জ কারণ কিছু ইন্টারনেট-মুখী পরিষেবা রয়েছে৷ এখানে আমাদের বিকল্প আছে:
+ * ব্যক্তিগত পরিষেবাগুলি থেকে পাবলিক পরিষেবা এবং ডেটা আলাদা করুন, যাতে DDoS আক্রমণগুলি সবচেয়ে গুরুত্বপূর্ণ ক্লায়েন্টদের প্রভাবিত না করে
+ * কদাচিৎ আপডেট করা ডেটা সঞ্চয় করতে একটি ক্যাশিং স্তর ব্যবহার করুন
+ * DDoS এর বিপরীতে শক্ত URL, যেমন `https://my.website.com/data/recent` বনাম `https://my.website.com/data?from=123&to=456` পছন্দ করুন, কারণ আগেরটি বেশি ক্যাশেযোগ্য
+ * কার্যকর অনুমোদিত তালিকা/ব্লকলিস্ট প্রক্রিয়া প্রয়োজন।
+ * হার সীমাবদ্ধতা DDoS প্রশমিত করতে ব্যবহার করা যেতে পারে
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
-Other interesting notes:
- * not all exchanges rely on putting everything on one big server, but some still do
- * modern exchanges rely more on cloud infrastructure and also on automatic market makers (AMM) to avoid maintaining an order book
+## ধাপ 4: মোড়ানো
+অন্যান্য আকর্ষণীয় নোট:
+ * সমস্ত এক্সচেঞ্জ একটি বড় সার্ভারে সবকিছু রাখার উপর নির্ভর করে না, তবে কিছু এখনও করে
+ * আধুনিক এক্সচেঞ্জগুলি অর্ডার বই বজায় রাখা এড়াতে ক্লাউড অবকাঠামো এবং স্বয়ংক্রিয় বাজার নির্মাতাদের (এএমএম) উপর বেশি নির্ভর করে

@@ -1,182 +1,182 @@
-# অধ্যায় 13: সার্চ অটো-কমপ্লিট সিস্টেম ডিজাইন
+# অধ্যায় 13: একটি অনুসন্ধান স্বয়ংসম্পূর্ণ সিস্টেম ডিজাইন করুন
 
-## ভূমিকা (Introduction)
-Autocomplete, also known as typeahead or incremental search, provides real-time suggestions to users as they type in search boxes. The system must efficiently deliver top-k relevant and popular suggestions based on historical query data.
+## ভূমিকা
+স্বয়ংসম্পূর্ণ, যা টাইপহেড বা ক্রমবর্ধমান অনুসন্ধান নামেও পরিচিত, ব্যবহারকারীরা অনুসন্ধান বাক্সে টাইপ করার সাথে সাথে তাদের রিয়েল-টাইম পরামর্শ প্রদান করে। ঐতিহাসিক ক্যোয়ারী ডেটার উপর ভিত্তি করে সিস্টেমটিকে অবশ্যই দক্ষতার সাথে শীর্ষ-কে প্রাসঙ্গিক এবং জনপ্রিয় পরামর্শ প্রদান করতে হবে।
 
-### মূল বৈশিষ্ট্যসমূহ (Key Features)
-- Suggest up to **5 autocomplete results**.
-- Based on **query popularity** (frequency).
-- Support only **lowercase English characters**.
-- Fast response time (<100 ms) and scalable.
-
----
-
-## ধাপ ১: সমস্যা বোঝা ও রিকোয়ারমেন্টস
-
-### রিকোয়ারমেন্টস (Requirements)
-1. **Real-Time Suggestions:** Display relevant matches as the user types.
-2. **Top-k Results:** Return up to 5 results sorted by popularity.
-3. **Scalability:** Handle **10 million DAU** with a peak QPS of **48,000**.
-4. **High Availability:** Handle failures without system downtime.
-5. **Data Growth:** Support daily storage growth of **0.4 GB** for new query data.
+### মূল বৈশিষ্ট্য
+- **5টি স্বয়ংসম্পূর্ণ ফলাফল** পর্যন্ত প্রস্তাব করুন।
+- **কোয়েরি জনপ্রিয়তা** (ফ্রিকোয়েন্সি) এর উপর ভিত্তি করে।
+- শুধুমাত্র **ছোট হাতের ইংরেজি অক্ষর** সমর্থন করে।
+- দ্রুত প্রতিক্রিয়া সময় (<100 ms) এবং মাপযোগ্য।
 
 ---
 
-## ধাপ ২: হাই-লেভেল আর্কিটেকচার ডিজাইন
-At the high-level, the system is broken down into two services:
-1. **Data Gathering Service:** 
-    - Collects user queries and aggregates them for frequency analysis in real-time.
-    - Real-time processing is not practical for large data sets; however, it is a good starting point
+## ধাপ 1: সমস্যা বোঝা
 
-
-2. **Query Service:** Provides the top-k suggestions based on the user’s input.
+### প্রয়োজনীয়তা
+1. **রিয়েল-টাইম সাজেশন:** ব্যবহারকারীর ধরন হিসাবে প্রাসঙ্গিক মিলগুলি প্রদর্শন করুন।
+2. **টপ-কে ফলাফল:** জনপ্রিয়তা অনুসারে সাজানো 5টি পর্যন্ত ফলাফল ফেরত দিন।
+3. **স্কেলযোগ্যতা:** **48,000** এর সর্বোচ্চ QPS সহ **10 মিলিয়ন DAU** হ্যান্ডেল করুন।
+4. **উচ্চ প্রাপ্যতা:** সিস্টেম ডাউনটাইম ছাড়াই ব্যর্থতাগুলি পরিচালনা করুন।
+5. **ডেটা বৃদ্ধি:** নতুন কোয়েরি ডেটার জন্য **0.4 GB** দৈনিক স্টোরেজ বৃদ্ধি সমর্থন করে।
 
 ---
 
-### Data Gathering Service
+## ধাপ 2: উচ্চ-স্তরের নকশা
+উচ্চ-স্তরে, সিস্টেমটি দুটি পরিষেবাতে বিভক্ত:
+1. **ডেটা সংগ্রহ পরিষেবা:** 
+    - ব্যবহারকারীর প্রশ্ন সংগ্রহ করে এবং রিয়েল-টাইমে ফ্রিকোয়েন্সি বিশ্লেষণের জন্য সেগুলিকে একত্রিত করে।
+    - রিয়েল-টাইম প্রসেসিং বড় ডেটা সেটের জন্য ব্যবহারিক নয়; যাইহোক, এটি একটি ভাল শুরু বিন্দু
+
+
+2. **কোয়েরি পরিষেবা:** ব্যবহারকারীর ইনপুটের উপর ভিত্তি করে শীর্ষ-কে পরামর্শ প্রদান করে।
+
+---
+
+### ডেটা সংগ্রহ পরিষেবা
 <div style="margin-left:3rem">
     <img src="./images/data-gathering.png" alt="Data Gathering" width="600">
 </div>
 
-- Aggregates query data from analytics logs and updates the frequency table.
-- Processes historical data weekly to build a **trie** (prefix tree).
+- বিশ্লেষণ লগ থেকে কোয়েরি ডেটা একত্রিত করে এবং ফ্রিকোয়েন্সি টেবিল আপডেট করে।
+- একটি **ট্রাই** ​​(উপসর্গ গাছ) তৈরি করতে সাপ্তাহিক ঐতিহাসিক ডেটা প্রক্রিয়া করে।
 
 
 
 
-### Query Service
+### ক্যোয়ারী সার্ভিস
 <div style="margin-left:3rem">
     <img src="./images/frequency-table.png" alt="Frequency Table" width="400">
     <img src="./images/basic-search-suggestions.png" alt="Search Suggestions" width="360">
 </div>
 
-- Uses the frequency table from data gathering service.
-- Processes user input and retrieves top-k suggestions from the frequency table using a Trie.
-- Optimized for fast lookups using caching and efficient data structures.
-- For example when a user types “tw” in the search box, the following top 5 searched queries are displayed.
+- ডেটা সংগ্রহ পরিষেবা থেকে ফ্রিকোয়েন্সি টেবিল ব্যবহার করে।
+- ব্যবহারকারীর ইনপুট প্রক্রিয়া করে এবং একটি Trie ব্যবহার করে ফ্রিকোয়েন্সি টেবিল থেকে শীর্ষ-কে পরামর্শগুলি পুনরুদ্ধার করে।
+- ক্যাশিং এবং দক্ষ ডেটা স্ট্রাকচার ব্যবহার করে দ্রুত লুকআপের জন্য অপ্টিমাইজ করা হয়েছে।
+- উদাহরণ স্বরূপ যখন একজন ব্যবহারকারী সার্চ বক্সে "tw" টাইপ করেন, নিম্নলিখিত শীর্ষ 5টি অনুসন্ধান করা প্রশ্ন প্রদর্শিত হয়৷
 
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### Trie Data Structure
-The **trie** is a tree-like data structure used to store and retrieve query strings efficiently.
+### ট্রাই ডেটা স্ট্রাকচার
+**ট্রাই** ​​হল একটি গাছের মতো ডেটা স্ট্রাকচার যা দক্ষতার সাথে ক্যোয়ারী স্ট্রিংগুলি সঞ্চয় এবং পুনরুদ্ধার করতে ব্যবহৃত হয়।
 
-#### মূল বৈশিষ্ট্যসমূহ (Key Features)
-1. **Compact Storage:** Represents prefixes hierarchically to minimize redundancy.
-2. **Frequency Information:** Stores the popularity of queries at each node.
+#### মূল বৈশিষ্ট্য
+1. **কমপ্যাক্ট স্টোরেজ:** অপ্রয়োজনীয়তা কমাতে অনুক্রমিকভাবে উপসর্গের প্রতিনিধিত্ব করে।
+2. **ফ্রিকোয়েন্সি তথ্য:** প্রতিটি নোডে প্রশ্নের জনপ্রিয়তা সংরক্ষণ করে।
 
-4. **Steps to get top k most searched queries**
+4. **সর্বোচ্চ k সর্বাধিক অনুসন্ধান করা প্রশ্নগুলি পেতে পদক্ষেপগুলি**
    <div style="margin-left:3rem">
       <img src="./images/trie-structure.png" alt="Trie Structure" width="500">
    </div>
 
-    - Find the prefix
-    - Traverse the subtree from prefix node to get all valid children
-    - Sort the children and get top k 
+- উপসর্গ খুঁজুন
+    - সমস্ত বৈধ সন্তান পেতে উপসর্গ নোড থেকে সাবট্রি অতিক্রম করুন
+    - শিশুদের বাছাই করুন এবং শীর্ষ k পান
 
 
-3. **Optimizations:**
-   - Cache top-k queries at each node to speed up retrieval and avoid traversing the whole trie.
+3. **অপ্টিমাইজেশন:**
+   - পুনরুদ্ধারের গতি বাড়ানোর জন্য প্রতিটি নোডে শীর্ষ-কে প্রশ্নগুলি ক্যাশে করুন এবং পুরো ট্রাইটি অতিক্রম করা এড়ান।
 
         <img src="./images/cached-trie.png" alt="Cached Trie" width="600">
 
-   - Limit prefix length to reduce search space as users rarely type a loong search query (say 50).
+- অনুসন্ধানের স্থান কমাতে উপসর্গের দৈর্ঘ্য সীমিত করুন কারণ ব্যবহারকারীরা খুব কমই একটি দীর্ঘ অনুসন্ধান ক্যোয়ারী টাইপ করুন (বলুন 50)।
 
-#### Trie Operations
-1. **Create:** 
-    - Built weekly using aggregated query data.
-    - The source of data is from Analytics Log/DB.
-2. **Update:** Rarely updated in real-time; weekly updates replace old data.
-3. **Delete:** 
+#### ট্রাই অপারেশন
+1. **তৈরি করুন:** 
+    - সমষ্টিগত ক্যোয়ারী ডেটা ব্যবহার করে সাপ্তাহিক তৈরি।
+    - ডেটার উৎস বিশ্লেষণ লগ/ডিবি থেকে।
+2. **আপডেট:** রিয়েল-টাইমে খুব কমই আপডেট করা হয়; সাপ্তাহিক আপডেট পুরানো ডেটা প্রতিস্থাপন করে।
+3. **মুছুন:**
       <div style="margin-left:3rem">
          <img src="./images/delete-kv.png" alt="Delete KV" width="500">
       </div>
 
-    - Filters remove unwanted or harmful suggestions (e.g., hate speech).
-    - Having a filter layer gives us the flexibility of removing results based on different filter rules.
-    - Unwanted suggestions are removed physically from the database asynchronically.
+- ফিল্টারগুলি অবাঞ্ছিত বা ক্ষতিকারক পরামর্শগুলি সরিয়ে দেয় (যেমন, ঘৃণাত্মক বক্তব্য)।
+    - একটি ফিল্টার স্তর থাকা আমাদের বিভিন্ন ফিল্টার নিয়মের উপর ভিত্তি করে ফলাফল অপসারণের নমনীয়তা দেয়৷
+    - অবাঞ্ছিত পরামর্শগুলি অসিঙ্ক্রোনিক্যালি ডাটাবেস থেকে শারীরিকভাবে সরানো হয়।
     
 
 ---
 
-### Query Processing Flow
-1. **Prefix Search:**
-   - Identify the prefix node corresponding to the user’s input.
-   - Traverse the subtree to collect valid suggestions.
-2. **Top-k Sorting:**
-   - Cache top-k suggestions at each node to minimize sorting overhead.
-3. **Response Construction:**
-   - Construct results using cached data for fast response times.
+### ক্যোয়ারী প্রসেসিং ফ্লো
+1. **উপসর্গ অনুসন্ধান:**
+   - ব্যবহারকারীর ইনপুটের সাথে সম্পর্কিত উপসর্গ নোড সনাক্ত করুন।
+   - বৈধ পরামর্শ সংগ্রহ করতে সাবট্রি অতিক্রম করুন।
+2. **টপ-কে বাছাই:**
+   - ওভারহেড বাছাই কমাতে প্রতিটি নোডে শীর্ষ-কে পরামর্শ ক্যাশে করুন।
+3. **প্রতিক্রিয়া নির্মাণ:**
+   - দ্রুত প্রতিক্রিয়া সময়ের জন্য ক্যাশে ডেটা ব্যবহার করে ফলাফল তৈরি করুন।
 
 ---
 
-### Optimizations
-1. **Cache at Each Node:**
-   - Store the top-k queries to avoid redundant traversals.
-2. **Limit Prefix Length:**
-   - Cap prefix length to a small value (e.g., 50 characters) for faster lookups.
-3. **AJAX Requests:**
-   - Use lightweight asynchronous requests for real-time responses.
-4. **Browser Caching:**
-   - Save autocomplete results in the browser cache for frequently searched terms.
+### অপ্টিমাইজেশন
+1. **প্রতিটি নোডে ক্যাশে:**
+   - অপ্রয়োজনীয় ট্রাভার্সাল এড়াতে শীর্ষ-কে প্রশ্নগুলি সংরক্ষণ করুন৷
+2. **সীমা উপসর্গের দৈর্ঘ্য:**
+   - দ্রুত সন্ধানের জন্য একটি ছোট মান (যেমন, 50 অক্ষর) ক্যাপ প্রিফিক্স দৈর্ঘ্য।
+3. **AJAX অনুরোধ:**
+   - রিয়েল-টাইম প্রতিক্রিয়ার জন্য লাইটওয়েট অ্যাসিঙ্ক্রোনাস অনুরোধগুলি ব্যবহার করুন।
+4. **ব্রাউজার ক্যাশিং:**
+   - প্রায়শই অনুসন্ধান করা পদগুলির জন্য ব্রাউজার ক্যাশে স্বয়ংসম্পূর্ণ ফলাফলগুলি সংরক্ষণ করুন৷
 
 ---
 
-### Data Gathering Pipeline
-In the high-level design, whenever a user types a search query, data is updated in real-time. This appraoch is not practical.
-- Users may enter billions of queries per day. Updating the trie on every query is not feasible.
-- Top suggestions may not change much one the trie is built.
+### তথ্য সংগ্রহ পাইপলাইন
+উচ্চ-স্তরের ডিজাইনে, যখনই একজন ব্যবহারকারী একটি অনুসন্ধান ক্যোয়ারী টাইপ করেন, ডেটা রিয়েল-টাইমে আপডেট হয়। এই দৃষ্টিভঙ্গি ব্যবহারিক নয়।
+- ব্যবহারকারীরা প্রতিদিন কোটি কোটি প্রশ্ন লিখতে পারে। প্রতিটি প্রশ্নের ট্রাই আপডেট করা সম্ভব নয়।
+- ট্রাই তৈরি করা হয়েছে শীর্ষ পরামর্শগুলি খুব বেশি পরিবর্তন করতে পারে না।
 
 
-#### Updated Design
+#### আপডেট করা ডিজাইন
 
 <div style="margin-left:3rem">
    <img src="./images/data-gathering-flow.png" alt="Updated Data Gathering Flow" width="600">
 </div>
 
-1. **Analytics Logs:**
-   - Stores raw query data as logs for weekly aggregation.
-   - Logs are append-only and are not indexed
-2. **Aggregators:**
-   - Process logs into frequency tables, suitable for trie construction.
-   - For real-time applications such as Twitter, aggregate data in a shorter time interval.
-   - For other cases, aggregating data less frequently, say once per week is good enough.
-3. **Workers:**
-   - Asynchronous servers rebuild the trie and store it in persistent storage.
-4. **Storage Options:**
-    - **Trie Cache**: Trie Cache is a distributed cache system that keeps trie in memory for fast read.
-    - **Trie DB** 
-        1. **Document Store (e.g., MongoDB)**: Since a new trie is built weekly, we can periodically take a snapshot of it, serialize it, and store the serialized data in the database like MongoDB
-        2. **Key-Value Store:** 
-            - Maps prefixes to node data for fast access.
-            - Every prefix in the trie is mapped to a key in a hash table.
-            - Data on each trie node is mapped to a value in a hash table.
+1. **বিশ্লেষণ লগ:**
+   - সাপ্তাহিক একত্রিতকরণের লগ হিসাবে কাঁচা ক্যোয়ারী ডেটা সঞ্চয় করে।
+   - লগগুলি শুধুমাত্র যোগ করা হয় এবং সূচিত করা হয় না
+2. **সমষ্টিকারী:**
+   - ট্রাই নির্মাণের জন্য উপযুক্ত ফ্রিকোয়েন্সি টেবিলে লগ ইন প্রক্রিয়া।
+   - টুইটারের মতো রিয়েল-টাইম অ্যাপ্লিকেশনগুলির জন্য, অল্প সময়ের ব্যবধানে মোট ডেটা।
+   - অন্যান্য ক্ষেত্রে, কম ঘন ঘন ডেটা একত্রিত করা, বলুন প্রতি সপ্তাহে একবার যথেষ্ট ভাল।
+3. **শ্রমিক:**
+   - অ্যাসিঙ্ক্রোনাস সার্ভারগুলি ট্রাইটি পুনর্নির্মাণ করে এবং এটিকে স্থায়ী সঞ্চয়স্থানে সংরক্ষণ করে।
+4. **স্টোরেজ বিকল্প:**
+    - **ট্রাই ক্যাশে**: ট্রাই ক্যাশে একটি বিতরণ করা ক্যাশে সিস্টেম যা দ্রুত পড়ার জন্য ট্রাই মেমরিতে রাখে।
+    - **ট্রাই ডিবি** 
+        1. **ডকুমেন্ট স্টোর (যেমন, মঙ্গোডিবি)**: যেহেতু একটি নতুন ট্রাই সাপ্তাহিকভাবে তৈরি করা হয়, তাই আমরা পর্যায়ক্রমে এটির একটি স্ন্যাপশট নিতে পারি, এটিকে সিরিয়ালাইজ করতে পারি এবং মঙ্গোডিবি-এর মতো ডাটাবেসে সিরিয়ালাইজড ডেটা সংরক্ষণ করতে পারি।
+        2. **কী-মূল্যের দোকান:** 
+            - দ্রুত অ্যাক্সেসের জন্য নোড ডেটাতে মানচিত্র উপসর্গ।
+- ট্রাই-এর প্রতিটি উপসর্গ হ্যাশ টেবিলের একটি কী-তে ম্যাপ করা হয়।
+            - প্রতিটি ট্রাই নোডের ডেটা একটি হ্যাশ টেবিলের একটি মানের সাথে ম্যাপ করা হয়।
 
                 <img src="./images/trie-db.png" alt="Trie DB" width="600">
 ---
 
-### Scalability
-1. **Sharding:**
-   - Distribute trie nodes across servers based on prefix ranges (e.g., `a-m`, `n-z`).
-   - Further shard within prefixes to balance uneven distributions (e.g., `aa-ag`, `ah-an`).
-2. **Load Balancing:**
+### পরিমাপযোগ্যতা
+1. **ভাগ করা:**
+   - প্রিফিক্স রেঞ্জের উপর ভিত্তি করে সার্ভার জুড়ে ট্রাই নোডগুলি বিতরণ করুন (যেমন, `a-m`, `n-z`)।
+   - অসম বণ্টনের ভারসাম্য আনতে উপসর্গের মধ্যে আরও শার্ড (যেমন, `আ-আগ`, `আহ-আন`)।
+2. **লোড ব্যালেন্সিং:**
    <div style="margin-left:3rem">
       <img src="./images/sharding.png" alt="Sharding" width="400">
    </div>
 
-   - Use a shard map manager to route requests to the appropriate server.
+- উপযুক্ত সার্ভারে অনুরোধ রুট করতে একটি শার্ড ম্যাপ ম্যানেজার ব্যবহার করুন।
 
 
 ---
 
-## ধাপ 4: Advanced Features
+## ধাপ 4: উন্নত বৈশিষ্ট্য
 
-### Multi-Language Support
-1. **Unicode Characters:** Use Unicode to support non-English languages.
-2. **Country-Specific Tries:** Build separate tries for different countries or regions.
+### বহু-ভাষা সমর্থন
+1. **ইউনিকোড অক্ষর:** অ-ইংরেজি ভাষা সমর্থন করতে ইউনিকোড ব্যবহার করুন।
+2. **দেশ-নির্দিষ্ট চেষ্টা:** বিভিন্ন দেশ বা অঞ্চলের জন্য পৃথক চেষ্টা তৈরি করুন।
 
-### Trending Queries
-- Handle real-time events by dynamically updating trie nodes or weighting recent queries more heavily.
+### প্রবণতা প্রশ্ন
+- ট্রাই নোডগুলি গতিশীলভাবে আপডেট করে বা সাম্প্রতিক প্রশ্নগুলিকে আরও বেশি ওজন করে রিয়েল-টাইম ইভেন্টগুলি পরিচালনা করুন৷
 

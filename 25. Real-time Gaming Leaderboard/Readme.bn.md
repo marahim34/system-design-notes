@@ -1,8 +1,8 @@
 # অধ্যায় 25: রিয়েল-টাইম গেমিং লিডারবোর্ড
 
-## ভূমিকা (Introduction)
+## ভূমিকা
 
-We are going to design a **leaderboard** for an online mobile game:
+আমরা একটি অনলাইন মোবাইল গেমের জন্য একটি **লিডারবোর্ড** ডিজাইন করতে যাচ্ছি:
 
 <div style="margin-left:3rem">
     <img src="./images/leaderboard.png" alt="leaderboard" width="500" />
@@ -10,69 +10,69 @@ We are going to design a **leaderboard** for an online mobile game:
 
 ---
 
-## ধাপ ১: সমস্যা বোঝা এবং ডিজাইনের পরিধি নির্ধারণ
+## ধাপ 1: সমস্যাটি বুঝুন এবং ডিজাইনের সুযোগ স্থাপন করুন
 
-- C: How is the score calculated for the leaderboard?
-- I: User gets a point whenever they win a match.
-- C: Are all players included in the leaderboard?
-- I: Yes
-- C: Is there a time segment, associated with the leaderboard?
-- I: Each month, a new tournament starts which starts a new leaderboard.
-- C: Can we assume we only care about top 10 users?
-- I: We want to display top 10 users, along with position of specific user. If time permits, we can discuss showing users around particular user in the leaderboard.
-- C: How many users are in a tournament?
-- I: 5mil DAU and 25mil MAU
-- C: How many matches are played on average during a tournament?
-- I: Each player plays 10 matches per day on average
-- C: How do we determine the rank if two players have the same score?
-- I: Their rank is the same in that case. If time permits, we can discuss breaking ties.
-- C: Does the leaderboard need to be real-time?
-- I: Yes, we want to present real-time results or as close as possible to real-time. It is not okay to present batched result history.
+- সি: লিডারবোর্ডের জন্য স্কোর কিভাবে গণনা করা হয়?
+- আমি: যখনই তারা একটি ম্যাচ জিতবে ব্যবহারকারী একটি পয়েন্ট পায়।
+- সি: সমস্ত খেলোয়াড় কি লিডারবোর্ডে অন্তর্ভুক্ত?
+- আমি: হ্যাঁ
+- সি: লিডারবোর্ডের সাথে যুক্ত একটি সময় বিভাগ আছে?
+- আমি: প্রতি মাসে, একটি নতুন টুর্নামেন্ট শুরু হয় যা একটি নতুন লিডারবোর্ড শুরু করে।
+- সি: আমরা কি ধরে নিতে পারি যে আমরা শুধুমাত্র সেরা 10 জন ব্যবহারকারীর বিষয়ে চিন্তা করি?
+- আমি: আমরা নির্দিষ্ট ব্যবহারকারীর অবস্থান সহ শীর্ষ 10 ব্যবহারকারী প্রদর্শন করতে চাই। যদি সময় অনুমতি দেয়, আমরা লিডারবোর্ডে নির্দিষ্ট ব্যবহারকারীর চারপাশে ব্যবহারকারীদের দেখানোর বিষয়ে আলোচনা করতে পারি।
+- সি: একটি টুর্নামেন্টে কতজন ব্যবহারকারী আছে?
+- I: 5mil DAU এবং 25mil MAU
+- C: একটি টুর্নামেন্ট চলাকালীন গড়ে কতটি ম্যাচ খেলা হয়?
+- আমি: প্রতিটি খেলোয়াড় গড়ে প্রতিদিন 10টি ম্যাচ খেলে
+- সি: দুই খেলোয়াড়ের সমান স্কোর থাকলে আমরা কীভাবে র‌্যাঙ্ক নির্ধারণ করব?
+- আমি: সেক্ষেত্রে তাদের পদমর্যাদা একই। যদি সময় অনুমতি দেয়, আমরা সম্পর্ক ভাঙার বিষয়ে আলোচনা করতে পারি।
+- সি: লিডারবোর্ড কি রিয়েল-টাইম হওয়া দরকার?
+- আমি: হ্যাঁ, আমরা রিয়েল-টাইম ফলাফল উপস্থাপন করতে চাই বা যতটা সম্ভব রিয়েল-টাইমের কাছাকাছি। ব্যাচ করা ফলাফলের ইতিহাস উপস্থাপন করা ঠিক নয়।
 
-### **Functional requirements**
+### **কার্যকর প্রয়োজনীয়তা**
 
-- Display top 10 players on leaderboard
-- Show a user's specific rank
-- Display users which are four places above and below given user (bonus)
+- লিডারবোর্ডে শীর্ষ 10 খেলোয়াড় প্রদর্শন করুন
+- ব্যবহারকারীর নির্দিষ্ট র‍্যাঙ্ক দেখান
+- প্রদত্ত ব্যবহারকারী (বোনাস) উপরে এবং নীচের চারটি স্থান ব্যবহারকারীদের প্রদর্শন করুন
 
-### **Non-functional requirements**
+### **অকার্যকর প্রয়োজনীয়তা**
 
-- Real-time updates on scores
-- Score update is reflected on the leaderboard in real-time
-- General scalability, availability, reliability
+- স্কোরের রিয়েল-টাইম আপডেট
+- স্কোর আপডেট রিয়েল-টাইমে লিডারবোর্ডে প্রতিফলিত হয়
+- সাধারণ মাপযোগ্যতা, প্রাপ্যতা, নির্ভরযোগ্যতা
 
-### **Back-of-the-envelope estimation**
+### **খামের পিছনের অনুমান**
 
-With 50mil DAU, if the game has an even distribution of players during a 24h period, we'd have an average of 50 users per second.
-However, since distribution is typically uneven, we can estimate that the peak online users would be 250 users per second.
+50mil DAU এর সাথে, যদি 24 ঘন্টা সময়কালে গেমটিতে খেলোয়াড়দের সমান বন্টন থাকে, তাহলে আমাদের প্রতি সেকেন্ডে গড়ে 50 জন ব্যবহারকারী থাকবে।
+যাইহোক, যেহেতু বিতরণ সাধারণত অসম, আমরা অনুমান করতে পারি যে সর্বোচ্চ অনলাইন ব্যবহারকারী প্রতি সেকেন্ডে 250 জন ব্যবহারকারী হবে।
 
-QPS for users scoring a point - given 10 games per day on average, 50 users/s * 10 = 500 QPS. Peak QPS = 2500.
+একটি পয়েন্ট স্কোর করা ব্যবহারকারীদের জন্য QPS - প্রতিদিন গড়ে 10টি গেম দেওয়া হয়েছে, 50 ব্যবহারকারী/s * 10 = 500 QPS। পিক QPS = 2500।
 
-QPS for fetching the top 10 leaderboard - assuming users open that once a day on average, QPS is 50.
+শীর্ষ 10 লিডারবোর্ড আনার জন্য QPS - ধরে নিচ্ছি যে ব্যবহারকারীরা দিনে একবার খুলবেন, QPS হল 50৷
 
 ---
 
-## ধাপ ২: হাই-লেভেল ডিজাইন প্রস্তাব ও অনুমোদন গ্রহণ
+## ধাপ 2: উচ্চ-স্তরের ডিজাইন প্রস্তাব করুন এবং বাই-ইন পান
 
-### **API Design**
+### **এপিআই ডিজাইন**
 
-The first API we need is one to update a user's score:
+ব্যবহারকারীর স্কোর আপডেট করার জন্য আমাদের প্রথম APIটি প্রয়োজন:
 
 ```
 POST /v1/scores
 ```
 
-This API takes two params - `user_id` and `points` scored for winning a game.
+এই API দুটি প্যারাম নেয় - একটি গেম জেতার জন্য `user_id` এবং `পয়েন্ট` স্কোর।
 
-This API should only be accessible to game servers, not end clients.
+এই API শুধুমাত্র গেম সার্ভারে অ্যাক্সেসযোগ্য হওয়া উচিত, শেষ ক্লায়েন্টদের নয়।
 
-Next one is for getting the top 10 players of the leaderboard:
+পরবর্তীটি হল লিডারবোর্ডের সেরা 10 জন খেলোয়াড় পাওয়ার জন্য:
 
 ```
 GET /v1/scores
 ```
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```
 {
@@ -95,13 +95,13 @@ Example response:
 }
 ```
 
-You can also get the score of a particular user:
+আপনি একটি নির্দিষ্ট ব্যবহারকারীর স্কোরও পেতে পারেন:
 
 ```
 GET /v1/scores/{:user_id}
 ```
 
-Example response:
+উদাহরণ প্রতিক্রিয়া:
 
 ```
 {
@@ -113,77 +113,77 @@ Example response:
 }
 ```
 
-### **High-level architecture**
+### **উচ্চ-স্তরের স্থাপত্য**
 
 <div style="margin-left:3rem">
     <img src="./images/high-level-architecture.png" alt="high-level-architecture" width="500" />
 </div>
 
-- When a player wins a game, client sends a request to the game service
-- Game service validates if win is valid and calls the leaderboard service to update the player's score
-- Leaderboard service updates the user's score in the leaderboard store
-- Player makes a call to leaderboard service to fetch leaderboard data, eg top 10 players and given player's rank
+- যখন একজন খেলোয়াড় একটি গেম জেতে, ক্লায়েন্ট গেম পরিষেবাতে একটি অনুরোধ পাঠায়
+- জয় বৈধ হলে গেম পরিষেবা যাচাই করে এবং খেলোয়াড়ের স্কোর আপডেট করতে লিডারবোর্ড পরিষেবাকে কল করে
+- লিডারবোর্ড পরিষেবা লিডারবোর্ড স্টোরে ব্যবহারকারীর স্কোর আপডেট করে
+- প্লেয়ার লিডারবোর্ড ডেটা আনার জন্য লিডারবোর্ড পরিষেবাতে কল করে, যেমন শীর্ষ 10 খেলোয়াড় এবং প্লেয়ারের র‌্যাঙ্ক দেওয়া
 
-An alternative design which was considered is the client updating their score directly within the leaderboard service:
+একটি বিকল্প ডিজাইন যা বিবেচনা করা হয়েছিল তা হল ক্লায়েন্ট সরাসরি লিডারবোর্ড পরিষেবার মধ্যে তাদের স্কোর আপডেট করে:
 
 <div style="margin-left:3rem">
     <img src="./images/alternative-design.png" alt="alternative-design" width="500" />
 </div>
 
-This option is not secure as it's susceptible to man-in-the-middle attacks. Players can put a proxy and change their score as they please.
+এই বিকল্পটি নিরাপদ নয় কারণ এটি ম্যান-ইন-দ্য-মিডল আক্রমণের জন্য সংবেদনশীল। খেলোয়াড়রা একটি প্রক্সি রাখতে পারে এবং তাদের খুশি মত তাদের স্কোর পরিবর্তন করতে পারে।
 
-One additional caveat is that for games, where the game logic is managed by the server, cliets don't need to call the server explicitly to record their win.
-Servers do it automatically for them based on the game logic.
+একটি অতিরিক্ত সতর্কতা হল যে গেমগুলির জন্য, যেখানে গেম লজিক সার্ভার দ্বারা পরিচালিত হয়, ক্লাইটদের তাদের জয় রেকর্ড করার জন্য সার্ভারকে স্পষ্টভাবে কল করার দরকার নেই।
+সার্ভারগুলি গেমের যুক্তির উপর ভিত্তি করে তাদের জন্য স্বয়ংক্রিয়ভাবে এটি করে।
 
-One additional consideration is whether we should put a message queue between the game server and the leaderboard service. This would be useful if other services are interested in game results, but that is not an explicit requirement in the interview so far, hence it's not included in the design:
+একটি অতিরিক্ত বিবেচনা হল আমাদের গেম সার্ভার এবং লিডারবোর্ড পরিষেবার মধ্যে একটি বার্তা সারি রাখা উচিত কিনা। অন্যান্য পরিষেবাগুলি যদি গেমের ফলাফলগুলিতে আগ্রহী হয় তবে এটি কার্যকর হবে, তবে এটি এখন পর্যন্ত সাক্ষাত্কারে একটি সুস্পষ্ট প্রয়োজনীয়তা নয়, তাই এটি ডিজাইনে অন্তর্ভুক্ত করা হয়নি:
 
 <div style="margin-left:3rem">
     <img src="./images/message-queue-based-comm.png" alt="message-queue-based-comm" width="500" />
 </div>
 
-### **Data models**
+### **ডেটা মডেল**
 
-Let's discuss the options we have for storing leaderboard data - relational DBs, Redis, NoSQL.
+লিডারবোর্ড ডেটা সংরক্ষণের জন্য আমাদের কাছে যে বিকল্পগুলি রয়েছে তা নিয়ে আলোচনা করা যাক - রিলেশনাল ডিবি, রেডিস, নোএসকিউএল।
 
-The NoSQL solution is discussed in the deep dive section.
+NoSQL সমাধানটি গভীর ডাইভ বিভাগে আলোচনা করা হয়েছে।
 
-#### Relational database solution
+#### রিলেশনাল ডাটাবেস সমাধান
 
-If the scale doesn't matter and we don't have that many users, a relational DB serves our quite well.
+যদি স্কেল কোন ব্যাপার না হয় এবং আমাদের কাছে এত বেশি ব্যবহারকারী না থাকে, একটি রিলেশনাল ডিবি আমাদের বেশ ভালভাবে পরিবেশন করে।
 
-We can start from a simple leaderboard table, one for each month (personal note - this doesn't make sense. You can just add a `month` column and avoid the headache of maintaining new tables each month):
+আমরা একটি সাধারণ লিডারবোর্ড টেবিল থেকে শুরু করতে পারি, প্রতি মাসের জন্য একটি (ব্যক্তিগত নোট - এর কোনো মানে হয় না। আপনি শুধু একটি `মাস` কলাম যোগ করতে পারেন এবং প্রতি মাসে নতুন টেবিল বজায় রাখার মাথাব্যথা এড়াতে পারেন):
 
 <div style="margin-left:3rem">
     <img src="./images/leaderboard-table.png" alt="leaderboard-table" width="500" />
 </div>
 
-There is additional data to include in there, but that is irrelevant to the queries we'd run, so it's omitted.
+সেখানে অন্তর্ভুক্ত করার জন্য অতিরিক্ত ডেটা রয়েছে, কিন্তু আমরা যে প্রশ্নগুলি চালাব তার সাথে এটি অপ্রাসঙ্গিক, তাই এটি বাদ দেওয়া হয়েছে৷
 
-What happens when a user wins a point?
+একজন ব্যবহারকারী যখন একটি পয়েন্ট জিতে তখন কি হবে?
 
 <div style="margin-left:3rem">
     <img src="./images/user-wins-point.png" alt="user-wins-point" width="500" />
 </div>
 
-If a user doesn't exist in the table yet, we need to insert them first:
+যদি কোনও ব্যবহারকারী এখনও টেবিলে বিদ্যমান না থাকে, তাহলে আমাদের প্রথমে তাদের সন্নিবেশ করতে হবে:
 
 ```
 INSERT INTO leaderboard (user_id, score) VALUES ('mary1934', 1);
 ```
 
-On subsequent calls, we'd just update their score:
+পরবর্তী কলগুলিতে, আমরা কেবল তাদের স্কোর আপডেট করব:
 
 ```
 UPDATE leaderboard set score=score + 1 where user_id='mary1934';
 ```
 
-How do we find the top players of a leaderboard?
+কিভাবে আমরা একটি লিডারবোর্ডের শীর্ষ খেলোয়াড়দের খুঁজে পেতে পারি?
 
 <div style="margin-left:3rem">
     <img src="./images/find-leaderboard-position.png" alt="find-leaderboard-position" width="500" />
 </div>
 
-We can run the following query:
+আমরা নিম্নলিখিত ক্যোয়ারী চালাতে পারি:
 
 ```
 SELECT (@rownum := @rownum + 1) AS rank, user_id, score
@@ -191,9 +191,9 @@ FROM leaderboard
 ORDER BY score DESC;
 ```
 
-This is not performant though as it makes a table scan to order all records in the database table.
+এটি কার্যকরী নয় যদিও এটি ডাটাবেস টেবিলের সমস্ত রেকর্ড অর্ডার করার জন্য একটি টেবিল স্ক্যান করে।
 
-We can optimize it by adding an index on `score` and using the `LIMIT` operation to avoid scanning everything:
+আমরা `স্কোর`-এ একটি সূচক যোগ করে এবং সবকিছু স্ক্যান করা এড়াতে `LIMIT` অপারেশন ব্যবহার করে এটিকে অপ্টিমাইজ করতে পারি:
 
 ```
 SELECT (@rownum := @rownum + 1) AS rank, user_id, score
@@ -202,39 +202,39 @@ ORDER BY score DESC
 LIMIT 10;
 ```
 
-This approach, however, doesn't scale well if the user is not at the top of the leaderboard and you'd want to locate their rank.
+ব্যবহারকারী লিডারবোর্ডের শীর্ষে না থাকলে এবং আপনি তাদের র্যাঙ্ক সনাক্ত করতে চাইলে এই পদ্ধতিটি ভালভাবে পরিমাপ করে না।
 
-#### Redis solution
+#### রেডিস সমাধান
 
-We want to find a solution, which works well even for millions of players without having to fallback on complex database queries.
+আমরা একটি সমাধান খুঁজতে চাই, যা জটিল ডাটাবেস প্রশ্নে ফলব্যাক না করেও লক্ষ লক্ষ খেলোয়াড়ের জন্য ভাল কাজ করে।
 
-Redis is an in-memory data store, which is fast as it works in-memory and has a suitable data structure to serve our needs - sorted set.
+রেডিস হল একটি ইন-মেমরি ডেটা স্টোর, যা দ্রুত কাজ করে কারণ এটি মেমরির মধ্যে কাজ করে এবং আমাদের চাহিদাগুলি পূরণ করার জন্য একটি উপযুক্ত ডেটা কাঠামো রয়েছে - সাজানো সেট।
 
-A sorted set is a data structure similar to sets in programming languages, which allows you to keep a data structure sorted by a given criteria.
-Internally, it is implemented using a hash-map to maintain mapping between key (user_id) and value (score) and a skip list which maps scores to users in sorted order:
+একটি সাজানো সেট হল একটি ডেটা স্ট্রাকচার যা প্রোগ্রামিং ল্যাঙ্গুয়েজের সেটের মতো, যা আপনাকে একটি প্রদত্ত মানদণ্ড অনুসারে সাজানো ডেটা স্ট্রাকচার রাখতে দেয়।
+অভ্যন্তরীণভাবে, এটি কী (user_id) এবং মান (স্কোর) এবং একটি এড়িয়ে যাওয়ার তালিকার মধ্যে ম্যাপিং বজায় রাখার জন্য একটি হ্যাশ-ম্যাপ ব্যবহার করে প্রয়োগ করা হয় যা ব্যবহারকারীদের স্কোরকে সাজানো ক্রমে ম্যাপ করে:
 
 <div style="margin-left:3rem">
     <img src="./images/sorted-set.png" alt="sorted-set" width="500" />
 </div>
 
-How does a skip list work?
-- It is a linked list which allows for fast search
-- It consists of a sorted linked list and multi-level indexes
+কিভাবে একটি বাদ তালিকা কাজ করে?
+- এটি একটি লিঙ্কযুক্ত তালিকা যা দ্রুত অনুসন্ধানের জন্য অনুমতি দেয়
+- এটি একটি সাজানো লিঙ্ক তালিকা এবং বহু-স্তরের সূচী নিয়ে গঠিত
 
 <div style="margin-left:3rem">
     <img src="./images/skip-list.png" alt="skip-list" width="500" />
 </div>
 
-This structure enables us to quickly search for specific values when the data set is large enough.
-In the example below (64 nodes), it requires traversing 62 nodes in a base linked list to find the given value and 11 nodes in the skip-list case:
+ডেটা সেট যথেষ্ট বড় হলে এই কাঠামোটি আমাদেরকে দ্রুত নির্দিষ্ট মান অনুসন্ধান করতে সক্ষম করে।
+নীচের উদাহরণে (64 নোড), প্রদত্ত মান খুঁজে পেতে একটি বেস লিঙ্কযুক্ত তালিকায় 62টি নোড অতিক্রম করতে হবে এবং স্কিপ-লিস্টের ক্ষেত্রে 11টি নোড প্রয়োজন:
 
 <div style="margin-left:3rem">
     <img src="./images/skip-list-performance.png" alt="skip-list-performance" width="500" />
 </div>
 
-Sorted sets are more performant than relational databases as the data is kept sorted at all times at the price of O(logN) add and find operation.
+সাজানো সেটগুলি রিলেশনাল ডাটাবেসের চেয়ে বেশি পারফরম্যান্স করে কারণ ডেটা সর্বদা O(logN) অ্যাড এবং ফাইন্ড অপারেশনের মূল্যে সাজানো থাকে।
 
-In contract, here's an example nested query we need to run to find the rank of a given user in a relational DB:
+চুক্তিতে, একটি রিলেশনাল ডিবিতে প্রদত্ত ব্যবহারকারীর র‌্যাঙ্ক খুঁজতে আমাদের চালানো দরকার নেস্টেড কোয়েরির উদাহরণ:
 
 ```
 SELECT *,(SELECT COUNT(*) FROM leaderboard lb2
@@ -243,195 +243,195 @@ FROM leaderboard lb1
 WHERE lb1.user_id = {:user_id};
 ```
 
-What operations do we need to operate our leaderboard in Redis?
-- **ZADD** - insert the user into the set if they don't exist. Otherwise, update the score. O(logN) time complexity.
-- **ZINCRBY** - increment the score of a user by given amount. If user doesn't exist, score starts at zero. O(logN) time complexity.
-- **ZRANGE/ZREVRANGE** - fetch a range of users, sorted by their score. We can specify order (ASC/DESC), offset and result size. O(logN+M) time complexity where M is result size.
-- **ZRANK/ZREVRANK** - Fetch the position (rank) of given user in ASC/DESC order. O(logN) time complexity.
+রেডিসে আমাদের লিডারবোর্ড পরিচালনা করার জন্য আমাদের কী কী অপারেশন দরকার?
+- **ZADD** - সেটটিতে ব্যবহারকারীকে ঢোকান যদি তারা বিদ্যমান না থাকে। অন্যথায়, স্কোর আপডেট করুন। O(logN) সময়ের জটিলতা।
+- **ZINCRBY** - প্রদত্ত পরিমাণ দ্বারা ব্যবহারকারীর স্কোর বৃদ্ধি করুন। ব্যবহারকারী না থাকলে, স্কোর শূন্য থেকে শুরু হয়। O(logN) সময়ের জটিলতা।
+- **ZRANGE/ZREVRANGE** - তাদের স্কোর অনুসারে সাজানো ব্যবহারকারীদের একটি পরিসর আনুন। আমরা অর্ডার (ASC/DESC), অফসেট এবং ফলাফলের আকার নির্দিষ্ট করতে পারি। O(logN+M) সময় জটিলতা যেখানে M হল ফলাফলের আকার।
+- **ZRANK/ZREVRANK** - ASC/DESC ক্রমে প্রদত্ত ব্যবহারকারীর অবস্থান (র্যাঙ্ক) আনুন। O(logN) সময়ের জটিলতা।
 
-What happens when a user scores a point?
+একজন ব্যবহারকারী একটি পয়েন্ট স্কোর করলে কি হবে?
 
 ```
 ZINCRBY leaderboard_feb_2021 1 'mary1934'
 ```
 
-There's a new leaderboard created every month while old ones are moved to historical storage.
+প্রতি মাসে একটি নতুন লিডারবোর্ড তৈরি করা হয় যখন পুরানোগুলি ঐতিহাসিক স্টোরেজে স্থানান্তরিত হয়।
 
-What happens when a user fetches top 10 players?
+একজন ব্যবহারকারী সেরা 10 জন খেলোয়াড় আনলে কী হবে?
 
 ```
 ZREVRANGE leaderboard_feb_2021 0 9 WITHSCORES
 ```
 
-Example result:
+উদাহরণ ফলাফল:
 
 ```
 [(user2,score2),(user1,score1),(user5,score5)...]
 ```
 
-What about user fetching their leaderboard position?
+ব্যবহারকারী তাদের লিডারবোর্ড অবস্থান আনা সম্পর্কে কি?
 
 <div style="margin-left:3rem">
     <img src="./images/leaderboard-position-of-user.png" alt="leaderboard-position-of-user" width="500" />
 </div>
 
-This can be easily achieved by the following query, given that we know a user's leaderboard position:
+নিম্নলিখিত ক্যোয়ারী দ্বারা এটি সহজেই অর্জন করা যেতে পারে, প্রদত্ত যে আমরা একজন ব্যবহারকারীর লিডারবোর্ড অবস্থান জানি:
 
 ```
 ZREVRANGE leaderboard_feb_2021 357 365
 ```
 
-A user's position can be fetched using `ZREVRANK <user-id>`.
+একজন ব্যবহারকারীর অবস্থান `ZREVRANK <user-id>` ব্যবহার করে পাওয়া যেতে পারে।
 
-Let's explore what our storage requirements are:
-- Assuming worst-case scenario of all 25mil MAU participating in the game for a given month
-- ID is 24-character string and score is 16-bit integer, we need 26 bytes * 25mil = ~650MB of storage
-- Even if we double the storage cost due to the overhead of the skip list, this would still easily fit in a modern redis cluster
+আসুন জেনে নেই আমাদের স্টোরেজের প্রয়োজনীয়তাগুলি কী:
+- একটি নির্দিষ্ট মাসের জন্য গেমটিতে অংশগ্রহণকারী সমস্ত 25mil MAU এর সবচেয়ে খারাপ পরিস্থিতি অনুমান করা হচ্ছে
+- ID হল 24-অক্ষরের স্ট্রিং এবং স্কোর হল 16-বিট পূর্ণসংখ্যা, আমাদের প্রয়োজন 26 বাইট * 25mil = ~650MB স্টোরেজ
+- এমনকি যদি আমরা স্কিপ লিস্টের ওভারহেডের কারণে স্টোরেজ খরচ দ্বিগুণ করি, তবুও এটি একটি আধুনিক রেডিস ক্লাস্টারে সহজেই ফিট হবে
 
-Another non-functional requirement to consider is supporting 2500 updates per second. This is well within a single Redis server's capabilities.
+বিবেচনা করার জন্য আরেকটি অ-কার্যকরী প্রয়োজন প্রতি সেকেন্ডে 2500 আপডেট সমর্থন করে। এটি একটি একক রেডিস সার্ভারের ক্ষমতার মধ্যে ভাল।
 
-Additional caveats:
-- We can spin up a Redis replica to avoid losing data when a redis server crashes
-- We can still leverage Redis persistence to not lose data in the event of a crash
-- We'll need two supporting tables in MySQL to fetch user details such as username, display name, etc as well as store when eg a user won a game
-- The second table in MySQL can be used to reconstruct leaderboard when there is an infrastructure failure
-- As a small performance optimization, we could cache the user details of top 10 players as they'd be frequently accessed
+অতিরিক্ত সতর্কতা:
+- একটি রেডিস সার্ভার ক্র্যাশ হলে ডেটা হারানো এড়াতে আমরা একটি রেডিস রেপ্লিকা স্পিন করতে পারি
+- ক্র্যাশের ক্ষেত্রে ডেটা হারাতে না দেওয়ার জন্য আমরা এখনও Redis জেদ ব্যবহার করতে পারি
+- ব্যবহারকারীর নাম, প্রদর্শনের নাম ইত্যাদির মতো ব্যবহারকারীর বিশদ এবং সেইসাথে যখন কোনও ব্যবহারকারী একটি গেম জিতে তখন স্টোর করার জন্য আমাদের মাইএসকিউএল-এ দুটি সমর্থনকারী টেবিলের প্রয়োজন হবে
+- মাইএসকিউএল-এর দ্বিতীয় টেবিলটি যখন অবকাঠামোগত ব্যর্থতা থাকে তখন লিডারবোর্ড পুনর্গঠন করতে ব্যবহার করা যেতে পারে
+- একটি ছোট পারফরম্যান্স অপ্টিমাইজেশান হিসাবে, আমরা শীর্ষ 10 খেলোয়াড়ের ব্যবহারকারীর বিবরণ ক্যাশে করতে পারি কারণ তারা ঘন ঘন অ্যাক্সেস করা হবে
 
 ---
 
-## ধাপ ৩: বিস্তারিত আর্কিটেকচার ডিপ-ডাইভ (Design Deep Dive)
+## ধাপ 3: ডিপ ডাইভ ডিজাইন করুন
 
-### **To use a cloud provider or not**
+### **ক্লাউড প্রদানকারী ব্যবহার করুন বা না করুন**
 
-We can either choose to deploy and manage our own services or use a cloud provider to manage them for us.
+আমরা হয় আমাদের নিজস্ব পরিষেবাগুলি স্থাপন এবং পরিচালনা করতে বা আমাদের জন্য সেগুলি পরিচালনা করতে একটি ক্লাউড প্রদানকারী ব্যবহার করতে পারি৷
 
-If we choose to manage the services our selves, we'll use redis for leaderboard data, mysql for user profile and potentially a cache for user profile if we want to scale the database:
+আমরা যদি আমাদের নিজেরা পরিষেবাগুলি পরিচালনা করতে পছন্দ করি, আমরা যদি ডাটাবেস স্কেল করতে চাই তবে আমরা লিডারবোর্ড ডেটার জন্য redis, ব্যবহারকারীর প্রোফাইলের জন্য mysql এবং সম্ভাব্য ব্যবহারকারী প্রোফাইলের জন্য একটি ক্যাশে ব্যবহার করব:
 
 <div style="margin-left:3rem">
     <img src="./images/manage-services-ourselves.png" alt="manage-services-ourselves" width="500" />
 </div>
 
-Alternatively, we could use cloud offerings to manage a lot of the services for us. For example, we can use AWS API Gateway to route API calls to AWS Lambda functions:
+বিকল্পভাবে, আমরা আমাদের জন্য অনেক পরিষেবা পরিচালনা করতে ক্লাউড অফার ব্যবহার করতে পারি। উদাহরণস্বরূপ, আমরা AWS Lambda ফাংশনে API কলগুলিকে রুট করতে AWS API গেটওয়ে ব্যবহার করতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/api-gateway-mapping.png" alt="api-gateway-mapping" width="500" />
 </div>
 
-AWS Lambda enables us to run code without managing or provisioning servers ourselves. It runs only when needed and scales automatically.
+AWS Lambda আমাদেরকে সার্ভার পরিচালনা বা ব্যবস্থা না করেই কোড চালাতে সক্ষম করে। এটি শুধুমাত্র প্রয়োজন হলেই চলে এবং স্বয়ংক্রিয়ভাবে স্কেল করে।
 
-Exmaple user scoring a point:
+একটি পয়েন্ট স্কোর করার উদাহরণ ব্যবহারকারী:
 
 <div style="margin-left:3rem">
     <img src="./images/user-scoring-point-lambda.png" alt="user-scoring-point-lambda" width="500" />
 </div>
 
-Example user retrieving leaderboard:
+ব্যবহারকারীর লিডারবোর্ড পুনরুদ্ধারের উদাহরণ:
 
 <div style="margin-left:3rem">
     <img src="./images/user-retrieve-leaderboard.png" alt="user-retrieve-leaderboard" width="500" />
 </div>
 
-Lambdas are an implementation of a serverless architecture. We don't need to manage scaling and environment setup.
+ল্যাম্বডাস হল একটি সার্ভারহীন আর্কিটেকচারের বাস্তবায়ন। আমাদের স্কেলিং এবং পরিবেশ সেটআপ পরিচালনা করার দরকার নেই।
 
-Author recommends going with this approach if we build the game from the ground up.
+আমরা যদি গ্রাউন্ড আপ থেকে গেমটি তৈরি করি তবে লেখক এই পদ্ধতির সাথে যাওয়ার পরামর্শ দেন।
 
-### **Scaling Redis**
+### **স্কেলিং রেডিস**
 
-With 5mil DAU, we can get away with a single Redis instance from both a storage and QPS perspective.
+5mil DAU এর সাথে, আমরা স্টোরেজ এবং QPS উভয় দৃষ্টিকোণ থেকে একটি একক Redis ইন্সট্যান্স নিয়ে যেতে পারি।
 
-However, if we imagine userbase grows 10x to 500mil DAU, then we'd need 65gb for storage and QPS goes to 250k.
+যাইহোক, যদি আমরা কল্পনা করি ইউজারবেস 10x থেকে 500mil DAU বৃদ্ধি পায়, তাহলে আমাদের স্টোরেজের জন্য 65gb লাগবে এবং QPS 250k-এ যায়।
 
-Such scale would require sharding.
+এই ধরনের স্কেল sharding প্রয়োজন হবে.
 
-One way to achieve it is by range-partitioning the data:
+এটি অর্জন করার একটি উপায় হল ডেটা পরিসীমা-বিভাজন করা:
 
 <div style="margin-left:3rem">
     <img src="./images/range-partition.png" alt="range-partition" width="500" />
 </div>
 
-In this example, we'll shard based on user's score. We'll maintain the mapping between user_id and shard in application code.
-We can do that either via MySQL or another cache for the mapping itself.
+এই উদাহরণে, আমরা ব্যবহারকারীর স্কোরের উপর ভিত্তি করে ভাগ করব। আমরা অ্যাপ্লিকেশন কোডে user_id এবং shard এর মধ্যে ম্যাপিং বজায় রাখব।
+আমরা এটি MySQL এর মাধ্যমে করতে পারি বা ম্যাপিংয়ের জন্য অন্য ক্যাশের মাধ্যমে করতে পারি।
 
-To fetch the top 10 players, we'd query the shard with the highest scores (`[900-1000]`).
+সেরা 10 জন খেলোয়াড় আনতে, আমরা সর্বোচ্চ স্কোর (`[900-1000]`) সহ শার্ডকে জিজ্ঞাসা করব।
 
-To fetch a user's rank, we'll need to calculate the rank within the user's shard and add up all users with higher scores in other shards.
-The latter is a O(1) operation as total records per shard can quickly be accessed via the info keyspace command.
+একজন ব্যবহারকারীর র‌্যাঙ্ক আনতে, আমাদের ব্যবহারকারীর শার্ডের মধ্যে র‌্যাঙ্ক গণনা করতে হবে এবং অন্যান্য শার্ডে উচ্চ স্কোর সহ সমস্ত ব্যবহারকারীকে যুক্ত করতে হবে।
+পরেরটি হল একটি O(1) অপারেশন কারণ শার্ড প্রতি মোট রেকর্ড দ্রুত ইনফো কীস্পেস কমান্ডের মাধ্যমে অ্যাক্সেস করা যায়।
 
-Alternatively, we can use hash partitioning via Redis Cluster. It is a proxy which distributes data across redis nodes based on partitioning similar to consistent hashing, but not exactly the same:
+বিকল্পভাবে, আমরা রেডিস ক্লাস্টারের মাধ্যমে হ্যাশ পার্টিশন ব্যবহার করতে পারি। এটি একটি প্রক্সি যা সামঞ্জস্যপূর্ণ হ্যাশিংয়ের মতো পার্টিশনের উপর ভিত্তি করে রেডিস নোড জুড়ে ডেটা বিতরণ করে, কিন্তু ঠিক একই নয়:
 
 <div style="margin-left:3rem">
     <img src="./images/hash-partition.png" alt="hash-partition" width="500" />
 </div>
 
-Calculating the top 10 players is challenging with this setup. We'll need to get the top 10 players of each shard and merge the results in the application:
+এই সেটআপের সাথে সেরা 10 খেলোয়াড়ের গণনা করা চ্যালেঞ্জিং। আমাদের প্রতিটি শার্ডের সেরা 10 জন খেলোয়াড় পেতে হবে এবং ফলাফলগুলিকে অ্যাপ্লিকেশনটিতে একত্রিত করতে হবে:
 
 <div style="margin-left:3rem">
     <img src="./images/top-10-players-calculation.png" alt="top-10-players-calculation" width="500" />
 </div>
 
-There are some limitations with the hash partitioning:
-- If we need to fetch top K users, where K is high, latency can increase as we'll need to fetch a lot of data from all the shards
-- Latency increases as the number of partitions grows
-- There is no straightforward approach to determine a user's rank
+হ্যাশ পার্টিশনের সাথে কিছু সীমাবদ্ধতা রয়েছে:
+- যদি আমাদের শীর্ষ K ব্যবহারকারীদের আনার প্রয়োজন হয়, যেখানে K বেশি, সেখানে লেটেন্সি বাড়তে পারে কারণ আমাদের সমস্ত শার্ড থেকে প্রচুর ডেটা আনতে হবে
+- পার্টিশনের সংখ্যা বাড়ার সাথে সাথে লেটেন্সি বাড়ে
+- ব্যবহারকারীর পদমর্যাদা নির্ধারণের জন্য কোন সরল পদ্ধতি নেই
 
-Due to all this, the author leans towards using fixed partitions for this problem.
+এই সমস্ত কারণে, লেখক এই সমস্যার জন্য স্থির পার্টিশন ব্যবহার করার দিকে ঝুঁকেছেন।
 
-Other caveats:
-- A best practice is to allocate twice as much memory as required for write-heavy redis nodes to accommodate snapshots if required
-- We can use a tool called Redis-benchmark to track the performance of a redis setup and make data-driven decisions
+অন্যান্য সতর্কতা:
+- একটি সর্বোত্তম অভ্যাস হল স্ন্যাপশটগুলিকে মিটমাট করার জন্য লেখা-ভারী রেডিস নোডগুলির জন্য প্রয়োজনের তুলনায় দ্বিগুণ মেমরি বরাদ্দ করা।
+- আমরা রেডিস সেটআপের কর্মক্ষমতা ট্র্যাক করতে এবং ডেটা-চালিত সিদ্ধান্ত নিতে রেডিস-বেঞ্চমার্ক নামক একটি টুল ব্যবহার করতে পারি
 
-### **Alternative solution: NoSQL**
+### **বিকল্প সমাধান: NoSQL**
 
-An alternative solution to consider is using an appropriate NoSQL database optimized for:
-- heavy writes
-- effectively sorting items within the same partition by score
+বিবেচনা করার জন্য একটি বিকল্প সমাধান হল একটি উপযুক্ত NoSQL ডাটাবেস ব্যবহার করার জন্য অপ্টিমাইজ করা:
+- ভারী লেখা
+- স্কোর অনুসারে একই পার্টিশনের মধ্যে আইটেমগুলিকে কার্যকরভাবে বাছাই করা
 
-DynamoDB, Cassandra or MongoDB are all good fits.
+DynamoDB, Cassandra বা MongoDB সবই ভালো ফিট।
 
-In this chapter, the author has decided to use DynamoDB. It is a fully-managed NoSQL database, which offers reliable performance and great scalability.
-It also enables usage of global secondary indexes when we need to query fields not part of the primary key.
+এই অধ্যায়ে, লেখক DynamoDB ব্যবহার করার সিদ্ধান্ত নিয়েছেন। এটি একটি সম্পূর্ণ-পরিচালিত NoSQL ডাটাবেস, যা নির্ভরযোগ্য কর্মক্ষমতা এবং দুর্দান্ত পরিমাপযোগ্যতা প্রদান করে।
+এটি বৈশ্বিক সেকেন্ডারি ইনডেক্সের ব্যবহার সক্ষম করে যখন আমাদের প্রাথমিক কী-এর অংশ নয় এমন ক্ষেত্রগুলিকে জিজ্ঞাসা করতে হয়।
 
 <div style="margin-left:3rem">
     <img src="./images/dynamo-db.png" alt="dynamo-db" width="500" />
 </div>
 
-Let's start from a table for storing a leaderboard for a chess game:
+একটি দাবা খেলার জন্য একটি লিডারবোর্ড সংরক্ষণের জন্য একটি টেবিল থেকে শুরু করা যাক:
 
 <div style="margin-left:3rem">
     <img src="./images/chess-game-leaderboard-table-1.png" alt="chess-game-leaderboard-table-1" width="500" />
 </div>
 
-This works well, but doesn't scale well if we need to query anything by score. Hence, we can put the score as a sort key:
+এটি ভাল কাজ করে, কিন্তু যদি আমাদের স্কোর দ্বারা কিছু জিজ্ঞাসা করার প্রয়োজন হয় তবে এটি ভালভাবে স্কেল করে না। সুতরাং, আমরা স্কোরটিকে একটি সাজানোর কী হিসাবে রাখতে পারি:
 
 <div style="margin-left:3rem">
     <img src="./images/chess-game-leaderboard-table-2.png" alt="chess-game-leaderboard-table-2" width="500" />
 </div>
 
-Another problem with this design is that we're partitioning by month. This leads to a hotspot partition as the latest month will be unevenly accessed compared to the others.
+এই ডিজাইনের সাথে আরেকটি সমস্যা হল আমরা মাস অনুযায়ী পার্টিশন করছি। এটি একটি হটস্পট পার্টিশনের দিকে নিয়ে যায় কারণ সর্বশেষ মাসে অন্যদের তুলনায় অসমভাবে অ্যাক্সেস করা হবে।
 
-We could use a technique called write sharding, where we append a partition number for each key, calculated via `user_id % num_partitions`:
+আমরা রাইট শার্ডিং নামে একটি কৌশল ব্যবহার করতে পারি, যেখানে আমরা প্রতিটি কী-এর জন্য একটি পার্টিশন নম্বর যুক্ত করি, যা `user_id % num_partitions` এর মাধ্যমে গণনা করা হয়:
 
 <div style="margin-left:3rem">
     <img src="./images/chess-game-leaderboard-table-3.png" alt="chess-game-leaderboard-table-3" width="500" />
 </div>
 
-An important trade-off to consider is how many partitions we should use:
-- The more partitions there are, the higher the write scalability
-- However, read scalability suffers as we need to query more partitions to collect aggregate results
+বিবেচনা করার জন্য একটি গুরুত্বপূর্ণ ট্রেড-অফ হল আমাদের কতগুলি পার্টিশন ব্যবহার করা উচিত:
+- যত বেশি পার্টিশন আছে, রাইট স্কেলেবিলিটি তত বেশি
+- যাইহোক, রিড স্কেলেবিলিটি ক্ষতিগ্রস্থ হয় কারণ সামগ্রিক ফলাফল সংগ্রহ করার জন্য আমাদের আরও পার্টিশন অনুসন্ধান করতে হবে
 
-Using this approach requires that we use the "scatter-gather" technique we saw earlier, which grows in time complexity as we add more partitions:
+এই পদ্ধতিটি ব্যবহার করার জন্য আমাদের "স্ক্যাটার-গেদার" কৌশলটি ব্যবহার করতে হবে যা আমরা আগে দেখেছি, যা সময়ের জটিলতার সাথে বৃদ্ধি পায় যখন আমরা আরও পার্টিশন যোগ করি:
 
 <div style="margin-left:3rem">
     <img src="./images/scatter-gather-2.png" alt="scatter-gather-2" width="500" />
 </div>
 
-To make a good evaluation on the number of partitions, we'd need to do some benchmarking.
+পার্টিশনের সংখ্যার উপর একটি ভাল মূল্যায়ন করতে, আমাদের কিছু বেঞ্চমার্কিং করতে হবে।
 
-This NoSQL approach still has one major downside - it is hard to calculate the specific rank of a user.
+এই NoSQL পদ্ধতির এখনও একটি প্রধান খারাপ দিক রয়েছে - এটি একটি ব্যবহারকারীর নির্দিষ্ট র্যাঙ্ক গণনা করা কঠিন।
 
-If we have sufficient scale to require us to shard, we could then perhaps tell users what "percentile" of scores they're in.
+যদি আমাদের কাছে পর্যাপ্ত স্কেল থাকে যা আমাদের শর্ড করার প্রয়োজন হয়, তাহলে আমরা সম্ভবত ব্যবহারকারীদের বলতে পারব যে তারা কত স্কোরের "শতাংশ" আছে।
 
-A cron job can periodically run to analyze score distributions, based on which a user's percentile is determined, eg:
+একটি ক্রন জব পর্যায়ক্রমে স্কোর বিতরণ বিশ্লেষণ করতে চালাতে পারে, যার ভিত্তিতে ব্যবহারকারীর শতাংশ নির্ধারণ করা হয়, যেমন:
 
 ```
 10th percentile = score < 100
@@ -442,9 +442,9 @@ A cron job can periodically run to analyze score distributions, based on which a
 
 ---
 
-## ধাপ ৪: সমাপ্তি ও ভবিষ্যৎ উন্নয়ন (Wrap Up)
+## ধাপ 4: মোড়ানো
 
-Other things to discuss if time permits:
-- **Faster retrieval** - We can cache the user object via a Redis hash with mapping `user_id -> user object`. This enables faster retrieval vs. querying the database.
-- **Breaking ties** - When two players have the same score, we can break the tie by sorting them based on last played game.
-- **System failure recovery** - In the event of a large-scale Redis outage, we can recreate the leaderboard by going through the MySQL WAL entries and recreate it via an ad-hoc script
+সময় অনুমতি দিলে আলোচনা করার অন্যান্য বিষয়:
+- **দ্রুত পুনরুদ্ধার** - আমরা `user_id -> user object` ম্যাপিং সহ Redis হ্যাশের মাধ্যমে ব্যবহারকারী অবজেক্টকে ক্যাশে করতে পারি। এটি ডাটাবেস অনুসন্ধান বনাম দ্রুত পুনরুদ্ধার সক্ষম করে।
+- **ব্রেকিং টাই** - যখন দুইজন খেলোয়াড়ের স্কোর সমান থাকে, আমরা শেষ খেলা খেলার উপর ভিত্তি করে তাদের সাজিয়ে টাই ভাঙতে পারি।
+- **সিস্টেম ব্যর্থতা পুনরুদ্ধার** - একটি বড় আকারের রেডিস বিভ্রাটের ক্ষেত্রে, আমরা মাইএসকিউএল ওয়াল এন্ট্রিগুলির মাধ্যমে গিয়ে লিডারবোর্ডটি পুনরায় তৈরি করতে পারি এবং একটি অ্যাড-হক স্ক্রিপ্টের মাধ্যমে এটি পুনরায় তৈরি করতে পারি
